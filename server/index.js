@@ -1,23 +1,18 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-dotenv.config(); // Standard config for Render/Local env vars
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Log to help debug on Render
-console.log("Starting server with settings:");
-console.log("- PORT:", PORT);
-console.log("- MP Token exists:", !!process.env.VITE_MP_ACCESS_TOKEN);
 
 // Mercado Pago Configuration
 const client = new MercadoPagoConfig({
@@ -64,13 +59,16 @@ app.post('/api/videos', (req, res) => {
     writeData(videosFile, videos);
     res.status(201).json(newVideo);
 });
+
+// Students
 app.get('/api/students', (req, res) => {
     res.json(readData(studentsFile));
 });
 
 app.post('/api/students', (req, res) => {
     const students = readData(studentsFile);
-    const newStudent = { ...req.body, id: Date.now().toString() };
+    const newId = Date.now().toString();
+    const newStudent = { ...req.body, id: newId };
     students.push(newStudent);
     writeData(studentsFile, students);
     res.status(201).json(newStudent);
@@ -85,6 +83,70 @@ app.put('/api/students/:id', (req, res) => {
         res.json(students[index]);
     } else {
         res.status(404).json({ error: 'Student not found' });
+    }
+});
+
+// --- SYNC PAYMENTS FROM MERCADO PAGO ---
+app.post('/api/students/:id/sync-payments', async (req, res) => {
+    try {
+        const students = readData(studentsFile);
+        const student = students.find(s => s.id === req.params.id);
+        if (!student) return res.status(404).json({ error: 'Alumno no encontrado' });
+
+        const mpPayment = new Payment(client);
+
+        // Buscamos pagos aprobados de este email en los últimos 6 meses
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+        const searchFilters = {
+            status: 'approved',
+            range: 'date_created',
+            begin_date: sixMonthsAgo.toISOString(),
+            end_date: new Date().toISOString(),
+            'payer.email': student.email
+        };
+
+        const result = await mpPayment.search({ options: searchFilters });
+
+        const newPayments = result.results || [];
+        let updatedCount = 0;
+
+        newPayments.forEach(pay => {
+            const payDate = pay.date_approved.split('T')[0];
+            // Si el pago no está en el historial, lo agregamos
+            if (!student.history.some(h => h.transaction_id === pay.id.toString())) {
+                student.history.push({
+                    date: payDate,
+                    status: 'Completado',
+                    amount: pay.transaction_amount,
+                    method: 'Mercado Pago',
+                    transaction_id: pay.id.toString()
+                });
+                updatedCount++;
+            }
+        });
+
+        if (updatedCount > 0) {
+            // Actualizar estado de pago si encontramos algo reciente
+            const lastPay = [...student.history].sort((a, b) => b.date.localeCompare(a.date))[0];
+            if (lastPay) {
+                student.lastPaymentMonth = lastPay.date.substring(0, 7);
+                student.isPaid = true;
+                student.lastPaymentDate = lastPay.date;
+            }
+            writeData(studentsFile, students);
+        }
+
+        res.json({
+            message: `Sincronización completada. Se encontraron ${newPayments.length} pagos en Mercado Pago.`,
+            addedCount: updatedCount,
+            student
+        });
+
+    } catch (error) {
+        console.error('Sync Error:', error);
+        res.status(500).json({ error: 'Error al sincronizar con Mercado Pago' });
     }
 });
 
@@ -113,7 +175,7 @@ app.post('/api/checkout', async (req, res) => {
                     pending: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=pending`,
                 },
                 auto_return: "approved",
-                notification_url: `${process.env.BACKEND_URL}/api/webhooks` // Render URL here
+                notification_url: `${process.env.BACKEND_URL}/api/webhooks`
             }
         });
 
@@ -130,9 +192,9 @@ app.post('/api/webhooks', async (req, res) => {
     const { action, data } = req.body;
 
     if (action === 'payment.created' || action === 'payment.updated') {
-        // Aquí podrías consultar el estado del pago usando el ID en data.id
-        // Y actualizar el estado del alumno en students.json
-        console.log(`Pago ${data.id} con acción ${action}`);
+        // En un caso real, aquí usaríamos Payment.get(data.id) para confirmar el estado
+        // y actualizaríamos el alumno automáticamente.
+        console.log(`Pago recibido: ${data.id}`);
     }
 
     res.sendStatus(200);
@@ -140,4 +202,5 @@ app.post('/api/webhooks', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log("- MP Token exists:", !!process.env.VITE_MP_ACCESS_TOKEN);
 });

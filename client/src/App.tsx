@@ -106,6 +106,7 @@ const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isEditingStudent, setIsEditingStudent] = useState(false);
   const [editedStudent, setEditedStudent] = useState<Student | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // API Data Loading
   useEffect(() => {
@@ -167,6 +168,30 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error("Error updating student:", error);
+    }
+  };
+
+  const handleSyncMPPayments = async (studentId: string) => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch(`${API_URL}/api/students/${studentId}/sync-payments`, {
+        method: 'POST'
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert(data.message);
+        if (data.addedCount > 0) {
+          setStudents(prev => prev.map(s => s.id === data.student.id ? data.student : s));
+          setSelectedStudent(data.student);
+        }
+      } else {
+        alert("Error: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error syncing payments:", error);
+      alert("No se pudo conectar con el servidor para sincronizar.");
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -1623,7 +1648,7 @@ const App: React.FC = () => {
                       )}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     {!isEditingStudent ? (
                       <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                         style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', padding: '0.8rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: 'var(--panel-text)', fontWeight: 800, fontSize: '0.8rem' }}
@@ -1647,6 +1672,15 @@ const App: React.FC = () => {
                         </motion.button>
                       </div>
                     )}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      disabled={isSyncing}
+                      style={{ background: 'rgba(5,168,106,0.1)', border: '1px solid var(--logo-green)', borderRadius: '1rem', padding: '0.8rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: 'var(--logo-green)', fontWeight: 800, fontSize: '0.8rem' }}
+                      onClick={() => handleSyncMPPayments(selectedStudent.id)}>
+                      <RefreshCcw size={16} className={isSyncing ? 'animate-spin' : ''} />
+                      {isSyncing ? 'CONCILIANDO...' : 'SINC. MERCADO PAGO'}
+                    </motion.button>
                     <motion.button whileHover={{ rotate: 90, scale: 1.1 }} whileTap={{ scale: 0.9 }}
                       style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--panel-muted)' }}
                       onClick={() => { setSelectedStudent(null); setIsEditingStudent(false); }}>
