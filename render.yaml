@@ -10,10 +10,10 @@ services:
       - key: PORT
         value: 10000
       - key: VITE_MP_ACCESS_TOKEN
-        sync: false # Should be set in Render dashboard
+        sync: false
       - key: FRONTEND_URL
         fromService:
-          type: static_site
+          type: web
           name: dojo-demo-client
           property: url
     disk:
@@ -22,11 +22,11 @@ services:
       sizeGB: 1
 
   # Frontend Client
-  - type: static_site
+  - type: web
     name: dojo-demo-client
     runtime: static
     buildCommand: npm install && npm run build
-    publishPath: dist
+    staticPublishPath: dist
     rootDir: client
     envVars:
       - key: VITE_API_URL
