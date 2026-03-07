@@ -6,13 +6,18 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-dotenv.config({ path: '../.env' }); // Read from root .env
+dotenv.config(); // Standard config for Render/Local env vars
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Log to help debug on Render
+console.log("Starting server with settings:");
+console.log("- PORT:", PORT);
+console.log("- MP Token exists:", !!process.env.VITE_MP_ACCESS_TOKEN);
 
 // Mercado Pago Configuration
 const client = new MercadoPagoConfig({
@@ -32,8 +37,13 @@ const videosFile = path.join(dbPath, 'videos.json');
 
 // Helpers to read/write JSON
 const readData = (file) => {
-    if (!fs.existsSync(file)) return [];
-    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+    if (!fs.existsSync(file)) {
+        console.warn(`File not found: ${file}`);
+        return [];
+    }
+    const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    console.log(`Loaded ${data.length} items from ${path.basename(file)}`);
+    return data;
 };
 
 const writeData = (file, data) => {
