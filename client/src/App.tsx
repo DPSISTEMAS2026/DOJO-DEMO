@@ -371,7 +371,7 @@ const App: React.FC = () => {
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '70px', height: '70px', background: 'var(--logo-green)', filter: 'blur(30px)', opacity: 0.6, borderRadius: '50%', zIndex: -1 }}></div>
                 <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--logo-green)', boxShadow: '0 0 30px rgba(5, 168, 106, 0.4)' }} />
               </div>
-              <span style={{ fontWeight: 900, fontSize: '1.4rem', letterSpacing: '-1.5px', color: 'var(--text-main)' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>CONCE</span></span>
+              <span style={{ fontWeight: 900, fontSize: '1.4rem', letterSpacing: '-1px', color: 'var(--text-main)' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>JIU JITSU</span></span>
             </div>
             <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
               <a href="#inicio" style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.8 }}>Inicio</a>
@@ -566,7 +566,7 @@ const App: React.FC = () => {
                   <div style={{ padding: '3px', background: 'var(--text-main)', borderRadius: '50%', display: 'flex' }}>
                     <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }} />
                   </div>
-                  <span style={{ fontWeight: 900, fontSize: '2rem', letterSpacing: '-2px', color: 'var(--text-main)' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>CONCE</span></span>
+                  <span style={{ fontWeight: 900, fontSize: '2rem', letterSpacing: '-2px', color: 'var(--text-main)' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>JIU JITSU</span></span>
                 </div>
                 <p style={{ color: 'var(--text-muted)', lineHeight: 2, fontSize: '1.15rem', maxWidth: '400px', fontWeight: 500 }}>
                   El epicentro del Jiu Jitsu de alto nivel en Concepción. Orompello 1421. Maestría técnica y comunidad.
