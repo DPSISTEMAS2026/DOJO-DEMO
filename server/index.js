@@ -188,13 +188,60 @@ app.post('/api/checkout', async (req, res) => {
 
 // Mercado Pago: Webhook
 app.post('/api/webhooks', async (req, res) => {
-    console.log('Webhook received:', req.body);
-    const { action, data } = req.body;
+    console.log('--- WEBHOOK RECEIVED ---');
 
-    if (action === 'payment.created' || action === 'payment.updated') {
-        // En un caso real, aquí usaríamos Payment.get(data.id) para confirmar el estado
-        // y actualizaríamos el alumno automáticamente.
-        console.log(`Pago recibido: ${data.id}`);
+    // Mercado Pago manda el ID de diferentes formas dependiendo del evento
+    const paymentId = req.body.data?.id || req.body.id;
+    const action = req.body.action || req.body.type;
+
+    if (!paymentId) {
+        console.log('No payment ID found in webhook body');
+        return res.sendStatus(200);
+    }
+
+    try {
+        const mpPayment = new Payment(client);
+        const payDetails = await mpPayment.get({ id: paymentId });
+
+        if (payDetails.status === 'approved') {
+            const payerEmail = payDetails.payer.email;
+            const amount = payDetails.transaction_amount;
+            const payDate = payDetails.date_approved.split('T')[0];
+
+            console.log(`Payment Approved: ${paymentId} - Email: ${payerEmail} - Amount: ${amount}`);
+
+            const students = readData(studentsFile);
+            // Buscamos al alumno por email (o email del tutor)
+            const student = students.find(s => s.email.toLowerCase() === payerEmail.toLowerCase());
+
+            if (student) {
+                // Evitar duplicados en el historial
+                if (!student.history.some(h => h.transaction_id === paymentId.toString())) {
+                    student.history.push({
+                        date: payDate,
+                        status: 'Completado',
+                        amount: amount,
+                        method: 'Mercado Pago',
+                        transaction_id: paymentId.toString()
+                    });
+
+                    student.isPaid = true;
+                    student.lastPaymentDate = payDate;
+                    student.lastPaymentMonth = payDate.substring(0, 7);
+
+                    writeData(studentsFile, students);
+                    console.log(`Student ${student.name} updated successfully via Webhook.`);
+                } else {
+                    console.log('Payment already exists in history. Skipping.');
+                }
+            } else {
+                console.warn(`No student found for email: ${payerEmail}. Payment ${paymentId} received but not linked.`);
+            }
+        } else {
+            console.log(`Payment ${paymentId} status: ${payDetails.status}. No action taken.`);
+        }
+    } catch (error) {
+        console.error('Webhook processing error:', error);
     }
 
     res.sendStatus(200);
