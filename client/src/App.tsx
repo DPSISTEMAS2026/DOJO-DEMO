@@ -1673,15 +1673,6 @@ const App: React.FC = () => {
                         </motion.button>
                       </div>
                     )}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      disabled={isSyncing}
-                      style={{ background: 'rgba(5,168,106,0.1)', border: '1px solid var(--logo-green)', borderRadius: '1rem', padding: '0.8rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: 'var(--logo-green)', fontWeight: 800, fontSize: '0.8rem' }}
-                      onClick={() => handleSyncMPPayments(selectedStudent.id)}>
-                      <RefreshCcw size={16} className={isSyncing ? 'animate-spin' : ''} />
-                      {isSyncing ? 'CONCILIANDO...' : 'SINC. MERCADO PAGO'}
-                    </motion.button>
                     <motion.button whileHover={{ rotate: 90, scale: 1.1 }} whileTap={{ scale: 0.9 }}
                       style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--panel-muted)' }}
                       onClick={() => { setSelectedStudent(null); setIsEditingStudent(false); }}>

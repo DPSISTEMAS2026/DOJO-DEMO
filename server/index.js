@@ -60,9 +60,61 @@ app.post('/api/videos', (req, res) => {
     res.status(201).json(newVideo);
 });
 
-// Students
-app.get('/api/students', (req, res) => {
-    res.json(readData(studentsFile));
+// Students with automatic background sync
+app.get('/api/students', async (req, res) => {
+    const students = readData(studentsFile);
+    const mpPayment = new Payment(client);
+
+    // Configurar rango de 6 meses
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const now = new Date();
+
+    let anyUpdated = false;
+
+    // Sincronizar cada alumno que tenga email (en segundo plano o secuencial para asegurar data)
+    for (let student of students) {
+        if (!student.email) continue;
+
+        try {
+            const result = await mpPayment.search({
+                options: {
+                    status: 'approved',
+                    range: 'date_created',
+                    begin_date: sixMonthsAgo.toISOString(),
+                    end_date: now.toISOString(),
+                    'payer.email': student.email
+                }
+            });
+
+            const payments = result.results || [];
+            payments.forEach(pay => {
+                const payDate = pay.date_approved.split('T')[0];
+                if (!student.history.some(h => h.transaction_id === pay.id.toString())) {
+                    student.history.push({
+                        date: payDate,
+                        status: 'Completado',
+                        amount: pay.transaction_amount,
+                        method: 'Mercado Pago',
+                        transaction_id: pay.id.toString()
+                    });
+
+                    student.isPaid = true;
+                    student.lastPaymentDate = payDate;
+                    student.lastPaymentMonth = payDate.substring(0, 7);
+                    anyUpdated = true;
+                }
+            });
+        } catch (e) {
+            console.error(`Sync failed for ${student.email}:`, e.message);
+        }
+    }
+
+    if (anyUpdated) {
+        writeData(studentsFile, students);
+    }
+
+    res.json(students);
 });
 
 app.post('/api/students', (req, res) => {
