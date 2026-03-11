@@ -47,6 +47,8 @@
   --transition: all 0.3s ease;
   --transition-fast: all 0.2s ease;
 
+  /* Spacing */
+  --section-padding: 6rem;
   /* Belt Colors */
   --belt-white: #ffffff;
   --belt-blue: #2563eb;
@@ -54,6 +56,18 @@
   --belt-brown: #78350f;
   --belt-black: #000000;
   --belt-gray: #94a3b8;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --section-padding: 4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --section-padding: 3rem;
+  }
 }
 
 /* Custom Scrollbar */
@@ -536,4 +550,41 @@ section {
   display: flex;
   gap: 3rem;
   z-index: 100;
+}
+
+/* RESPONSIVE UTILITIES */
+@media (max-width: 1024px) {
+  .section-container {
+    padding: 0 4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-container {
+    padding: 0 2rem;
+  }
+
+  h1 { font-size: 3.5rem !important; }
+  h2 { font-size: 2.5rem !important; }
+  
+  .responsive-stack {
+    grid-template-columns: 1fr !important;
+    gap: 3rem !important;
+  }
+
+  .mobile-hide {
+    display: none !important;
+  }
+
+  .mobile-full {
+    width: 100% !important;
+    grid-column: span 1 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 2.8rem !important; }
+  .section-container {
+    padding: 0 1.5rem;
+  }
 }

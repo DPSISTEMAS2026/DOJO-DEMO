@@ -597,7 +597,7 @@ const App: React.FC = () => {
         </section>
 
         {/* Section 2. PROFESOR / NOTICIAS DESTACADAS */}
-        <section id="profesor" style={{ padding: '4rem 0', background: 'var(--bg-main)', position: 'relative', overflow: 'hidden' }}>
+        <section id="profesor" style={{ padding: 'var(--section-padding) 0', background: 'var(--bg-main)', position: 'relative', overflow: 'hidden' }}>
           <div className="section-container">
             <AnimatePresence mode="wait">
               <motion.div
@@ -606,7 +606,8 @@ const App: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10rem', alignItems: 'center' }}
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem', alignItems: 'center' }}
+                className="responsive-stack"
               >
                 {/* Left Side: Newspaper Visual */}
                 <div style={{ position: 'relative' }}>
@@ -680,9 +681,9 @@ const App: React.FC = () => {
         </section>
 
         {/* Section 3. GALLERY */}
-        <section id="gallery" style={{ padding: '10rem 0', position: 'relative' }}>
+        <section id="gallery" style={{ padding: 'var(--section-padding) 0', position: 'relative' }}>
           <div className="section-container">
-            <div style={{ textAlign: 'center', marginBottom: '8rem' }}>
+            <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
               <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.5em', fontSize: '0.9rem', textTransform: 'uppercase', display: 'block', marginBottom: '2rem' }}>Experiencia Ranas</span>
               <h2 style={{ fontSize: '6rem', color: 'var(--text-main)', marginBottom: '2rem' }}>Galería de <span style={{ color: 'var(--logo-green)' }}>Acción.</span></h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto', fontWeight: 500 }}>Capturando los mejores momentos en el tatami, desde competencias internacionales hasta el día a día en el dojo.</p>
@@ -721,7 +722,7 @@ const App: React.FC = () => {
         </section>
 
         {/* Section 4. CONTACT/JOIN CALL TO ACTION */}
-        <section id="contact" style={{ padding: '0 0 10rem 0', position: 'relative' }}>
+        <section id="contact" style={{ padding: '0 0 var(--section-padding) 0', position: 'relative' }}>
           <div className="section-container">
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
@@ -735,9 +736,10 @@ const App: React.FC = () => {
                 overflow: 'hidden', 
                 background: 'var(--panel-card)', 
                 border: '1px solid var(--panel-border)',
-                minHeight: '600px',
+                minHeight: '450px',
                 boxShadow: '0 40px 100px -20px rgba(0,0,0,0.1)'
               }}
+              className="responsive-stack"
             >
               {/* Image Side */}
               <div style={{ position: 'relative', overflow: 'hidden' }}>
@@ -750,9 +752,9 @@ const App: React.FC = () => {
               </div>
 
               {/* Text Side */}
-              <div style={{ padding: '6rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '1rem', textTransform: 'uppercase', marginBottom: '2rem', display: 'block' }}>Únete a Nosotros</span>
-                <h2 style={{ fontSize: '4.5rem', lineHeight: 1, marginBottom: '2.5rem', color: 'var(--text-main)', letterSpacing: '-2px' }}>
+              <div style={{ padding: '4rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '1.5rem', display: 'block' }}>Únete a Nosotros</span>
+                <h2 style={{ fontSize: 'clamp(2.5rem, 4vw, 3.5rem)', lineHeight: 1.1, marginBottom: '2rem', color: 'var(--text-main)', letterSpacing: '-1px' }}>
                   ¿Quieres sumarte al <span style={{ color: 'var(--logo-green)' }}>poder anfibio?</span>
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -786,7 +788,7 @@ const App: React.FC = () => {
         </section>
 
 
-        <footer style={{ background: '#000', padding: '10rem 0 5rem', borderTop: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}>
+        <footer style={{ background: '#000', padding: 'var(--section-padding) 0 4rem', borderTop: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}>
           <div className="section-container">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '8rem', marginBottom: '8rem' }}>
               <div>
