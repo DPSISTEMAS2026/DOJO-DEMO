@@ -19,7 +19,8 @@ import {
   DollarSign,
   Volume2,
   VolumeX,
-  ArrowRight,
+  Mail,
+  Lock,
   ChevronRight,
   ChevronLeft,
   Edit2,
@@ -196,8 +197,6 @@ const App: React.FC = () => {
     date: new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' }),
     stats: [{ label: 'Evento', text: '' }]
   });
-  const [loginStep, setLoginStep] = useState<'choice' | 'admin-pass' | 'student-select'>('choice');
-  const [adminPassword, setAdminPassword] = useState('');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [isEditingStudent, setIsEditingStudent] = useState(false);
@@ -393,23 +392,22 @@ const App: React.FC = () => {
   const planLabels: Record<string, string> = { '1': 'Clase Individual', '2': '2x Semana', '3': '3x Semana', '4': '4x Semana', 'Ilimitado': 'Full Rana' };
   const formatCLP = (amount: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
 
-  const handleLogin = (type: 'admin' | 'student', studentToLogin?: Student) => {
-    if (type === 'admin') {
-      if (adminPassword === 'admin123') {
-        setRole('admin');
-        setViewMode('app');
-      } else {
-        alert('Contraseña incorrecta');
-      }
+  const handleLogin = (studentToLogin?: Student) => {
+    // Unified login: try admin password first
+    if (authPassword.trim() === 'admin123') {
+      setRole('admin');
+      setViewMode('app');
+      return;
+    }
+
+    // Try student login
+    const student = studentToLogin || students.find(s => s.email.toLowerCase() === authEmail.trim().toLowerCase() && s.password === authPassword.trim());
+    if (student) {
+      setRole('student');
+      setCurrentUser(student);
+      setViewMode('app');
     } else {
-      const student = studentToLogin || students.find(s => s.email.toLowerCase() === authEmail.trim().toLowerCase() && s.password === authPassword.trim());
-      if (student) {
-        setRole('student');
-        setCurrentUser(student);
-        setViewMode('app');
-      } else {
-        alert('Correo o contraseña incorrecta');
-      }
+      alert('Correo o contraseña incorrecta');
     }
   };
 
@@ -840,118 +838,157 @@ const App: React.FC = () => {
 
   // --- RENDERING AUTH PAGE ---
   if (viewMode === 'auth') {
-    const springT = { type: 'spring' as const, stiffness: 300, damping: 30 };
     return (
-      <div style={{ width: '100%', height: '100vh', display: 'flex', position: 'relative', overflow: 'hidden', background: 'var(--panel-bg)' }}>
-        {/* Animated BG */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
-          <motion.div animate={{ x: [0, 30, 0], y: [0, -40, 0] }} transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-            style={{ position: 'absolute', top: '15%', left: '10%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(5,168,106,0.18) 0%, transparent 70%)', filter: 'blur(60px)', opacity: 'var(--panel-orb-opacity)' }} />
-          <motion.div animate={{ x: [0, -20, 0], y: [0, 30, 0] }} transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-            style={{ position: 'absolute', bottom: '10%', right: '15%', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(5,168,106,0.1) 0%, transparent 70%)', filter: 'blur(80px)', opacity: 'var(--panel-orb-opacity)' }} />
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, var(--panel-grid-dot) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+      <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: window.innerWidth < 1024 ? 'column' : 'row', position: 'relative', overflowX: 'hidden', background: '#000' }}>
+        {/* Decorative Background for Mobile */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.4 }}>
+          <div style={{ position: 'absolute', top: '20%', left: '10%', width: '300px', height: '300px', background: 'var(--logo-green)', filter: 'blur(100px)', borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', bottom: '20%', right: '10%', width: '300px', height: '300px', background: 'var(--logo-green)', filter: 'blur(100px)', borderRadius: '50%', opacity: 0.5 }} />
         </div>
 
-        {/* Left branding */}
-        <motion.div initial={{ opacity: 0, x: -60 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          style={{ width: '50%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '6rem 8rem', position: 'relative', zIndex: 1 }}>
+        {/* Left Side: Branding (Hidden on small mobile if needed, but here we stack) */}
+        <motion.div 
+          initial={{ opacity: 0, x: -50 }} 
+          animate={{ opacity: 1, x: 0 }}
+          style={{ 
+            width: window.innerWidth < 1024 ? '100%' : '45%', 
+            padding: window.innerWidth < 768 ? '4rem 2rem' : '6rem 8rem', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'center',
+            position: 'relative',
+            zIndex: 1,
+            color: '#fff',
+            background: 'linear-gradient(135deg, #000, #0a0a0a)'
+          }}
+        >
           <div style={{ position: 'relative', display: 'inline-flex', marginBottom: '2.5rem' }}>
-            <div style={{ position: 'absolute', inset: '-8px', background: 'var(--logo-green)', borderRadius: '50%', filter: 'blur(20px)', opacity: 0.4 }} />
-            <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--logo-green)', position: 'relative' }} />
+            <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--logo-green)' }} />
           </div>
-          <div style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.5em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>Ranas Jiu Jitsu · Concepción</div>
-          <h1 style={{ fontSize: '4rem', lineHeight: 0.95, letterSpacing: '-3px', marginBottom: '2rem', color: 'var(--panel-text)' }}>
+          <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '1.5rem', display: 'block' }}>Portal de Miembros</span>
+          <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)', color: '#fff', marginBottom: '2rem', lineHeight: 1, letterSpacing: '-2px' }}>
             Tu dojo,<br />
-            <span style={{ color: 'transparent', WebkitTextStroke: '2px var(--logo-green)', opacity: 0.6 }}>tu</span>{' '}
-            <span style={{ color: 'var(--logo-green)' }}>legado.</span>
+            <span style={{ color: 'var(--logo-green)' }}>tu legado.</span>
           </h1>
-          <p style={{ color: 'var(--panel-muted)', fontSize: '1rem', lineHeight: 1.8, maxWidth: '380px', fontWeight: 400 }}>Plataforma de gestión de élite para el Brazilian Jiu Jitsu de más alto nivel en Concepción.</p>
-          <div style={{ display: 'flex', gap: '2.5rem', marginTop: '3rem' }}>
-            {[{ n: '17', l: 'Años' }, { n: '200+', l: 'Alumnos' }, { n: '8', l: 'Medallas' }].map(s => (
-              <div key={s.l}>
-                <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--panel-text)', letterSpacing: '-1px' }}>{s.n}</div>
-                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--logo-green)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{s.l}</div>
-              </div>
-            ))}
-          </div>
+          <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.6)', maxWidth: '400px', lineHeight: 1.6, fontWeight: 500 }}>
+            Inicia sesión para acceder a tu plan de entrenamiento, clases registradas y contenido técnico exclusivo de Ranas Jiu Jitsu.
+          </p>
         </motion.div>
 
-        {/* Divider */}
-        <div style={{ position: 'absolute', left: '50%', top: '10%', bottom: '10%', width: '1px', background: 'linear-gradient(to bottom, transparent, rgba(5,168,106,0.35), transparent)', zIndex: 1 }} />
+        {/* Right Side: Traditional Login Form */}
+        <div style={{ width: window.innerWidth < 1024 ? '100%' : '55%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', position: 'relative', zIndex: 1 }}>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass"
+            style={{ 
+              width: '100%', 
+              maxWidth: '450px', 
+              padding: window.innerWidth < 768 ? '2.5rem' : '4rem', 
+              borderRadius: '3rem', 
+              background: 'rgba(255,255,255,0.03)', 
+              border: '1px solid rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(40px)',
+              boxShadow: '0 50px 100px rgba(0,0,0,0.5)'
+            }}
+          >
+            <div style={{ marginBottom: '3rem' }}>
+              <button 
+                onClick={() => setViewMode('landing')}
+                style={{ background: 'none', border: 'none', color: 'var(--logo-green)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', marginBottom: '1.5rem', padding: 0 }}
+              >
+                <ChevronLeft size={16} /> Volver al inicio
+              </button>
+              <h2 style={{ fontSize: '2.5rem', color: '#fff', letterSpacing: '-1px', marginBottom: '0.5rem' }}>Acceso</h2>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.95rem', fontWeight: 500 }}>Ingresa tus credenciales para continuar</p>
+            </div>
 
-        {/* Right form */}
-        <div style={{ width: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
-            style={{ width: '100%', maxWidth: '400px', padding: '3rem' }}>
+            <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Correo Electrónico</label>
+                <div style={{ position: 'relative' }}>
+                  <Mail size={18} style={{ position: 'absolute', left: '1.2rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--logo-green)' }} />
+                  <input 
+                    type="email" 
+                    placeholder="nombre@ejemplo.com" 
+                    value={authEmail}
+                    onChange={e => setAuthEmail(e.target.value)}
+                    required
+                    style={{ 
+                      width: '100%', 
+                      padding: '1.2rem 1.2rem 1.2rem 3.5rem', 
+                      background: 'rgba(255,255,255,0.05)', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
+                      borderRadius: '1.2rem', 
+                      color: '#fff', 
+                      fontSize: '1rem', 
+                      outline: 'none',
+                      transition: 'border-color 0.3s'
+                    }} 
+                    onFocus={(e) => e.target.style.borderColor = 'var(--logo-green)'}
+                    onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                  />
+                </div>
+              </div>
 
-            <button onClick={() => setViewMode('landing')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', padding: '0.5rem 1.2rem', borderRadius: '100px', color: 'var(--panel-muted)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', marginBottom: '2.5rem' }}>
-              <ArrowRight size={13} style={{ transform: 'rotate(180deg)' }} /> Volver al sitio
-            </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Contraseña</label>
+                  <button type="button" onClick={() => alert('Sistema de recuperación de contraseña disponible próximamente.')} style={{ background: 'none', border: 'none', color: 'var(--logo-green)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', padding: 0 }}>¿Olvidaste tu contraseña?</button>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={18} style={{ position: 'absolute', left: '1.2rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--logo-green)' }} />
+                  <input 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={authPassword}
+                    onChange={e => setAuthPassword(e.target.value)}
+                    required
+                    style={{ 
+                      width: '100%', 
+                      padding: '1.2rem 1.2rem 1.2rem 3.5rem', 
+                      background: 'rgba(255,255,255,0.05)', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
+                      borderRadius: '1.2rem', 
+                      color: '#fff', 
+                      fontSize: '1rem', 
+                      outline: 'none',
+                      letterSpacing: '0.1em'
+                    }} 
+                    onFocus={(e) => e.target.style.borderColor = 'var(--logo-green)'}
+                    onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+                  />
+                </div>
+              </div>
 
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--panel-text)', letterSpacing: '-1px', marginBottom: '0.4rem' }}>Acceder al portal</h2>
-            <p style={{ color: 'var(--panel-muted)', fontSize: '0.85rem', marginBottom: '2rem' }}>Selecciona tu tipo de acceso para continuar</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginTop: '0.5rem' }}>
+                <input type="checkbox" id="remember" style={{ accentColor: 'var(--logo-green)' }} />
+                <label htmlFor="remember" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer' }}>Recordarme en este equipo</label>
+              </div>
 
-            <AnimatePresence mode="wait">
-              {loginStep === 'choice' && (
-                <motion.div key="choice" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={springT}
-                  style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
-                  <motion.button whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={() => setLoginStep('admin-pass')}
-                    style={{ width: '100%', padding: '1.3rem 1.6rem', background: 'var(--panel-green-bg)', border: '1px solid var(--panel-green-border)', borderRadius: '1.1rem', color: 'var(--panel-text)', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Settings size={18} /></div>
-                    <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontWeight: 900, marginBottom: '1px' }}>Administrador</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--panel-muted)', fontWeight: 500 }}>Gestión completa del dojo</div>
-                    </div>
-                    <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.35 }} />
-                  </motion.button>
-                  <motion.button whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={() => setLoginStep('student-select')}
-                    style={{ width: '100%', padding: '1.3rem 1.6rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '1.1rem', color: 'var(--panel-text)', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--panel-card-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Users size={18} /></div>
-                    <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontWeight: 900, marginBottom: '1px' }}>Alumno</div>
-                      <div style={{ fontSize: '0.7rem', color: 'var(--panel-muted)', fontWeight: 500 }}>Ver mi progreso y técnicas</div>
-                    </div>
-                    <ChevronRight size={16} style={{ marginLeft: 'auto', opacity: 0.35 }} />
-                  </motion.button>
-                </motion.div>
-              )}
-              {loginStep === 'admin-pass' && (
-                <motion.div key="admin" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={springT}
-                  style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', marginBottom: '0.3rem' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--panel-green-bg)', border: '1px solid var(--panel-green-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}><Settings size={16} /></div>
-                    <div><div style={{ fontWeight: 900, color: 'var(--panel-text)', fontSize: '0.9rem' }}>Acceso Administrador</div><div style={{ fontSize: '0.7rem', color: 'var(--panel-muted)' }}>Introduce la contraseña</div></div>
-                  </div>
-                  <input type="password" autoFocus placeholder="••••••••"
-                    style={{ width: '100%', padding: '1.1rem 1.5rem', background: 'var(--panel-input-bg)', border: '1px solid rgba(5,168,106,0.4)', borderRadius: '0.9rem', color: 'var(--panel-text)', fontSize: '1.2rem', outline: 'none', letterSpacing: '0.3em', textAlign: 'center' }}
-                    value={adminPassword} onChange={e => setAdminPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin('admin')} />
-                  <div style={{ display: 'flex', gap: '0.7rem' }}>
-                    <button style={{ flex: 1, padding: '1rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '0.9rem', color: 'var(--panel-muted)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => setLoginStep('choice')}>← Volver</button>
-                    <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} style={{ flex: 2, padding: '1rem', background: 'var(--logo-green)', border: 'none', borderRadius: '0.9rem', color: '#fff', fontWeight: 900, cursor: 'pointer', fontSize: '0.85rem' }} onClick={() => handleLogin('admin')}>Entrar al panel</motion.button>
-                  </div>
-                  <p style={{ fontSize: '0.7rem', color: 'var(--panel-muted-soft)', textAlign: 'center' }}>Demo: <span style={{ color: 'var(--logo-green)' }}>admin123</span></p>
-                </motion.div>
-              )}
-              {loginStep === 'student-select' && (
-                <motion.div key="student" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={springT}
-                  style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', marginBottom: '0.3rem' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--panel-blue-bg)', border: '1px solid var(--panel-blue-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}><Users size={16} /></div>
-                    <div><div style={{ fontWeight: 900, color: 'var(--panel-text)', fontSize: '0.9rem' }}>Acceso Alumnos</div><div style={{ fontSize: '0.7rem', color: 'var(--panel-muted)' }}>Ingresa tus credenciales</div></div>
-                  </div>
-                  <input type="email" autoFocus placeholder="Correo Electrónico"
-                    style={{ width: '100%', padding: '1.1rem 1.5rem', background: 'var(--panel-input-bg)', border: '1px solid var(--panel-input-border)', borderRadius: '0.9rem', color: 'var(--panel-text)', fontSize: '1rem', outline: 'none' }}
-                    value={authEmail} onChange={e => setAuthEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin('student')} />
-                  <input type="password" placeholder="Contraseña"
-                    style={{ width: '100%', padding: '1.1rem 1.5rem', background: 'var(--panel-input-bg)', border: '1px solid var(--panel-input-border)', borderRadius: '0.9rem', color: 'var(--panel-text)', fontSize: '1rem', outline: 'none', letterSpacing: authPassword.length > 0 ? '0.2em' : 'normal' }}
-                    value={authPassword} onChange={e => setAuthPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin('student')} />
-                  <div style={{ display: 'flex', gap: '0.7rem', marginTop: '0.5rem' }}>
-                    <button style={{ flex: 1, padding: '1rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '0.9rem', color: 'var(--panel-muted)', fontWeight: 700, cursor: 'pointer', fontSize: '0.8rem' }} onClick={() => setLoginStep('choice')}>← Volver</button>
-                    <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} style={{ flex: 2, padding: '1rem', background: '#3b82f6', border: 'none', borderRadius: '0.9rem', color: '#fff', fontWeight: 900, cursor: 'pointer', fontSize: '0.85rem' }} onClick={() => handleLogin('student')}>Iniciar Sesión</motion.button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              <button 
+                type="submit"
+                className="btn-primary"
+                style={{ 
+                  marginTop: '1.5rem', 
+                  padding: '1.5rem', 
+                  justifyContent: 'center', 
+                  background: 'var(--logo-green)', 
+                  width: '100%', 
+                  fontSize: '1rem',
+                  borderRadius: '1.5rem'
+                }}
+              >
+                Iniciar Sesión
+              </button>
+            </form>
+
+            <div style={{ marginTop: '2.5rem', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '2rem' }}>
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+                ¿Aún no eres parte de la manada? <br />
+                <a href="#contact" onClick={() => setViewMode('landing')} style={{ color: 'var(--logo-green)', fontWeight: 800, textDecoration: 'none' }}>Únete hoy mismo</a>
+              </p>
+            </div>
           </motion.div>
         </div>
       </div>
