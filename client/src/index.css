@@ -139,10 +139,26 @@ h4 {
   color: var(--text-main);
 }
 
+.responsive-stack {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
 /* Base Sections */
 section {
   position: relative;
-  overflow: hidden;
+  width: 100%;
+}
+
+.section-alt {
+  background: var(--bg-subtle) !important;
+}
+
+.section-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 4rem;
   width: 100%;
 }
 
@@ -234,12 +250,6 @@ section {
   transform: translateY(-4px);
 }
 
-/* Grid System */
-.section-container {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 8%;
-}
 
 /* Belt Badges */
 .belt-badge {
@@ -314,11 +324,6 @@ section {
   width: 260px;
 }
 
-@media (max-width: 1024px) {
-  .section-container {
-    padding: 0 2rem;
-  }
-}
 
 @media (max-width: 768px) {
   .mobile-admin-header {
@@ -568,7 +573,7 @@ section {
 
 @media (max-width: 768px) {
   .section-container {
-    padding: 0 1.5rem;
+    padding: 0 2rem;
   }
 
   h1 { font-size: 3rem !important; line-height: 1.1 !important; }
@@ -578,6 +583,11 @@ section {
     display: flex !important;
     flex-direction: column !important;
     gap: 3rem !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+  
+  .responsive-stack > * {
     width: 100% !important;
   }
 
@@ -636,7 +646,7 @@ section {
 @media (max-width: 480px) {
   h1 { font-size: 2.5rem !important; }
   .section-container {
-    padding: 0 1.2rem;
+    padding: 0 1.5rem;
   }
   
   .nav-brand-text {

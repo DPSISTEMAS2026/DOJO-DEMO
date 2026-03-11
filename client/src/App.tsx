@@ -512,11 +512,17 @@ const App: React.FC = () => {
         </nav>
 
         {/* Hero Section - 1. INICIO */}
-        <section id="inicio" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '12rem 0 2rem', position: 'relative', overflow: 'visible' }}>
+        <section id="inicio" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '12rem 0 2rem', position: 'relative' }}>
           <div className="mesh-gradient" style={{ opacity: 0.2 }} />
           <div className="section-container">
-            <div className="responsive-stack" style={{ display: 'flex', flexDirection: 'column', gap: '4rem', alignItems: 'center', textAlign: 'center' }}>
-              <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}>
+            <div className="responsive-stack" style={{ gap: '4rem', alignItems: 'center' }}>
+              <motion.div 
+                initial={{ opacity: 0, x: -50 }} 
+                animate={{ opacity: 1, x: 0 }} 
+                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                style={{ flex: 1 }}
+                className="mobile-center"
+              >
                 <span className="font-cartoon" style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '1.2rem', textTransform: 'uppercase', display: 'block', marginBottom: '2rem' }}>
                   Concepción • Chile • Orompello 1421
                 </span>
@@ -528,7 +534,7 @@ const App: React.FC = () => {
                 <p style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)', color: 'var(--text-muted)', marginBottom: '3rem', maxWidth: '800px', margin: '0 auto 3rem', lineHeight: 1.5, fontWeight: 500 }}>
                   Domina el arte suave bajo el linaje de Manuel Plaza. Excelencia técnica y el máximo rendimiento deportivo en el corazón de Concepción.
                 </p>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: window.innerWidth < 1024 ? 'center' : 'flex-start' }}>
                   <button className="btn-cartoon" style={{ padding: '0.8rem 1.5rem', fontSize: '1rem' }}>Reservar Clase</button>
                   <button className="btn-secondary" style={{ padding: '0.8rem 1.5rem', fontSize: '0.9rem' }} onClick={() => window.open('https://www.instagram.com/ranasjiujitsu/?hl=es')}>Instagram</button>
                 </div>
@@ -597,7 +603,7 @@ const App: React.FC = () => {
         </section>
 
         {/* Section 2. PROFESOR / NOTICIAS DESTACADAS */}
-        <section id="profesor" style={{ padding: 'var(--section-padding) 0', background: 'var(--bg-main)', position: 'relative', overflow: 'hidden' }}>
+        <section id="profesor" className="section-alt" style={{ padding: 'var(--section-padding) 0', position: 'relative' }}>
           <div className="section-container">
             <AnimatePresence mode="wait">
               <motion.div
@@ -606,8 +612,8 @@ const App: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                style={{ display: 'flex', flexDirection: 'column', gap: '3rem', alignItems: 'center', textAlign: 'center' }}
                 className="responsive-stack"
+                style={{ gap: '5rem', alignItems: 'center' }}
               >
                 {/* Left Side: Newspaper Visual */}
                 <div style={{ position: 'relative', width: '100%', maxWidth: '500px' }}>
@@ -628,7 +634,7 @@ const App: React.FC = () => {
                 </div>
 
                 {/* Right Side: News Body */}
-                <div style={{ padding: '0 1rem' }}>
+                <div style={{ flex: 1, padding: window.innerWidth < 1024 ? '0 1rem' : '0' }}>
                   <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.5em', fontSize: '0.9rem', textTransform: 'uppercase', display: 'block', marginBottom: '2rem' }}>
                     {liveNews[activeNews].label}
                   </span>
@@ -642,7 +648,7 @@ const App: React.FC = () => {
                       liveNews[activeNews].title
                     )}
                   </h2>
-                  <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '3rem', fontWeight: 500, margin: '0 auto 3rem' }}>
+                  <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '3rem', fontWeight: 500, margin: window.innerWidth < 1024 ? '0 auto 3rem' : '0 0 3rem' }}>
                     {liveNews[activeNews].body}
                   </p>
                   
@@ -655,7 +661,7 @@ const App: React.FC = () => {
                     ))}
                   </div>
 
-                  <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', justifyContent: window.innerWidth < 1024 ? 'center' : 'flex-start' }}>
                     <button className="btn-cartoon" onClick={() => window.open(liveNews[activeNews].link, '_blank')}>Leer Noticia Completa</button>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                       {liveNews.map((_, i) => (
@@ -722,7 +728,7 @@ const App: React.FC = () => {
         </section>
 
         {/* Section 4. CONTACT/JOIN CALL TO ACTION */}
-        <section id="contact" style={{ padding: '0 0 var(--section-padding) 0', position: 'relative' }}>
+        <section id="contact" className="section-alt" style={{ padding: 'var(--section-padding) 0', position: 'relative' }}>
           <div className="section-container">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -730,13 +736,11 @@ const App: React.FC = () => {
               viewport={{ once: true }}
               className="responsive-stack glass"
               style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1.2fr',
                 borderRadius: '4rem',
                 overflow: 'hidden',
                 background: 'var(--panel-card)',
                 border: '1px solid var(--panel-border)',
-                minHeight: 'unset',
+                minHeight: '400px',
                 boxShadow: '0 40px 100px -20px rgba(0,0,0,0.1)'
               }}
             >
@@ -750,9 +754,9 @@ const App: React.FC = () => {
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, transparent, var(--panel-card))', opacity: 0.1 }}></div>
               </div>
 
-              <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div style={{ padding: window.innerWidth < 1024 ? '2rem' : '4rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <span className="mobile-center" style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '1.5rem', display: 'block' }}>Únete a Nosotros</span>
-                <h2 style={{ fontSize: 'clamp(2.5rem, 4vw, 3.5rem)', lineHeight: 1.1, marginBottom: '2rem', color: 'var(--text-main)', letterSpacing: '-1px' }}>
+                <h2 className="mobile-center" style={{ fontSize: 'clamp(2.5rem, 4vw, 3.5rem)', lineHeight: 1.1, marginBottom: '2rem', color: 'var(--text-main)', letterSpacing: '-1px' }}>
                   ¿Quieres sumarte al <span style={{ color: 'var(--logo-green)' }}>poder anfibio?</span>
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
