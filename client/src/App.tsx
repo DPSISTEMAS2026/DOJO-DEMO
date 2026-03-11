@@ -492,21 +492,23 @@ const App: React.FC = () => {
     return (
       <div className="landing-page" style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}>
         {/* Navbar */}
-        <nav style={{ position: 'fixed', top: '2.5rem', left: '0', right: '0', zIndex: 1000, display: 'flex', justifyContent: 'center' }}>
-          <div className="glass" style={{ padding: '0.8rem 3rem', display: 'flex', gap: '4rem', alignItems: 'center', borderRadius: '100px', border: '1px solid var(--glass-border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', position: 'relative' }}>
+        <nav className="mobile-nav-compact" style={{ position: 'fixed', top: '2.5rem', left: '0', right: '0', zIndex: 1000, display: 'flex', justifyContent: 'center' }}>
+          <div className="glass" style={{ padding: '0.8rem 2rem', display: 'flex', gap: '2rem', alignItems: 'center', borderRadius: '100px', border: '1px solid var(--glass-border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
               <div style={{ position: 'relative', display: 'flex' }}>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '70px', height: '70px', background: 'var(--logo-green)', filter: 'blur(30px)', opacity: 0.6, borderRadius: '50%', zIndex: -1 }}></div>
-                <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--logo-green)', boxShadow: '0 0 30px rgba(5, 168, 106, 0.4)' }} />
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '50px', height: '50px', background: 'var(--logo-green)', filter: 'blur(30px)', opacity: 0.6, borderRadius: '50%', zIndex: -1 }}></div>
+                <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--logo-green)' }} />
               </div>
-              <span style={{ fontWeight: 900, fontSize: '1.4rem', letterSpacing: '-1px', color: 'var(--text-main)' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>JIU JITSU</span></span>
+              <span className="nav-brand-text" style={{ fontWeight: 900, fontSize: '1.2rem', letterSpacing: '-1px', color: 'var(--text-main)' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>JIU JITSU</span></span>
             </div>
-            <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
-              <a href="#inicio" style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.8 }}>Inicio</a>
-              <a href="#profesor" style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.8 }}>Noticias</a>
-              <a href="#gallery" style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.8 }}>Galería</a>
-              <div style={{ width: '1px', height: '24px', background: 'var(--glass-border)' }} />
-              <button style={{ background: 'var(--logo-green)', border: 'none', padding: '0.8rem 1.8rem', borderRadius: '50px', fontWeight: 900, fontSize: '0.8rem', textTransform: 'uppercase', cursor: 'pointer', color: '#fff', boxShadow: '0 10px 20px rgba(5, 168, 106, 0.3)' }} onClick={() => setViewMode('auth')}>Entrar</button>
+            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+              <div className="mobile-hide" style={{ display: 'flex', gap: '2rem' }}>
+                <a href="#inicio" style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.8 }}>Inicio</a>
+                <a href="#profesor" style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.8 }}>Noticias</a>
+                <a href="#gallery" style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.8 }}>Galería</a>
+              </div>
+              <div className="mobile-hide" style={{ width: '1px', height: '20px', background: 'var(--glass-border)' }} />
+              <button style={{ background: 'var(--logo-green)', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '50px', fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', cursor: 'pointer', color: '#fff' }} onClick={() => setViewMode('auth')}>Entrar</button>
             </div>
           </div>
         </nav>
@@ -514,8 +516,8 @@ const App: React.FC = () => {
         {/* Hero Section - 1. INICIO */}
         <section id="inicio" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '12rem 0 2rem', position: 'relative', overflow: 'visible' }}>
           <div className="mesh-gradient" style={{ opacity: 0.2 }} />
-          <div className="section-container">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '4rem', alignItems: 'center' }}>
+          <div className="section-container responsive-stack">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '4rem', alignItems: 'center' }} className="responsive-hero-grid">
               <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}>
                 <span className="font-cartoon" style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '1.2rem', textTransform: 'uppercase', display: 'block', marginBottom: '2rem' }}>
                   Concepción • Chile • Orompello 1421
@@ -613,11 +615,11 @@ const App: React.FC = () => {
                 <div style={{ position: 'relative' }}>
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '120%', height: '120%', background: 'var(--logo-green)', filter: 'blur(100px)', opacity: 0.15, zIndex: -1 }}></div>
                   <div style={{ borderRadius: '4rem', overflow: 'hidden', border: '1px solid var(--logo-green)', boxShadow: '0 40px 80px rgba(0,0,0,0.5)', background: '#fff' }}>
-                    <div style={{ padding: '2rem', borderBottom: '2px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="font-martial" style={{ color: '#000', fontSize: '1.5rem' }}>DIARIO DEPORTIVO</span>
-                      <span style={{ color: '#000', fontWeight: 800 }}>{liveNews[activeNews].date}</span>
+                    <div style={{ padding: '1.5rem', borderBottom: '2px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="font-martial" style={{ color: '#000', fontSize: '1.2rem' }}>DIARIO DEPORTIVO</span>
+                      <span style={{ color: '#000', fontWeight: 800, fontSize: '0.8rem' }}>{liveNews[activeNews].date}</span>
                     </div>
-                    <img src={liveNews[activeNews].img} alt="Noticia" style={{ width: '100%', height: '500px', objectFit: 'cover', filter: 'sepia(0.2) contrast(1.1)' }} />
+                    <img src={liveNews[activeNews].img} alt="Noticia" style={{ width: '100%', height: 'auto', minHeight: '300px', maxHeight: '500px', objectFit: 'cover', filter: 'sepia(0.2) contrast(1.1)' }} />
                     <div style={{ padding: '2rem', color: '#000' }}>
                       <h4 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#000', lineHeight: 1.1 }}>{liveNews[activeNews].title}</h4>
                       <div className="glass" style={{ display: 'inline-block', padding: '0.5rem 1rem', background: 'var(--logo-green)', color: '#fff', borderRadius: '1rem', fontWeight: 900, fontSize: '0.8rem' }}>
@@ -684,12 +686,12 @@ const App: React.FC = () => {
         <section id="gallery" style={{ padding: 'var(--section-padding) 0', position: 'relative' }}>
           <div className="section-container">
             <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-              <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.5em', fontSize: '0.9rem', textTransform: 'uppercase', display: 'block', marginBottom: '2rem' }}>Experiencia Ranas</span>
-              <h2 style={{ fontSize: '6rem', color: 'var(--text-main)', marginBottom: '2rem' }}>Galería de <span style={{ color: 'var(--logo-green)' }}>Acción.</span></h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto', fontWeight: 500 }}>Capturando los mejores momentos en el tatami, desde competencias internacionales hasta el día a día en el dojo.</p>
+              <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.5em', fontSize: '0.8rem', textTransform: 'uppercase', display: 'block', marginBottom: '1.5rem' }}>Experiencia Ranas</span>
+              <h2 style={{ fontSize: 'clamp(2.5rem, 6vw, 6rem)', color: 'var(--text-main)', marginBottom: '1.5rem' }}>Galería de <span style={{ color: 'var(--logo-green)' }}>Acción.</span></h2>
+              <p className="mobile-hide" style={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto', fontWeight: 500 }}>Capturando los mejores momentos en el tatami, desde competencias internacionales hasta el día a día en el dojo.</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gridAutoRows: '300px', gap: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gridAutoRows: '300px', gap: '1.5rem' }}>
               {liveGallery.map((item, i) => (
                 <motion.div
                   key={i}
@@ -728,7 +730,7 @@ const App: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="glass" 
+              className="responsive-stack glass" 
               style={{ 
                 display: 'grid', 
                 gridTemplateColumns: '1fr 1.2fr', 
@@ -739,7 +741,6 @@ const App: React.FC = () => {
                 minHeight: '450px',
                 boxShadow: '0 40px 100px -20px rgba(0,0,0,0.1)'
               }}
-              className="responsive-stack"
             >
               {/* Image Side */}
               <div style={{ position: 'relative', overflow: 'hidden' }}>
@@ -757,8 +758,8 @@ const App: React.FC = () => {
                 <h2 style={{ fontSize: 'clamp(2.5rem, 4vw, 3.5rem)', lineHeight: 1.1, marginBottom: '2rem', color: 'var(--text-main)', letterSpacing: '-1px' }}>
                   ¿Quieres sumarte al <span style={{ color: 'var(--logo-green)' }}>poder anfibio?</span>
                 </h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                  <p style={{ fontSize: '1.4rem', color: 'var(--text-muted)', fontWeight: 500, lineHeight: 1.6 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <p style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)', color: 'var(--text-muted)', fontWeight: 500, lineHeight: 1.5 }}>
                     Forma parte de la comunidad de Jiu Jitsu más fuerte de Concepción. No importa tu nivel, solo tu determinación.
                   </p>
                   
@@ -769,16 +770,19 @@ const App: React.FC = () => {
                       rel="noopener noreferrer"
                       className="btn-primary hover-lift" 
                       style={{ 
-                        padding: '1.8rem 3.5rem', 
-                        fontSize: '1.2rem', 
+                        padding: '1.5rem 2.5rem', 
+                        fontSize: '1rem', 
                         background: 'var(--logo-green)', 
                         textDecoration: 'none', 
                         display: 'flex', 
                         alignItems: 'center', 
-                        gap: '1rem' 
+                        textAlign: 'center',
+                        justifyContent: 'center',
+                        gap: '1rem',
+                        width: '100%'
                       }}
                     >
-                      CONTÁCTANOS AL +56 9 3960 1560
+                      WHATSAPP +56 9 3960 1560
                     </a>
                   </div>
                 </div>
@@ -790,43 +794,43 @@ const App: React.FC = () => {
 
         <footer style={{ background: '#000', padding: 'var(--section-padding) 0 4rem', borderTop: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}>
           <div className="section-container">
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '8rem', marginBottom: '8rem' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '3rem' }}>
+            <div className="responsive-stack" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '4rem', marginBottom: '6rem' }}>
+              <div className="mobile-center">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem', justifyContent: 'inherit' }}>
                   <div style={{ padding: '3px', background: '#fff', borderRadius: '50%', display: 'flex' }}>
-                    <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }} />
                   </div>
-                  <span style={{ fontWeight: 900, fontSize: '2rem', letterSpacing: '-2px', color: '#fff' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>JIU JITSU</span></span>
+                  <span style={{ fontWeight: 900, fontSize: '1.6rem', letterSpacing: '-1px', color: '#fff' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>JIU JITSU</span></span>
                 </div>
-                <p style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 2, fontSize: '1.15rem', maxWidth: '400px', fontWeight: 500 }}>
+                <p className="mobile-hide" style={{ color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, fontSize: '1rem', maxWidth: '400px', fontWeight: 500 }}>
                   El epicentro del Jiu Jitsu de alto nivel en Concepción. Orompello 1421. Maestría técnica y comunidad.
                 </p>
               </div>
-              <div>
-                <h4 style={{ fontSize: '1.2rem', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.05em' }}>COMUNIDAD</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', fontWeight: 600 }}>
+              <div className="mobile-center">
+                <h4 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.05em' }}>COMUNIDAD</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', fontWeight: 600 }}>
                   <span className="footer-link">Nosotros</span>
                   <span className="footer-link">Horarios</span>
                   <span className="footer-link">Membresías</span>
                 </div>
               </div>
-              <div>
-                <h4 style={{ fontSize: '1.2rem', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.05em' }}>CONTACTO</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', fontWeight: 600 }}>
+              <div className="mobile-center">
+                <h4 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.05em' }}>CONTACTO</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', fontWeight: 600 }}>
                   <span>+56 9 3960 1560</span>
                   <span>hola@ranasjiujitsu.cl</span>
                   <span>Orompello 1421, Concepción</span>
                 </div>
               </div>
-              <div>
-                <h4 style={{ fontSize: '1.2rem', marginBottom: '2.5rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.05em' }}>SÍGUENOS</h4>
-                <div style={{ display: 'flex', gap: '1.5rem', color: 'var(--logo-green)' }}>
+              <div className="mobile-center">
+                <h4 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.05em' }}>SÍGUENOS</h4>
+                <div style={{ display: 'flex', gap: '1.5rem', color: 'var(--logo-green)', justifyContent: 'inherit' }}>
                   <Instagram size={24} className="hover-lift" style={{ cursor: 'pointer' }} />
                   <Facebook size={24} className="hover-lift" style={{ cursor: 'pointer' }} />
                 </div>
               </div>
             </div>
-            <div style={{ paddingTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.1em' }}>
+            <div style={{ paddingTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em' }}>
               © 2026 RANAS JIU JITSU • CONCEPCIÓN CHILE
             </div>
           </div>
