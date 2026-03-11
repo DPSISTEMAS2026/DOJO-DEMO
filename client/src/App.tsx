@@ -852,31 +852,34 @@ const App: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           style={{ 
             width: window.innerWidth < 1024 ? '100%' : '45%', 
-            padding: window.innerWidth < 768 ? '4rem 2rem' : '6rem 8rem', 
+            padding: window.innerWidth < 1024 ? '3rem 2rem 1rem' : '6rem 8rem', 
             display: 'flex', 
             flexDirection: 'column', 
-            justifyContent: 'center',
+            justifyContent: window.innerWidth < 1024 ? 'center' : 'center',
+            alignItems: window.innerWidth < 1024 ? 'center' : 'flex-start',
             position: 'relative',
             zIndex: 1,
             color: '#fff',
             background: 'linear-gradient(135deg, #000, #0a0a0a)'
           }}
         >
-          <div style={{ position: 'relative', display: 'inline-flex', marginBottom: '2.5rem' }}>
-            <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--logo-green)' }} />
+          <div style={{ position: 'relative', display: 'inline-flex', marginBottom: window.innerWidth < 1024 ? '0' : '2.5rem' }}>
+            <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: window.innerWidth < 1024 ? '120px' : '100px', height: window.innerWidth < 1024 ? '120px' : '100px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--logo-green)' }} />
           </div>
-          <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '1.5rem', display: 'block' }}>Portal de Miembros</span>
-          <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)', color: '#fff', marginBottom: '2rem', lineHeight: 1, letterSpacing: '-2px' }}>
-            Tu dojo,<br />
-            <span style={{ color: 'var(--logo-green)' }}>tu legado.</span>
-          </h1>
-          <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.6)', maxWidth: '400px', lineHeight: 1.6, fontWeight: 500 }}>
-            Inicia sesión para acceder a tu plan de entrenamiento, clases registradas y contenido técnico exclusivo de Ranas Jiu Jitsu.
-          </p>
+          <div className="desktop-only" style={{ width: '100%', textAlign: 'inherit', display: 'flex', flexDirection: 'column' }}>
+            <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '1.5rem', display: 'block', marginTop: '2.5rem' }}>Portal de Miembros</span>
+            <h1 style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)', color: '#fff', marginBottom: '2rem', lineHeight: 1, letterSpacing: '-2px' }}>
+              Tu dojo,<br />
+              <span style={{ color: 'var(--logo-green)' }}>tu legado.</span>
+            </h1>
+            <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.6)', maxWidth: '400px', lineHeight: 1.6, fontWeight: 500 }}>
+              Inicia sesión para acceder a tu plan de entrenamiento, clases registradas y contenido técnico exclusivo de Ranas Jiu Jitsu.
+            </p>
+          </div>
         </motion.div>
 
         {/* Right Side: Traditional Login Form */}
-        <div style={{ width: window.innerWidth < 1024 ? '100%' : '55%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', position: 'relative', zIndex: 1 }}>
+        <div style={{ width: window.innerWidth < 1024 ? '100%' : '55%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: window.innerWidth < 1024 ? '1rem' : '2rem', position: 'relative', zIndex: 1 }}>
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -892,15 +895,16 @@ const App: React.FC = () => {
               boxShadow: '0 50px 100px rgba(0,0,0,0.5)'
             }}
           >
-            <div style={{ marginBottom: '3rem' }}>
+            <div style={{ marginBottom: window.innerWidth < 1024 ? '1.5rem' : '3rem' }}>
               <button 
                 onClick={() => setViewMode('landing')}
+                className="desktop-only"
                 style={{ background: 'none', border: 'none', color: 'var(--logo-green)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '0.85rem', marginBottom: '1.5rem', padding: 0 }}
               >
                 <ChevronLeft size={16} /> Volver al inicio
               </button>
-              <h2 style={{ fontSize: '2.5rem', color: '#fff', letterSpacing: '-1px', marginBottom: '0.5rem' }}>Acceso</h2>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.95rem', fontWeight: 500 }}>Ingresa tus credenciales para continuar</p>
+              <h2 style={{ fontSize: window.innerWidth < 1024 ? '1.8rem' : '2.5rem', color: '#fff', letterSpacing: '-1px', marginBottom: '0.2rem' }}>Acceso</h2>
+              <p className="desktop-only" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.95rem', fontWeight: 500 }}>Ingresa tus credenciales para continuar</p>
             </div>
 
             <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
