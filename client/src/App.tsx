@@ -497,9 +497,9 @@ const App: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
               <div style={{ position: 'relative', display: 'flex' }}>
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '50px', height: '50px', background: 'var(--logo-green)', filter: 'blur(30px)', opacity: 0.6, borderRadius: '50%', zIndex: -1 }}></div>
-                <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--logo-green)' }} />
+                <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--logo-green)' }} />
               </div>
-              <span className="nav-brand-text" style={{ fontWeight: 900, fontSize: '1.2rem', letterSpacing: '-1px', color: 'var(--text-main)' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>JIU JITSU</span></span>
+              <span className="nav-brand-text" style={{ fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.5px', color: 'var(--text-main)' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>JIU JITSU</span></span>
             </div>
             <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
               <div className="mobile-hide" style={{ display: 'flex', gap: '2rem' }}>
@@ -612,8 +612,8 @@ const App: React.FC = () => {
                 className="responsive-stack"
               >
                 {/* Left Side: Newspaper Visual */}
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '120%', height: '120%', background: 'var(--logo-green)', filter: 'blur(100px)', opacity: 0.15, zIndex: -1 }}></div>
+                <div style={{ position: 'relative', width: '100%', maxWidth: '500px' }}>
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100%', height: '100%', background: 'var(--logo-green)', filter: 'blur(100px)', opacity: 0.15, zIndex: -1 }}></div>
                   <div style={{ borderRadius: '4rem', overflow: 'hidden', border: '1px solid var(--logo-green)', boxShadow: '0 40px 80px rgba(0,0,0,0.5)', background: '#fff' }}>
                     <div style={{ padding: '1.5rem', borderBottom: '2px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span className="font-martial" style={{ color: '#000', fontSize: '1.2rem' }}>DIARIO DEPORTIVO</span>
@@ -691,7 +691,7 @@ const App: React.FC = () => {
               <p className="mobile-hide" style={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto', fontWeight: 500 }}>Capturando los mejores momentos en el tatami, desde competencias internacionales hasta el día a día en el dojo.</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gridAutoRows: '300px', gap: '1.5rem' }}>
+            <div className="mobile-horizontal-slider" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gridAutoRows: '300px', gap: '1.5rem' }}>
               {liveGallery.map((item, i) => (
                 <motion.div
                   key={i}
@@ -699,7 +699,7 @@ const App: React.FC = () => {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  whileHover={{ scale: 1.02 }}
+                  className="mobile-slide"
                   style={{
                     gridColumn: item.size === 'large' ? 'span 2' : item.size === 'wide' ? 'span 2' : 'span 1',
                     gridRow: item.size === 'large' ? 'span 2' : item.size === 'tall' ? 'span 2' : 'span 1',
@@ -738,7 +738,7 @@ const App: React.FC = () => {
                 overflow: 'hidden',
                 background: 'var(--panel-card)',
                 border: '1px solid var(--panel-border)',
-                minHeight: '450px',
+                minHeight: 'unset',
                 boxShadow: '0 40px 100px -20px rgba(0,0,0,0.1)'
               }}
             >
@@ -752,9 +752,8 @@ const App: React.FC = () => {
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, transparent, var(--panel-card))', opacity: 0.1 }}></div>
               </div>
 
-              {/* Text Side */}
-              <div style={{ padding: '4rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '1.5rem', display: 'block' }}>Únete a Nosotros</span>
+              <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <span className="mobile-center" style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '1.5rem', display: 'block' }}>Únete a Nosotros</span>
                 <h2 style={{ fontSize: 'clamp(2.5rem, 4vw, 3.5rem)', lineHeight: 1.1, marginBottom: '2rem', color: 'var(--text-main)', letterSpacing: '-1px' }}>
                   ¿Quieres sumarte al <span style={{ color: 'var(--logo-green)' }}>poder anfibio?</span>
                 </h2>
