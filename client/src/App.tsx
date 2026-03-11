@@ -516,8 +516,8 @@ const App: React.FC = () => {
         {/* Hero Section - 1. INICIO */}
         <section id="inicio" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '12rem 0 2rem', position: 'relative', overflow: 'visible' }}>
           <div className="mesh-gradient" style={{ opacity: 0.2 }} />
-          <div className="section-container responsive-stack">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '4rem', alignItems: 'center' }} className="responsive-hero-grid">
+          <div className="section-container">
+            <div className="responsive-stack" style={{ display: 'flex', flexDirection: 'column', gap: '4rem', alignItems: 'center', textAlign: 'center' }}>
               <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}>
                 <span className="font-cartoon" style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '1.2rem', textTransform: 'uppercase', display: 'block', marginBottom: '2rem' }}>
                   Concepción • Chile • Orompello 1421
@@ -527,16 +527,16 @@ const App: React.FC = () => {
                   <span style={{ color: 'var(--logo-green)' }}>PODER</span> <br />
                   <span style={{ color: 'transparent', WebkitTextStroke: '2px var(--tatami-black)' }}>ANFIBIO.</span>
                 </h1>
-                <p style={{ fontSize: '1.4rem', color: 'var(--text-muted)', marginBottom: '4rem', maxWidth: '600px', lineHeight: 1.6, fontWeight: 500 }}>
+                <p style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)', color: 'var(--text-muted)', marginBottom: '3rem', maxWidth: '800px', margin: '0 auto 3rem', lineHeight: 1.5, fontWeight: 500 }}>
                   Domina el arte suave bajo el linaje de Manuel Plaza. Excelencia técnica y el máximo rendimiento deportivo en el corazón de Concepción.
                 </p>
-                <div style={{ display: 'flex', gap: '2rem' }}>
-                  <button className="btn-cartoon">Reservar Clase</button>
-                  <button className="btn-secondary" style={{ padding: '1.2rem 3rem' }} onClick={() => window.open('https://www.instagram.com/ranasjiujitsu/?hl=es')}>Instagram</button>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button className="btn-cartoon" style={{ padding: '0.8rem 1.5rem', fontSize: '1rem' }}>Reservar Clase</button>
+                  <button className="btn-secondary" style={{ padding: '0.8rem 1.5rem', fontSize: '0.9rem' }} onClick={() => window.open('https://www.instagram.com/ranasjiujitsu/?hl=es')}>Instagram</button>
                 </div>
               </motion.div>
 
-              <div className="hero-video-wrapper">
+              <div className="hero-video-wrapper" style={{ marginTop: '2rem' }}>
                 <div className="hero-video-container"
                   onTouchStart={(e) => {
                     const touch = e.touches[0];
@@ -608,7 +608,7 @@ const App: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -50 }}
                 transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem', alignItems: 'center' }}
+                style={{ display: 'flex', flexDirection: 'column', gap: '3rem', alignItems: 'center', textAlign: 'center' }}
                 className="responsive-stack"
               >
                 {/* Left Side: Newspaper Visual */}
@@ -630,7 +630,7 @@ const App: React.FC = () => {
                 </div>
 
                 {/* Right Side: News Body */}
-                <div style={{ paddingLeft: '2rem' }}>
+                <div style={{ padding: '0 1rem' }}>
                   <span style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.5em', fontSize: '0.9rem', textTransform: 'uppercase', display: 'block', marginBottom: '2rem' }}>
                     {liveNews[activeNews].label}
                   </span>
@@ -644,7 +644,7 @@ const App: React.FC = () => {
                       liveNews[activeNews].title
                     )}
                   </h2>
-                  <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '4rem', fontWeight: 500, maxWidth: '90%' }}>
+                  <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '3rem', fontWeight: 500, margin: '0 auto 3rem' }}>
                     {liveNews[activeNews].body}
                   </p>
                   
@@ -657,7 +657,7 @@ const App: React.FC = () => {
                     ))}
                   </div>
 
-                  <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', justifyContent: 'center' }}>
                     <button className="btn-cartoon" onClick={() => window.open(liveNews[activeNews].link, '_blank')}>Leer Noticia Completa</button>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                       {liveNews.map((_, i) => (
