@@ -9,7 +9,7 @@ export interface Video {
     url: string;
     thumbnail: string;
     beltLevel: Belt;
-    category: 'Tecnica' | 'Sparring' | 'Teoria';
+    category: string;
 }
 
 export interface PaymentRecord {

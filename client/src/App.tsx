@@ -13,7 +13,7 @@ import {
   Play,
   Instagram,
   Facebook,
-  X,
+  X, Menu,
   Bell,
   Calendar,
   DollarSign,
@@ -21,6 +21,7 @@ import {
   VolumeX,
   Mail,
   Lock,
+  Folder,
   ChevronRight,
   ChevronLeft,
   Edit2,
@@ -150,12 +151,43 @@ const newsItems = [
 ];
 
 const App: React.FC = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>('landing');
-  const [role, setRole] = useState<UserRole>('guest');
-  const [currentUser, setCurrentUser] = useState<Student | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>(() => localStorage.getItem('viewMode') as ViewMode || 'landing');
+  const [role, setRole] = useState<UserRole>(() => localStorage.getItem('role') as UserRole || 'guest');
+  const [currentUser, setCurrentUser] = useState<Student | null>(() => {
+    const u = localStorage.getItem('currentUser');
+    return u ? JSON.parse(u) : null;
+  });
+
+
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setViewMode('landing');
+    setRole('guest');
+    setCurrentUser(null);
+  };
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [activeHeroVideo, setActiveHeroVideo] = useState(0);
   const [activeNews, setActiveNews] = useState(0);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'students' | 'attendance' | 'payments' | 'settings' | 'videos' | 'website'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'students' | 'attendance' | 'payments' | 'settings' | 'videos' | 'website'>(() => localStorage.getItem('activeTab') as any || 'dashboard');
+
+  useEffect(() => {
+    localStorage.setItem('viewMode', viewMode);
+    localStorage.setItem('role', role);
+    localStorage.setItem('activeTab', activeTab);
+    if (currentUser) {
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('currentUser');
+    }
+  }, [viewMode, role, currentUser, activeTab]);
   const [liveNews, setLiveNews] = useState(newsItems);
   const [liveHeroVideos, setLiveHeroVideos] = useState([
     "/assets/WhatsApp Video 2026-03-04 at 3.29.01 PM.mp4",
@@ -164,6 +196,7 @@ const App: React.FC = () => {
   ]);
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
   const [studentFilterAge, setStudentFilterAge] = useState<'ALL' | 'KIDS' | 'ADULTS'>('ALL');
+  const [studentFilterPayment, setStudentFilterPayment] = useState<'ALL' | 'PAID' | 'PENDING'>('ALL');
   const [studentFilterBelt, setStudentFilterBelt] = useState<Belt | 'ALL'>('ALL');
   const [liveGallery, setLiveGallery] = useState([
     { img: '/assets/WhatsApp Image 2026-03-04 at 3.39.08 PM.jpeg', size: 'large' },
@@ -181,8 +214,25 @@ const App: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
+  
+  const handleManualPayment = async (studentId: string) => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+      const response = await fetch(`${API_URL}/api/students/${studentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPaid: true, lastPaymentDate: new Date().toISOString().split('T')[0], lastPaymentMonth: new Date().toISOString().substring(0, 7) })
+      });
+      if (response.ok) {
+        setStudents(prev => prev.map(s => s.id === studentId ? { ...s, isPaid: true, lastPaymentDate: new Date().toISOString().split('T')[0], lastPaymentMonth: new Date().toISOString().substring(0, 7) } : s));
+      }
+    } catch (e) {
+      console.error("Error updating payment:", e);
+    }
+  };
   const [videos, setVideos] = useState<Video[]>([]);
   const [isAddingVideo, setIsAddingVideo] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [newVideoData, setNewVideoData] = useState<Omit<Video, 'id'>>({ title: '', description: '', url: '', thumbnail: '', beltLevel: 'WHITE', category: 'Tecnica' });
   const [isAddingStudent, setIsAddingStudent] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -471,15 +521,26 @@ const App: React.FC = () => {
 
   const handleAddVideo = async () => {
     try {
+      let videoThumbnail = 'https://images.unsplash.com/photo-1599058917232-d750c185ca0d?w=800'; 
+      
+      const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^\"&?\/\s]{11})/;
+      const match = newVideoData.url.match(ytRegex);
+      if (match && match[1]) {
+           videoThumbnail = `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg`;
+      }
+
+      const payload = { ...newVideoData, thumbnail: videoThumbnail };
+
       const response = await fetch(`${API_URL}/api/videos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newVideoData)
+        body: JSON.stringify(payload)
       });
       if (response.ok) {
         const savedVideo = await response.json();
         setVideos([...videos, savedVideo]);
         setIsAddingVideo(false);
+        setNewVideoData({ title: '', description: '', url: '', thumbnail: '', beltLevel: 'WHITE', category: 'General' });
       }
     } catch (error) {
       console.error("Error adding video:", error);
@@ -535,7 +596,7 @@ const App: React.FC = () => {
                   Domina el arte suave bajo el linaje de Manuel Plaza. Excelencia técnica y el máximo rendimiento deportivo en el corazón de Concepción.
                 </p>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: window.innerWidth < 1024 ? 'center' : 'flex-start' }}>
-                  <button className="btn-cartoon" style={{ padding: '0.8rem 1.5rem', fontSize: '1rem' }}>Reservar Clase</button>
+                  <button className="btn-cartoon" style={{ padding: '0.8rem 1.5rem', fontSize: '1rem' }} onClick={() => window.open('https://wa.me/56939601560?text=Hola,%20me%20gustaría%20reservar%20una%20clase%20de%20Jiu%20Jitsu')}>Reservar Clase</button>
                   <button className="btn-secondary" style={{ padding: '0.8rem 1.5rem', fontSize: '0.9rem' }} onClick={() => window.open('https://www.instagram.com/ranasjiujitsu/?hl=es')}>Instagram</button>
                 </div>
               </motion.div>
@@ -819,7 +880,7 @@ const App: React.FC = () => {
                 <h4 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.05em' }}>CONTACTO</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', fontWeight: 600 }}>
                   <span>+56 9 3960 1560</span>
-                  <span>hola@ranasjiujitsu.cl</span>
+                  <span>manuelplazaarenas@gmail.com</span>
                   <span>Orompello 1421, Concepción</span>
                 </div>
               </div>
@@ -1106,7 +1167,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.6rem' }}>
-              <motion.button whileTap={{ scale: 0.88 }} onClick={() => setViewMode('auth')} style={{ width: '40px', height: '40px', borderRadius: '11px', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--panel-muted)' }}>
+              <motion.button whileTap={{ scale: 0.88 }} onClick={handleLogout} style={{ width: '40px', height: '40px', borderRadius: '11px', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--panel-muted)' }}>
                 <LogOut size={17} />
               </motion.button>
             </div>
@@ -1276,7 +1337,7 @@ const App: React.FC = () => {
                       </div>
                     </div>
 
-                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }} onClick={() => setViewMode('auth')}
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }} onClick={handleLogout}
                       style={{ width: '100%', padding: '1.2rem', borderRadius: '1rem', background: 'var(--panel-red-bg)', color: '#ef4444', border: '1px solid var(--panel-red-border)', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                       <LogOut size={18} /> Cerrar Sesión
                     </motion.button>
@@ -1316,20 +1377,7 @@ const App: React.FC = () => {
   const tabLabels: Record<string, string> = { dashboard: 'Resumen', students: 'Alumnos', videos: 'Biblioteca', attendance: 'Asistencia', payments: 'Finanzas', settings: 'Ajustes', website: 'Sitio Web' };
   return (
     <div style={{ background: 'var(--panel-bg)', minHeight: '100vh', display: 'flex', color: 'var(--panel-text)', overflow: 'hidden' }}>
-      {/* Mobile Header */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, height: '70px', background: '#000', zIndex: 1000,
-        padding: '0 1.5rem', display: 'none', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.1)'
-      }} className="mobile-admin-header">
-        <img src="https://i.ibb.co/vzPR7LTC/ranas-logo.png" style={{ height: '35px' }} />
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          style={{ background: 'none', border: 'none', color: '#fff' }}
-        >
-          {isMobileMenuOpen ? <X /> : <Plus style={{ transform: 'rotate(45deg)' }} />}
-        </button>
-      </div>
+
 
       {/* BG */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
@@ -1339,9 +1387,9 @@ const App: React.FC = () => {
       </div>
 
       {/* Sidebar */}
-      <motion.nav initial={{ x: -300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      <motion.nav initial={{ x: -350, opacity: 0 }} animate={{ x: isMobile ? (isMobileMenuOpen ? 0 : -500) : 0, opacity: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className={`sidebar ${isMobileMenuOpen ? 'sidebar-open' : ''}`}
-        style={{ position: 'fixed', left: 0, top: 0, bottom: 0, padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', zIndex: 100, background: 'rgba(6,6,6,0.95)', backdropFilter: 'blur(40px)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+        style={{ position: 'fixed', left: 0, top: isMobile ? '70px' : 0, bottom: 0, padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', zIndex: 995, background: 'rgba(6,6,6,0.98)', backdropFilter: 'blur(40px)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
         {/* Header Branding */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '3.5rem', padding: '1rem 0' }}>
           <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
@@ -1366,12 +1414,17 @@ const App: React.FC = () => {
           {[
             { id: 'dashboard', label: 'Resumen', icon: <TrendingUp size={17} /> },
             { id: 'students', label: 'Alumnos', icon: <Users size={17} /> },
-            { id: 'videos', label: 'Biblioteca', icon: <Play size={17} /> },
-            { id: 'website', label: 'Sitio Web', icon: <Monitor size={17} /> },
             { id: 'attendance', label: 'Asistencia', icon: <QrCode size={17} /> },
             { id: 'payments', label: 'Finanzas', icon: <CreditCard size={17} /> },
+            { id: 'videos', label: 'Biblioteca', icon: <Play size={17} /> },
+            { id: 'website', label: 'Sitio Web', icon: <Monitor size={17} /> },
             { id: 'settings', label: 'Ajustes', icon: <Settings size={17} /> },
-          ].map(item => (
+          ].filter(item => {
+              if (isMobile) {
+                  return ['dashboard', 'students', 'attendance', 'payments'].includes(item.id);
+              }
+              return true;
+          }).map(item => (
             <motion.button key={item.id} whileHover={{ x: 4 }} whileTap={{ scale: 0.97 }}
               onClick={() => {
                 setActiveTab(item.id as any);
@@ -1390,7 +1443,7 @@ const App: React.FC = () => {
 
         {/* Bottom */}
         <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1.2rem' }}>
-          <motion.button whileTap={{ scale: 0.95 }} onClick={() => setViewMode('auth')}
+          <motion.button whileTap={{ scale: 0.95 }} onClick={handleLogout}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.9rem', padding: '0.7rem 1rem', borderRadius: '0.8rem', border: 'none', background: 'transparent', color: 'rgba(239,68,68,0.7)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', width: '100%' }}>
             <LogOut size={16} /> Cerrar sesión
           </motion.button>
@@ -1398,13 +1451,21 @@ const App: React.FC = () => {
       </motion.nav>
 
       {/* Main content */}
-      <main className="main-content" style={{ flex: 1, padding: '2.5rem 3rem', position: 'relative', zIndex: 1, overflowY: 'auto' }}>
+      <main className="main-content" style={{ flex: 1, padding: isMobile ? '1.5rem 1rem' : '2.5rem 3rem', position: 'relative', zIndex: 1, overflowY: 'auto' }}>
         {/* Header */}
         <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-          <div>
-            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '0.3rem' }}>Ranas · Lautaro 581</div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px', color: 'var(--logo-green)' }}>{tabLabels[activeTab]}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {isMobile && (
+              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+                style={{ background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '12px', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            )}
+            <div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '0.3rem' }}>Ranas · Lautaro 581</div>
+              <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px', color: 'var(--logo-green)' }}>{tabLabels[activeTab]}</h1>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }} className="mobile-hide">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.6rem 1.4rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '100px' }}>
@@ -1424,7 +1485,7 @@ const App: React.FC = () => {
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div key="dashboard" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
-              style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.2rem' }}>
+              style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.2rem' }}>
               {[
                 { title: 'Total Alumnos', value: students.length, icon: <Users size={18} />, sub: '+12% este mes', color: 'var(--panel-green-bg)', border: 'var(--panel-green-border)' },
                 { title: 'Alumnos al Día', value: students.filter(s => s.isPaid).length, icon: <Award size={18} />, sub: 'Pagos vigentes', color: 'var(--panel-green-bg)', border: 'var(--panel-green-border)' },
@@ -1442,16 +1503,16 @@ const App: React.FC = () => {
               ))}
 
               {/* Upcoming Birthdays */}
-              <div style={{ gridColumn: 'span 3', marginTop: '1rem' }}>
+              <div style={{ gridColumn: isMobile ? 'span 1' : 'span 3', marginTop: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--logo-green)' }}>Próximos Cumpleaños 🎂</h3>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem' }}>
                   {getUpcomingBirthdays().map((student) => {
                     const bd = new Date(student.birthDate!);
                     return (
-                      <motion.div key={student.id} whileHover={{ y: -5 }}
-                        style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1.5rem', textAlign: 'center' }}>
+                      <motion.div key={student.id} whileHover={{ y: -5 }} onClick={() => setSelectedStudent(student)}
+                        style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1.5rem', textAlign: 'center', cursor: 'pointer' }}>
                         <div style={{ fontSize: '1.8rem', marginBottom: '0.6rem' }}>🎁</div>
                         <div style={{ fontWeight: 900, fontSize: '0.85rem', color: 'var(--panel-text)', marginBottom: '0.3rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{student.name.split(' ')[0]}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--logo-green)', fontWeight: 800 }}>
@@ -1464,7 +1525,7 @@ const App: React.FC = () => {
               </div>
 
               {/* Pending Payments */}
-              <section style={{ gridColumn: 'span 2', marginTop: '1rem' }}>
+              <section style={{ gridColumn: isMobile ? 'span 1' : 'span 2', marginTop: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
                   <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--logo-green)' }}>Pagos Pendientes ⚠️</h3>
                   <button style={{ background: 'none', border: 'none', color: 'var(--logo-green)', fontWeight: 800, fontSize: '0.75rem', letterSpacing: '0.05em', cursor: 'pointer' }} onClick={() => setActiveTab('students')}>VER TODOS LOS ALUMNOS</button>
@@ -1473,7 +1534,7 @@ const App: React.FC = () => {
                   {students.filter(s => !s.isPaid).slice(0, 5).map((student, i) => (
                     <motion.div key={student.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
                       style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', borderBottom: '1px solid var(--panel-border-light)', cursor: 'pointer', transition: 'background 0.2s' }}
-                      className="hover-light">
+                      className="hover-light" onClick={() => setSelectedStudent(student)}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: '#ef4444', fontSize: '1rem' }}>{student.name[0]}</div>
                         <div>
@@ -1515,7 +1576,7 @@ const App: React.FC = () => {
 
           {activeTab === 'attendance' && (
             <motion.div key="attendance" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '2.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(300px, 1fr) 2fr', gap: isMobile ? '1.5rem' : '2.5rem' }}>
                 <div className="glass" style={{ padding: '3.5rem', borderRadius: '3rem', textAlign: 'center', height: 'fit-content' }}>
                   <div style={{ width: '220px', height: '220px', margin: '0 auto 2rem', padding: '2rem', background: 'white', borderRadius: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <QRCode value="https://ranasjiujitsu.cl/checkin" size={180} />
@@ -1563,6 +1624,12 @@ const App: React.FC = () => {
             <motion.div key="students" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                 <select className="glass" style={{ padding: '0.8rem 1.2rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700 }}
+                  value={studentFilterPayment} onChange={e => setStudentFilterPayment(e.target.value as any)}>
+                  <option value="ALL">Todos los Estados</option>
+                  <option value="PAID">Al Día</option>
+                  <option value="PENDING">Pendiente</option>
+                </select>
+                <select className="glass" style={{ padding: '0.8rem 1.2rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700 }}
                   value={studentFilterAge} onChange={e => setStudentFilterAge(e.target.value as any)}>
                   <option value="ALL">Todas las edades</option>
                   <option value="KIDS">Niños (Menores de 18)</option>
@@ -1577,7 +1644,7 @@ const App: React.FC = () => {
                 </select>
               </div>
               <div className="glass" style={{ borderRadius: '3.5rem', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead>
                     <tr style={{ background: 'rgba(5, 168, 106, 0.05)', borderBottom: '1px solid var(--glass-border)' }}>
                       <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ALUMNO</th>
@@ -1591,6 +1658,12 @@ const App: React.FC = () => {
                     {students
                       .filter(s => s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()))
                       .filter(s => studentFilterBelt === 'ALL' || s.belt === studentFilterBelt)
+                      .filter(s => {
+                        if (studentFilterPayment === 'ALL') return true;
+                        if (studentFilterPayment === 'PAID') return s.isPaid;
+                        if (studentFilterPayment === 'PENDING') return !s.isPaid;
+                        return true;
+                      })
                       .filter(s => {
                         if (studentFilterAge === 'ALL') return true;
                         const ageStr = calculateAge(s.birthDate);
@@ -1626,127 +1699,176 @@ const App: React.FC = () => {
                         </tr>
                       ))}
                   </tbody>
-                </table>
+                </table></div>
               </div>
             </motion.div>
           )}
 
           {activeTab === 'videos' && (
             <motion.div key="videos" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div style={{ display: 'flex', gap: '1.2rem', marginBottom: '4rem', overflowX: 'auto', paddingBottom: '1rem' }}>
-                {(['ALL', 'WHITE', 'BLUE', 'PURPLE', 'BROWN', 'BLACK'] as const).map(level => (
-                  <button
-                    key={level}
-                    className="glass"
-                    onClick={() => setVideoFilter(level)}
-                    style={{
-                      padding: '1rem 2.5rem',
-                      borderRadius: '50px',
-                      border: '1px solid var(--glass-border)',
-                      background: videoFilter === level ? 'var(--logo-green)' : 'var(--bg-glass)',
-                      color: 'var(--text-main)',
-                      fontWeight: 900,
-                      fontSize: '0.8rem',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {level === 'ALL' ? 'Todos' : beltLabels[level as Belt]}
-                  </button>
-                ))}
+              <div className="grid-layout" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
+                {videos.length === 0 && (
+                  <div style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '5rem 2rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem', border: '1px solid var(--glass-border)' }}>
+                      <Folder size={32} style={{ opacity: 0.4, color: 'var(--logo-green)' }} />
+                    </div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '0.5rem' }}>Biblioteca Vacía</h3>
+                    <p style={{ fontSize: '0.85rem', maxWidth: '400px', lineHeight: 1.5, opacity: 0.7 }}>Aún no has creado "Situaciones". Haz clic en el botón de arriba **"+ Nuevo Video"** para inaugurar tu primera carpeta de técnicas.</p>
+                  </div>
+                )}
+                {Array.from(new Set(videos.map(v => v.category || 'General'))).map(category => {
+                  const categoryVideos = videos.filter(v => (v.category || 'General') === category);
+                  return (
+                    <motion.div 
+                      whileHover={{ y: -8, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }} 
+                      key={category} 
+                      onClick={() => setSelectedCategory(category)}
+                      className="glass" 
+                      style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', overflow: 'hidden' }}>
+                      
+                      <div style={{ position: 'absolute', top: 0, right: 0, width: '120px', height: '120px', background: 'radial-gradient(circle, rgba(5,168,106,0.06) 0%, transparent 70%)', filter: 'blur(30px)' }} />
+                      
+                      <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: 'rgba(5,168,106,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}>
+                        <Folder size={24} />
+                      </div>
+                      <div>
+                        <h4 style={{ fontSize: '1.4rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '0.4rem', textTransform: 'capitalize' }}>{category}</h4>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>Aquí verás tus videos disponibles para tus alumnos sobre {category}.</p>
+                      </div>
+                      <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--logo-green)' }}>{categoryVideos.length} Videos</span>
+                        <ChevronRight size={16} style={{ opacity: 0.5 }} />
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
 
-              <div className="grid-layout" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '3rem' }}>
-                {videos.filter(v => videoFilter === 'ALL' || v.beltLevel === videoFilter).map(video => (
-                  <motion.div whileHover={{ y: -10 }} key={video.id} className="glass" style={{ padding: 0, overflow: 'hidden', borderRadius: '2.5rem', border: '1px solid var(--glass-border)' }}>
-                    <div style={{ height: '220px', position: 'relative' }}>
-                      <img src={video.thumbnail} alt={video.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <div className={`belt-badge belt-${video.beltLevel}`} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', boxShadow: '0 10px 20px var(--bg-glass)' }}>
-                        {beltLabels[video.beltLevel]}
+              {/* Group Modal for selected category */}
+              {selectedCategory && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(10px)' }}>
+                  <motion.div style={{ width: '100%', maxWidth: '900px', padding: '3rem', borderRadius: '2rem', background: 'var(--panel-bg)', color: 'var(--text-main)', border: '1px solid var(--glass-border)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.5)', maxHeight: '85vh', overflowY: 'auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1.5rem' }}>
+                      <div>
+                        <h2 style={{ fontSize: '2rem', fontWeight: 900, textTransform: 'capitalize', color: 'var(--text-main)' }}>{selectedCategory}</h2>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Videos disponibles para todos tus alumnos</p>
                       </div>
-                      <div style={{ position: 'absolute', top: '0', left: '0', width: '100%', height: '100%', background: 'linear-gradient(to bottom, transparent 60%, var(--bg-glass))' }}></div>
-                      <div style={{ position: 'absolute', bottom: '1.2rem', left: '1.5rem', color: 'var(--logo-green)', fontWeight: 900, fontSize: '0.8rem', letterSpacing: '0.1em' }}>
-                        {video.category.toUpperCase()}
-                      </div>
+                      <button onClick={() => setSelectedCategory(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', color: 'var(--text-main)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
                     </div>
-                    <div style={{ padding: '2rem' }}>
-                      <h4 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: '0.8rem', color: 'var(--text-main)' }}>{video.title}</h4>
-                      <p style={{ fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-muted)', height: '3rem', overflow: 'hidden' }}>{video.description}</p>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2.5rem', alignItems: 'center' }}>
-                        <button className="btn-primary" style={{ padding: '0.8rem 2rem', fontSize: '0.8rem', background: 'var(--logo-green)' }} onClick={() => window.open(video.url)}>
-                          <Play size={16} fill="var(--text-main)" /> VER TÉCNICA
-                        </button>
-                        <button style={{ background: 'none', border: 'none', fontSize: '0.85rem', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontWeight: 700 }} onClick={() => setVideos(videos.filter(v => v.id !== video.id))}>
-                          ELIMINAR
-                        </button>
-                      </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.5rem' }}>
+                      {videos.filter(v => (v.category || 'General') === selectedCategory).map(video => (
+                        <div key={video.id} className="glass" style={{ borderRadius: '1.5rem', overflow: 'hidden', border: '1px solid var(--glass-border)', background: 'var(--panel-card)' }}>
+                          <div style={{ height: '140px', position: 'relative' }}>
+                            <img src={video.thumbnail} alt={video.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                          <div style={{ padding: '1.2rem' }}>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '0.4rem', color: 'var(--text-main)' }}>{video.title}</h4>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', height: '2rem', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '1rem' }}>{video.description}</p>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button className="btn-primary" style={{ flex: 1, padding: '0.6rem', fontSize: '0.75rem' }} onClick={() => window.open(video.url)}>VER</button>
+                              <button style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', padding: '0.5rem', cursor: 'pointer' }} onClick={async () => {
+                                if(confirm('¿Eliminar video?')) {
+                                  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+                                  await fetch(`${API_URL}/api/videos/${video.id}`, { method: 'DELETE' });
+                                  setVideos(videos.filter(v => v.id !== video.id));
+                                }
+                              }}>Eliminar</button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </motion.div>
-                ))}
-              </div>
+                </motion.div>
+              )}
             </motion.div>
           )}
 
           {activeTab === 'payments' && (
             <motion.div key="payments" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '3.5rem' }}>
-                <div className="glass" style={{ padding: '4rem', borderRadius: '3.5rem', border: '2px dashed var(--logo-green)', background: 'rgba(5,168,106,0.03)' }}>
-                  <img src="https://logospng.org/download/mercado-pago/logo-mercado-pago-2048.png" style={{ height: '40px', marginBottom: '3rem' }} />
-                  <h3 style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '1rem' }}>Conciliación Automática</h3>
-                  <p style={{ color: 'var(--text-muted)', fontWeight: 600, fontSize: '1.1rem', marginBottom: '4rem' }}>Simula un pago para ver el registro automático:</p>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: isMobile ? '1.5rem' : '2.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                  <div className="glass" style={{ padding: '2rem', borderRadius: '1.5rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: 0, right: 0, width: '100px', height: '100px', background: 'radial-gradient(circle, rgba(5,168,106,0.1) 0%, transparent 70%)', filter: 'blur(20px)' }} />
+                    <p style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>RECAUDACIÓN MES</p>
+                    <p style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--logo-green)' }}>{formatCLP(students.filter(s => s.isPaid).reduce((acc, curr) => acc + (Number(curr.monthlyFee) || 0), 0))}</p>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>De un total proyectado de {formatCLP(students.reduce((acc, curr) => acc + (Number(curr.monthlyFee) || 0), 0))}</p>
+                  </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                    <button className="btn-primary" style={{ height: '80px', borderRadius: '2rem', justifyContent: 'center' }} onClick={() => {
-                      if (students.length > 0) {
-                        const success = handleMercadoPagoPayment({ email: students[0].email, name: students[0].name, amount: 45000 });
-                        alert(success ? 'Pago conciliado automáticamente' : 'Error en conciliación');
-                      }
-                    }}>Simular Pago Recibido (Alex Rivera)</button>
-                    <button className="btn-secondary" style={{ height: '80px', borderRadius: '2rem', justifyContent: 'center', color: 'var(--text-main)', borderColor: 'var(--glass-border)' }} onClick={() => {
-                      const success = handleMercadoPagoPayment({ email: 'desconocido@test.com', name: 'Alguien Nuevo', amount: 55000 });
-                      alert(success ? 'Pago conciliado' : 'Pago no identificado: Enviado a revisión');
-                    }}>Simular Pago Desconocido</button>
+                  <div className="glass" style={{ padding: '2rem', borderRadius: '1.5rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)' }}>
+                    <p style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>PENDIENTE DE COBRO</p>
+                    <p style={{ fontSize: '2rem', fontWeight: 900, color: '#ef4444' }}>{formatCLP(students.filter(s => !s.isPaid).reduce((acc, curr) => acc + (Number(curr.monthlyFee) || 0), 0))}</p>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Sobre {students.filter(s => !s.isPaid).length} alumnos pendientes</p>
                   </div>
                 </div>
 
-                <div className="glass" style={{ borderRadius: '3.5rem', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ background: 'rgba(5, 168, 106, 0.05)' }}>
-                        <th style={{ padding: '2.5rem', textAlign: 'left', fontWeight: 900, color: 'var(--logo-green)' }}>ALUMNO</th>
-                        <th style={{ padding: '2.5rem', textAlign: 'left', fontWeight: 900, color: 'var(--logo-green)' }}>CUOTA</th>
-                        <th style={{ padding: '2.5rem', textAlign: 'left', fontWeight: 900, color: 'var(--logo-green)' }}>ESTADO</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {students.map(s => (
-                        <tr key={s.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
-                          <td style={{ padding: '2.5rem', fontWeight: 800, color: 'var(--text-main)' }}>{s.name}</td>
-                          <td style={{ padding: '2.5rem', fontWeight: 600, color: 'var(--text-muted)' }}>{formatCLP(s.monthlyFee || 0)}</td>
-                          <td style={{ padding: '2.5rem' }}>
-                            <span style={{ color: s.isPaid ? 'var(--logo-green)' : '#ef4444', fontWeight: 900 }}>{s.isPaid ? 'COMPLETADO' : 'PENDIENTE'}</span>
-                          </td>
+                <div className="glass" style={{ borderRadius: '1.5rem', border: '1px solid var(--glass-border)', overflow: 'hidden', background: 'var(--panel-card)', padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 900, marginBottom: '1.5rem', color: 'var(--text-main)' }}>Lista de Deudores</h3>
+                  <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--panel-border)', opacity: 0.6 }}>
+                          <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 800 }}>ALUMNO</th>
+                          <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 800 }}>CUOTA</th>
+                          <th style={{ padding: '1rem', textAlign: 'center', fontSize: '0.75rem', fontWeight: 800 }}>ACCIÓN</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {students.filter(s => !s.isPaid).map(s => (
+                          <tr key={s.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                            <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem' }}>{s.name}</td>
+                            <td style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{formatCLP(s.monthlyFee || 0)}</td>
+                            <td style={{ padding: '1rem', textAlign: 'center' }}>
+                              <button onClick={() => {
+                                handleManualPayment(s.id);
+                                alert(`Pago registrado manualmente para ${s.name}`);
+                              }} style={{ background: 'rgba(5,168,106,0.1)', border: 'none', color: 'var(--logo-green)', padding: '0.5rem 0.8rem', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>Registrar</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </motion.div>
           )}
 
           {activeTab === 'website' && (
-            <motion.div key="website" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 1fr) 2fr', gap: '2.5rem' }}>
+            <motion.div key="website" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(350px, 1fr) 2fr', gap: '2.5rem' }}>
               {/* Manage Hero Videos */}
               <div className="glass" style={{ padding: '2.5rem', borderRadius: '2.5rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: 900 }}>Hero Videos <br/><span style={{ fontSize: '0.7rem', opacity: 0.5 }}>(Slider Principal)</span></h3>
                   <button className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.7rem' }} onClick={() => {
-                    const url = prompt('URL del video (MP4):');
-                    if (url) {
-                      const updated = [...liveHeroVideos, url];
-                      setLiveHeroVideos(updated);
-                      syncWebsite('hero-videos', updated);
-                    }
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'video/mp4';
+                    input.onchange = async (e: any) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      
+                      try {
+                        const response = await fetch(`${API_URL}/api/upload`, {
+                          method: 'POST',
+                          headers: { 'X-Filename': file.name },
+                          body: file
+                        });
+                        if (response.ok) {
+                          const data = await response.json();
+                          const url = `${API_URL}${data.url}`;
+                          const updated = [...liveHeroVideos, url];
+                          setLiveHeroVideos(updated);
+                          syncWebsite('hero-videos', updated);
+                        } else {
+                          alert('Error al subir el archivo');
+                        }
+                      } catch (error) {
+                        console.error('Error uploading:', error);
+                      }
+                    };
+                    input.click();
                   }}><Plus size={14}/> Añadir</button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -1829,7 +1951,7 @@ const App: React.FC = () => {
           )}
 
           {activeTab === 'settings' && (
-            <motion.div key="settings" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="grid-layout" style={{ gridTemplateColumns: '1fr 1fr', gap: '3rem' }}>
+            <motion.div key="settings" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="grid-layout" style={{ gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '3rem' }}>
               <section className="glass" style={{ padding: '3.5rem', borderRadius: '3.5rem', border: '1px solid var(--glass-border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.5rem' }}>
                   <DollarSign size={24} color="var(--logo-green)" />
@@ -1964,15 +2086,15 @@ const App: React.FC = () => {
         {
           selectedStudent && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.15)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(12px)' }}
+              style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.15)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '0.5rem' : '2rem', backdropFilter: 'blur(12px)' }}
               onClick={() => setSelectedStudent(null)}>
-              <motion.div style={{ width: '100%', maxWidth: '750px', maxHeight: '90vh', overflowY: 'auto', padding: '2.5rem', borderRadius: '3rem', background: '#fff', border: '1px solid var(--panel-border)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.15)', position: 'relative' }}
+              <motion.div style={{ width: '100%', maxWidth: '750px', maxHeight: isMobile ? '95vh' : '90vh', overflowY: 'auto', padding: isMobile ? '1.5rem' : '2.5rem', borderRadius: isMobile ? '1.5rem' : '3rem', background: '#fff', border: '1px solid var(--panel-border)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.15)', position: 'relative' }}
                 onClick={e => e.stopPropagation()}>
                 {/* Decorative Background Element */}
                 <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '300px', height: '300px', background: 'var(--logo-green-soft)', borderRadius: '50%', filter: 'blur(60px)', zIndex: 0 }} />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1, flexWrap: 'wrap', gap: '1.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1, minWidth: '300px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1, minWidth: isMobile ? '100%' : '300px' }}>
                     <div style={{ position: 'relative' }}>
                       <div style={{ width: '100px', height: '100px', borderRadius: '2.5rem', overflow: 'hidden', background: 'var(--panel-surface)', border: '2px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.05)' }}>
                         <img
@@ -2030,7 +2152,7 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
                   <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                     <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>CONTACTO PERSONAL</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', width: '100%', alignItems: 'center' }}>
@@ -2069,7 +2191,7 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
                   <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: selectedStudent.isPaid ? 'var(--panel-green-bg)' : 'var(--panel-red-bg)', border: `1px solid ${selectedStudent.isPaid ? 'var(--panel-green-border)' : 'var(--panel-red-border)'}`, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
                     <p style={{ color: selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>ESTADO COMERCIAL</p>
                     {isEditingStudent ? (
@@ -2109,7 +2231,7 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
                   <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
                     <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>PLAN ACTUAL</p>
                     {isEditingStudent ? (
@@ -2149,7 +2271,7 @@ const App: React.FC = () => {
                   <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>HISTORIAL DE PAGOS</p>
                   <div style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1.5rem', overflow: 'hidden' }}>
                     {selectedStudent.history && selectedStudent.history.length > 0 ? (
-                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                      <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
                           <tr style={{ background: 'rgba(5,168,106,0.05)', borderBottom: '1px solid var(--panel-border)' }}>
                             <th style={{ padding: '0.5rem 1rem', fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)' }}>FECHA</th>
@@ -2170,7 +2292,7 @@ const App: React.FC = () => {
                             </tr>
                           ))}
                         </tbody>
-                      </table>
+                      </table></div>
                     ) : (
                       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--panel-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
                         No hay pagos registrados aún en el sistema. Al sincronizar con Mercado Pago aparecerán aquí.
@@ -2178,6 +2300,27 @@ const App: React.FC = () => {
                     )}
                   </div>
                 </div>
+
+                {role === 'admin' && (
+                  <motion.button whileHover={{ y: -3, boxShadow: '0 10px 25px rgba(34,197,94,0.2)' }} whileTap={{ scale: 0.98 }}
+                    style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', width: '100%', marginBottom: '1.2rem', position: 'relative', zIndex: 1 }}
+                    onClick={() => {
+                       if (!window.confirm(`¿Registrar pago manual de ${selectedStudent.name} por ${formatCLP(selectedStudent.monthlyFee || 0)}?`)) return;
+                       const updated = { 
+                           ...selectedStudent, 
+                           isPaid: true, 
+                           lastPaymentDate: new Date().toISOString().split('T')[0],
+                           lastPaymentMonth: new Date().toISOString().substring(0, 7),
+                           history: [
+                               ...(selectedStudent.history || []),
+                               { date: new Date().toISOString().split('T')[0], status: 'Completado', amount: selectedStudent.monthlyFee || 0, method: 'Manual/Transferencia' }
+                           ]
+                       };
+                       handleUpdateStudent(updated);
+                    }}>
+                    <DollarSign size={18} /> REGISTRAR PAGO MANUAL (EFECTIVO / TRANSFERENCIA)
+                  </motion.button>
+                )}
 
                 {!selectedStudent.isPaid && (
                   <div style={{ display: 'flex', gap: '1rem', position: 'relative', zIndex: 1 }}>
@@ -2206,7 +2349,10 @@ const App: React.FC = () => {
           isAddingVideo && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.15)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(12px)' }}>
               <motion.div style={{ width: '100%', maxWidth: '700px', padding: '4rem', borderRadius: '3rem', background: '#fff', border: '1px solid var(--panel-border)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.1)' }}>
-                <h2 style={{ marginBottom: '3rem', color: 'var(--panel-text)' }}>Nuevo Contenido Técnico</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+                  <h2 style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--panel-text)' }}>Nuevo <span style={{ color: 'var(--logo-green)' }}>Contenido</span></h2>
+                  <button onClick={() => setIsAddingVideo(false)} style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', color: '#000', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                   <div style={{ gridColumn: 'span 2' }}>
                     <input className="glass" style={{ width: '100%', padding: '1.2rem' }} placeholder="Título" value={newVideoData.title} onChange={e => setNewVideoData({ ...newVideoData, title: e.target.value })} />
@@ -2214,14 +2360,8 @@ const App: React.FC = () => {
                   <div style={{ gridColumn: 'span 2' }}>
                     <input className="glass" style={{ width: '100%', padding: '1.2rem' }} placeholder="URL Video" value={newVideoData.url} onChange={e => setNewVideoData({ ...newVideoData, url: e.target.value })} />
                   </div>
-                  <select className="glass" style={{ padding: '1.2rem' }} value={newVideoData.beltLevel} onChange={e => setNewVideoData({ ...newVideoData, beltLevel: e.target.value as Belt })}>
-                    {Object.keys(beltLabels).map(b => <option key={b} value={b}>{beltLabels[b as Belt]}</option>)}
-                  </select>
-                  <select className="glass" style={{ padding: '1.2rem' }} value={newVideoData.category} onChange={e => setNewVideoData({ ...newVideoData, category: e.target.value as any })}>
-                    <option value="Tecnica">Técnica</option>
-                    <option value="Sparring">Sparring</option>
-                    <option value="Teoria">Teoría</option>
-                  </select>
+                  
+                  <input className="glass" style={{ padding: '1.2rem' }} placeholder="Categoría (Ej: Agarre, Guardia)" value={newVideoData.category} onChange={e => setNewVideoData({ ...newVideoData, category: e.target.value })} />
                   <button className="btn-primary" style={{ gridColumn: 'span 2', marginTop: '2rem' }} onClick={handleAddVideo}>PUBLICAR TÉCNICA</button>
                 </div>
               </motion.div>

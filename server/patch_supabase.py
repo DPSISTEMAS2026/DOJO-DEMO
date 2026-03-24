@@ -1,186 +1,31 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import os
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+file_path = r'd:\DOJO DEMO\server\index.js'
 
-dotenv.config({ path: path.join(__dirname, '../.env') });
+with open(file_path, 'r', encoding='utf-8') as f:
+    content = f.read()
 
-import { createClient } from '@supabase/supabase-js';
-const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABASE_ANON_KEY || '');
+placeholder = """// Videos
+app.get('/api/videos', (req, res) => {"""
 
+if placeholder not in content:
+    print("❌ Could not find target line 150 block in index.js")
+    exit(1)
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+# Find where to cut (The row before app.post('/api/checkout') or similar)
+# We want to replace everything from `// Videos` until the block before `/api/checkout`
+cut_index = content.find("app.post('/api/checkout'")
 
-// Mercado Pago Configuration
-const client = new MercadoPagoConfig({
-    accessToken: process.env.VITE_MP_ACCESS_TOKEN || '',
-    options: { timeout: 5000 }
-});
+if cut_index == -1:
+    print("❌ Could not find '/api/checkout' marker in index.js")
+    exit(1)
 
-app.use(cors());
-app.use(express.json());
+# Find the end of the previous endpoint, which is usually right before `app.post('/api/checkout'`
+# We can search backwards for `}` or empty lines
+header_part = content[:content.find("// Videos")]
+footer_part = content[cut_index:]
 
-// Paths to "Database"
-const dbPath = path.join(__dirname, 'data');
-if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath);
-
-const uploadsDir = path.join(dbPath, 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
-
-const studentsFile = path.join(dbPath, 'students.json');
-const videosFile = path.join(dbPath, 'videos.json');
-const newsFile = path.join(dbPath, 'news.json');
-const galleryFile = path.join(dbPath, 'gallery.json');
-const heroVideosFile = path.join(dbPath, 'heroVideos.json');
-
-// Servir archivos estáticos de subidas
-app.use('/uploads', express.static(uploadsDir));
-
-// Endpoint de subida directo por Stream (sin multer)
-app.post('/api/upload', (req, res) => {
-    try {
-        const originalName = req.headers['x-filename'] || `upload_${Date.now()}`;
-        // Sanitizar el nombre de archivo o usar timestamp para evitar colisiones
-        const ext = path.extname(originalName) || '.mp4';
-        const sanitizedName = `file_${Date.now()}${ext}`;
-        const filePath = path.join(uploadsDir, sanitizedName);
-        
-        const fileStream = fs.createWriteStream(filePath);
-        req.pipe(fileStream);
-
-        fileStream.on('finish', () => {
-            res.status(201).json({ url: `/uploads/${sanitizedName}` });
-        });
-
-        fileStream.on('error', (err) => {
-            res.status(500).json({ error: err.message });
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Helpers to read/write JSON
-const readData = (file) => {
-    if (!fs.existsSync(file)) {
-        return null; // Return null to indicate "no file" vs "empty array"
-    }
-    const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
-    return data;
-};
-
-const writeData = (file, data) => {
-    fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
-};
-
-// --- ROUTES ---
-
-// Admin Payments Lookup
-app.get('/api/admin/payments', async (req, res) => {
-    try {
-        const { year = '2026', month = '02' } = req.query;
-        const mpPayment = new Payment(client);
-        
-        const nextMonth = Number(month) === 12 ? 1 : Number(month) + 1;
-        const nextYear = Number(month) === 12 ? Number(year) + 1 : Number(year);
-        
-        const beginDate = `${year}-${String(month).padStart(2,'0')}-01T00:00:00.000Z`;
-        const endDate = `${nextYear}-${String(nextMonth).padStart(2,'0')}-01T00:00:00.000Z`;
-
-        const result = await mpPayment.search({
-            options: {
-                range: 'date_created',
-                begin_date: beginDate,
-                end_date: endDate,
-            }
-        });
-
-        // Cargar alumnos para el cruce
-        const students = readData(studentsFile) || [];
-
-        const payments = result.results || [];
-        const matched = [];
-        const unmatched = [];
-        const expenses = [];
-
-        payments.forEach(p => {
-            const payerEmail = p.payer?.email?.toLowerCase() || '';
-            const description = p.description?.toLowerCase() || '';
-            
-            // 1. Detectar si es un gasto obvio (compras en comercios)
-            const isGasto = description.includes('copec') || 
-                            description.includes('lider') || 
-                            description.includes('panaderia') || 
-                            description.includes('parking') || 
-                            description.includes('experiencia gourmet') ||
-                            description.includes('sb ');
-
-            if (isGasto) {
-                expenses.push({
-                    id: p.id,
-                    date: p.date_created,
-                    amount: p.transaction_amount,
-                    description: p.description
-                });
-                return;
-            }
-
-            // 2. Intentar cruce por Email
-            let student = students.find(s => s.email?.toLowerCase() === payerEmail);
-            
-            // 3. Intentar cruce por nombre incluido en la descripción
-            if (!student) {
-                student = students.find(s => s.name && description.includes(s.name.toLowerCase()));
-            }
-
-            if (student) {
-                matched.push({
-                    studentName: student.name,
-                    id: p.id,
-                    date: p.date_created,
-                    amount: p.transaction_amount,
-                    description: p.description,
-                    payer: p.payer?.email || 'No email'
-                });
-            } else {
-                unmatched.push({
-                    id: p.id,
-                    date: p.date_created,
-                    amount: p.transaction_amount,
-                    description: p.description,
-                    payer: p.payer?.email || 'No email'
-                });
-            }
-        });
-
-        res.json({
-            success: true,
-            range: { beginDate, endDate },
-            summary: {
-                total: payments.length,
-                matched: matched.length,
-                unmatched_income: unmatched.length,
-                expenses: expenses.length
-            },
-            matched,
-            unmatched_income: unmatched,
-            expenses
-        });
-
-    } catch (error) {
-        console.error("Admin Payments Lookup Failed:", error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// Videos
+supabase_endpoints = """// Videos
 app.get('/api/videos', async (req, res) => {
     try {
         const { data, error } = await supabase.from('videos').select('*');
@@ -221,17 +66,20 @@ app.post('/api/videos', async (req, res) => {
 });
 
 // News
-app.get('/api/news', (req, res) => {
+app.get('/api/news', async (req, res) => {
     try {
-        res.json(readData(newsFile) || []);
+        const { data, error } = await supabase.from('news').select('*');
+        if (error) throw error;
+        res.json(data);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-app.post('/api/news', (req, res) => {
+app.post('/api/news', async (req, res) => {
     try {
-        writeData(newsFile, req.body);
+        const { error } = await supabase.from('news').insert(req.body);
+        if (error) throw error;
         res.status(200).json(req.body);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -239,17 +87,20 @@ app.post('/api/news', (req, res) => {
 });
 
 // Gallery
-app.get('/api/gallery', (req, res) => {
+app.get('/api/gallery', async (req, res) => {
     try {
-        res.json(readData(galleryFile) || []);
+        const { data, error } = await supabase.from('gallery').select('*');
+        if (error) throw error;
+        res.json(data);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-app.post('/api/gallery', (req, res) => {
+app.post('/api/gallery', async (req, res) => {
     try {
-        writeData(galleryFile, req.body);
+        const { error } = await supabase.from('gallery').insert(req.body);
+        if (error) throw error;
         res.status(200).json(req.body);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -362,7 +213,7 @@ async function syncStudentsBackground(students) {
             }
         }
     } catch (e) {
-        console.error("--- Background Sync Failed ---", e.message || e);
+        print("--- Background Sync Failed ---", e.message || e)
     }
 }
 
@@ -491,110 +342,9 @@ app.post('/api/students/:id/sync-payments', async (req, res) => {
     }
 });
 
-app.post('/api/checkout', async (req, res) => {
-    try {
-        const { student, amount } = req.body;
+"""
 
-        const preference = new Preference(client);
-        const result = await preference.create({
-            body: {
-                items: [
-                    {
-                        title: `Mensualidad Dojo Ranas - ${student.name}`,
-                        quantity: 1,
-                        currency_id: 'CLP',
-                        unit_price: Number(amount)
-                    }
-                ],
-                payer: {
-                    email: student.email
-                },
-                back_urls: {
-                    success: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=success`,
-                    failure: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=failure`,
-                    pending: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=pending`,
-                },
-                auto_return: "approved",
-                notification_url: `${process.env.BACKEND_URL}/api/webhooks`
-            }
-        });
+with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(header_part + supabase_endpoints + footer_part)
 
-        res.json({ init_point: result.init_point });
-    } catch (error) {
-        console.error('MP Preference Error:', error);
-        res.status(500).json({ error: 'Failed to create payment link' });
-    }
-});
-
-// Mercado Pago: Webhook
-app.post('/api/webhooks', async (req, res) => {
-    console.log('--- WEBHOOK RECEIVED ---');
-
-    // Mercado Pago manda el ID de diferentes formas dependiendo del evento
-    const paymentId = req.body.data?.id || req.body.id;
-    const action = req.body.action || req.body.type;
-
-    if (!paymentId) {
-        console.log('No payment ID found in webhook body');
-        return res.sendStatus(200);
-    }
-
-    try {
-        const mpPayment = new Payment(client);
-        const payDetails = await mpPayment.get({ id: paymentId });
-
-        if (payDetails.status === 'approved') {
-            const payerEmail = payDetails.payer.email;
-            const amount = payDetails.transaction_amount;
-            const payDate = payDetails.date_approved.split('T')[0];
-
-            console.log(`Payment Approved: ${paymentId} - Email: ${payerEmail} - Amount: ${amount}`);
-
-            // Buscamos alumno en Supabase
-            const { data: student, error: selectError } = await supabase
-                .from('students')
-                .select('*')
-                .eq('email', payerEmail.toLowerCase())
-                .maybeSingle();
-
-            if (selectError) throw selectError;
-
-            if (student) {
-                const history = Array.isArray(student.history) ? student.history : [];
-                if (!history.some(h => h.transaction_id === paymentId.toString())) {
-                    history.push({
-                        date: payDate,
-                        status: 'Completado',
-                        amount: amount,
-                        method: 'Mercado Pago',
-                        transaction_id: paymentId.toString()
-                    });
-
-                    await supabase.from('students').update({
-                        history: history,
-                        ispaid: true,
-                        lastpaymentdate: payDate,
-                        lastpaymentmonth: payDate.substring(0, 7)
-                    }).eq('id', student.id);
-
-                    console.log(`Student ${student.name} updated successfully via Webhook.`);
-                } else {
-                    console.log('Payment already exists in history. Skipping.');
-                }
-            } else {
-                console.warn(`No student found for email: ${payerEmail}. Payment ${paymentId} received but not linked.`);
-            }
-        } else {
-            console.log(`Payment ${paymentId} status: ${payDetails.status}. No action taken.`);
-        }
-    } catch (error) {
-        console.error('Webhook processing error:', error);
-    }
-
-    res.sendStatus(200);
-});
-
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log("- MP Token exists:", !!process.env.VITE_MP_ACCESS_TOKEN);
-});
+print("✅ Index.js updated with Supabase endpoints successfully!")

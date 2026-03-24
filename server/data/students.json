@@ -68,12 +68,20 @@
     "belt": "WHITE",
     "classesAttended": 0,
     "classesToNextBelt": 40,
-    "lastPaymentMonth": "",
-    "isPaid": false,
-    "history": [],
+    "lastPaymentMonth": "2025-11",
+    "isPaid": true,
+    "history": [
+      {
+        "date": "2025-11-17",
+        "status": "Completado",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "transaction_id": "133623918573"
+      }
+    ],
     "plan": "",
     "joinDate": "",
-    "lastPaymentDate": "",
+    "lastPaymentDate": "2025-11-17",
     "monthlyFee": 0
   },
   {
@@ -527,12 +535,20 @@
     "belt": "WHITE",
     "classesAttended": 0,
     "classesToNextBelt": 40,
-    "lastPaymentMonth": "",
-    "isPaid": false,
-    "history": [],
+    "lastPaymentMonth": "2025-11",
+    "isPaid": true,
+    "history": [
+      {
+        "date": "2025-11-20",
+        "status": "Completado",
+        "amount": 30000,
+        "method": "Mercado Pago",
+        "transaction_id": "134630966536"
+      }
+    ],
     "plan": "",
     "joinDate": "",
-    "lastPaymentDate": "",
+    "lastPaymentDate": "2025-11-20",
     "monthlyFee": 0
   },
   {
@@ -697,18 +713,32 @@
     "belt": "GRAY",
     "classesAttended": 0,
     "classesToNextBelt": 40,
-    "lastPaymentMonth": "",
-    "isPaid": false,
+    "lastPaymentMonth": "2025-11",
+    "isPaid": true,
     "history": [
       {
         "date": "2025-02-10",
         "status": "Completado",
         "amount": 35000
+      },
+      {
+        "date": "2025-10-16",
+        "status": "Completado",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "transaction_id": "130200726430"
+      },
+      {
+        "date": "2025-11-20",
+        "status": "Completado",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "transaction_id": "134065087055"
       }
     ],
     "plan": "2 X SEMANA",
     "joinDate": "",
-    "lastPaymentDate": "2025-02-10",
+    "lastPaymentDate": "2025-11-20",
     "monthlyFee": 35000,
     "tutorName": "Sofia morales"
   },
@@ -721,18 +751,25 @@
     "belt": "WHITE",
     "classesAttended": 0,
     "classesToNextBelt": 40,
-    "lastPaymentMonth": "2026-02",
+    "lastPaymentMonth": "2025-09",
     "isPaid": true,
     "history": [
       {
         "date": "2026-02-02",
         "status": "Completado",
         "amount": 35000
+      },
+      {
+        "date": "2025-09-30",
+        "status": "Completado",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "transaction_id": "127474314459"
       }
     ],
     "plan": "2 X SEMANA",
     "joinDate": "",
-    "lastPaymentDate": "2026-02-02",
+    "lastPaymentDate": "2025-09-30",
     "monthlyFee": 35000,
     "tutorName": "Tania Díaz"
   },
@@ -983,18 +1020,32 @@
     "belt": "WHITE",
     "classesAttended": 0,
     "classesToNextBelt": 40,
-    "lastPaymentMonth": "2026-02",
+    "lastPaymentMonth": "2025-11",
     "isPaid": true,
     "history": [
       {
         "date": "2026-02-23",
         "status": "Completado",
         "amount": 40000
+      },
+      {
+        "date": "2025-10-08",
+        "status": "Completado",
+        "amount": 50000,
+        "method": "Mercado Pago",
+        "transaction_id": "128555902023"
+      },
+      {
+        "date": "2025-11-20",
+        "status": "Completado",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "transaction_id": "134632728938"
       }
     ],
     "plan": "3 X SEMANA",
     "joinDate": "",
-    "lastPaymentDate": "2026-02-23",
+    "lastPaymentDate": "2025-11-20",
     "monthlyFee": 40000
   },
   {
