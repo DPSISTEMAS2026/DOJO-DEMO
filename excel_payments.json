@@ -1,157 +1,567 @@
 [
-    {
-        "name": "Sara Sierra",
-        "date": "2026-02-18",
-        "amount": 40000.0
-    },
-    {
-        "name": "Elíseo Lema",
-        "date": "2026-02-22",
-        "amount": 45000.0
-    },
-    {
-        "name": "Valentino Sáez",
-        "date": "2026-02-25",
-        "amount": 35000.0
-    },
-    {
-        "name": "Agustina Sáez",
-        "date": "2026-02-25",
-        "amount": 20000.0
-    },
-    {
-        "name": "Rafaela Aguilef",
-        "date": "2026-02-02",
-        "amount": 35000.0
-    },
-    {
-        "name": "Balder Betancourt",
-        "date": "2026-02-24",
-        "amount": 35000.0
-    },
-    {
-        "name": "Paula Morales",
-        "date": "2026-02-21",
-        "amount": 35000.0
-    },
-    {
-        "name": "Matías Castillo",
-        "date": "2026-02-03",
-        "amount": 35000.0
-    },
-    {
-        "name": "Josefa Montecinos",
-        "date": "2026-02-02",
-        "amount": 35000.0
-    },
-    {
-        "name": "Rudy Muñoz",
-        "date": "2026-02-17",
-        "amount": 35000.0
-    },
-    {
-        "name": "Jeremias Herrera",
-        "date": "2026-02-03",
-        "amount": 45000.0
-    },
-    {
-        "name": "Alonso higueras",
-        "date": "2026-02-04",
-        "amount": 40000.0
-    },
-    {
-        "name": "Rodrigo Fuentes",
-        "date": "2026-02-12",
-        "amount": 40000.0
-    },
-    {
-        "name": "Luciano Caraboni",
-        "date": "2026-02-05",
-        "amount": 35000.0
-    },
-    {
-        "name": "Pablo Araneda",
-        "date": "2026-02-21",
-        "amount": 25000.0
-    },
-    {
-        "name": "Pedro Barria",
-        "date": "2026-02-27",
-        "amount": 35000.0
-    },
-    {
-        "name": "Ignacio Vásquez",
-        "date": "2026-02-26",
-        "amount": 35000.0
-    },
-    {
-        "name": "Felipe Campos",
-        "date": "2026-02-28",
-        "amount": 40000.0
-    },
-    {
-        "name": "Camilo Rivera",
-        "date": "2026-02-23",
-        "amount": 45000.0
-    },
-    {
-        "name": "Cristian Moya",
-        "date": "2026-02-02",
-        "amount": 50000.0
-    },
-    {
-        "name": "Maximiliano Carrasco",
-        "date": "2026-02-26",
-        "amount": 20000.0
-    },
-    {
-        "name": "Samuel Urrea",
-        "date": "2026-02-23",
-        "amount": 40000.0
-    },
-    {
-        "name": "Lucas Araneda",
-        "date": "2026-02-06",
-        "amount": 45000.0
-    },
-    {
-        "name": "Matías Salgado",
-        "date": "2026-02-02",
-        "amount": 40000.0
-    },
-    {
-        "name": "Diego Echeverria",
-        "date": "2026-02-18",
-        "amount": 35000.0
-    },
-    {
-        "name": "Matías Ormeño",
-        "date": "2026-02-09",
-        "amount": 45000.0
-    },
-    {
-        "name": "Nicolás Esparza",
-        "date": "2026-02-03",
-        "amount": 40000.0
-    },
-    {
-        "name": "Liz Méndez",
-        "date": "2026-02-03",
-        "amount": 35000.0
-    },
-    {
-        "name": "Damian Parra",
-        "date": "2026-02-04",
-        "amount": 35000.0
-    },
-    {
-        "name": "Agustín Ramírez",
-        "date": "2026-02-09",
-        "amount": 40000.0
-    },
-    {
-        "name": "Rodrigo Salgado x3",
-        "date": "2026-02-27",
-        "amount": 50000.0
-    }
+  {
+    "name": "Florencia Almonacid",
+    "date": "2026-03-02",
+    "amount": 35000
+  },
+  {
+    "name": "Sara Sierra",
+    "date": "2026-03-19",
+    "amount": 40000
+  },
+  {
+    "name": "Lucas Bascuñan",
+    "date": "2026-03-01",
+    "amount": 40000
+  },
+  {
+    "name": "Fernando Wall",
+    "date": "2026-03-13",
+    "amount": 35000
+  },
+  {
+    "name": "Facundo Carrillo",
+    "date": "2025-11-10",
+    "amount": 35000
+  },
+  {
+    "name": "León cornejo",
+    "date": "2026-01-30",
+    "amount": 25000
+  },
+  {
+    "name": "Renata cornejo",
+    "date": "2026-01-30",
+    "amount": 25000
+  },
+  {
+    "name": "Rafaela Cornejo",
+    "date": "2025-09-30",
+    "amount": 25000
+  },
+  {
+    "name": "Elíseo Lema",
+    "date": "2026-03-18",
+    "amount": 45000
+  },
+  {
+    "name": "Maximiliano canessa",
+    "date": "2026-03-20",
+    "amount": 50000
+  },
+  {
+    "name": "Valentino Sáez",
+    "date": "2026-02-25",
+    "amount": 35000
+  },
+  {
+    "name": "Agustina Sáez",
+    "date": "2026-02-25",
+    "amount": 20000
+  },
+  {
+    "name": "Alonso Cabezas",
+    "date": "2026-03-05",
+    "amount": 35000
+  },
+  {
+    "name": "Rafaela Aguilef",
+    "date": "2026-02-02",
+    "amount": 35000
+  },
+  {
+    "name": "Maite Novoa",
+    "date": "2026-03-10",
+    "amount": 35000
+  },
+  {
+    "name": "Bruno Novoa",
+    "date": "2026-03-10",
+    "amount": 35000
+  },
+  {
+    "name": "Facundo Muñoz",
+    "date": "2026-03-10",
+    "amount": 35000
+  },
+  {
+    "name": "Renata Avilés",
+    "date": "2025-11-14",
+    "amount": 35000
+  },
+  {
+    "name": "Santino Garrido",
+    "date": "2026-01-05",
+    "amount": 20000
+  },
+  {
+    "name": "Antonella Lofiego",
+    "date": "2025-12-17",
+    "amount": 40000
+  },
+  {
+    "name": "Gaspar Lansberger",
+    "date": "2026-03-06",
+    "amount": 35000
+  },
+  {
+    "name": "Benjamín Lizama",
+    "date": "2026-01-06",
+    "amount": 35000
+  },
+  {
+    "name": "Josefa Barrales",
+    "date": "2026-01-15",
+    "amount": 35000
+  },
+  {
+    "name": "Agustín Barrales",
+    "date": "2026-01-15",
+    "amount": 35000
+  },
+  {
+    "name": "Fernanda Villalobos",
+    "date": "2026-03-10",
+    "amount": 35000
+  },
+  {
+    "name": "Balder Betancourt",
+    "date": "2026-03-24",
+    "amount": 35000
+  },
+  {
+    "name": "Mateo Cid",
+    "date": "2025-12-17",
+    "amount": 45000
+  },
+  {
+    "name": "Julieta Sánchez",
+    "date": "2025-12-30",
+    "amount": 35000
+  },
+  {
+    "name": "Luan Villalobos",
+    "date": "2026-03-12",
+    "amount": 35000
+  },
+  {
+    "name": "Paula Morales",
+    "date": "2026-03-20",
+    "amount": 35000
+  },
+  {
+    "name": "Amaro Martínez",
+    "date": "2026-03-08",
+    "amount": 35000
+  },
+  {
+    "name": "Matías Castillo",
+    "date": "2026-02-03",
+    "amount": 35000
+  },
+  {
+    "name": "Josefa Montecinos",
+    "date": "2026-02-02",
+    "amount": 35000
+  },
+  {
+    "name": "Rudy Muñoz",
+    "date": "2026-02-17",
+    "amount": 35000
+  },
+  {
+    "name": "Alma Pereira",
+    "date": "2026-01-16",
+    "amount": 20000
+  },
+  {
+    "name": "Jeremias Herrera",
+    "date": "2026-02-03",
+    "amount": 45000
+  },
+  {
+    "name": "Tomás Riquelme",
+    "date": "2026-03-17",
+    "amount": 35000
+  },
+  {
+    "name": "Alonso higueras",
+    "date": "2026-02-04",
+    "amount": 40000
+  },
+  {
+    "name": "Rodrigo Fuentes",
+    "date": "2026-02-12",
+    "amount": 40000
+  },
+  {
+    "name": "Amparo Aguilera",
+    "date": "2026-03-04",
+    "amount": 35000
+  },
+  {
+    "name": "Gracia Vásquez 15000",
+    "date": "2026-03-11",
+    "amount": 20000
+  },
+  {
+    "name": "Christopher Sepúlveda",
+    "date": "2026-03-11",
+    "amount": 10000
+  },
+  {
+    "name": "Renzzo Badilla",
+    "date": "2026-03-17",
+    "amount": 35000
+  },
+  {
+    "name": "Andrés Becerra",
+    "date": "2026-03-24",
+    "amount": 35000
+  },
+  {
+    "name": "Karling Silva",
+    "date": "2026-03-06",
+    "amount": 20000
+  },
+  {
+    "name": "Nicolás Mellado",
+    "date": "2026-03-06",
+    "amount": 45000
+  },
+  {
+    "name": "Constanza Sepulveda",
+    "date": "2026-03-05",
+    "amount": 40000
+  },
+  {
+    "name": "Vicente Salgado",
+    "date": "2026-01-24",
+    "amount": 35000
+  },
+  {
+    "name": "Ricardo Morales",
+    "date": "2026-03-02",
+    "amount": 20000
+  },
+  {
+    "name": "Alfonso Arriagada",
+    "date": "2025-12-09",
+    "amount": 35000
+  },
+  {
+    "name": "Joaquín Nova",
+    "date": "2026-03-21",
+    "amount": 35000
+  },
+  {
+    "name": "Luciano Caraboni",
+    "date": "2026-02-05",
+    "amount": 35000
+  },
+  {
+    "name": "Pablo Araneda",
+    "date": "2026-03-20",
+    "amount": 25000
+  },
+  {
+    "name": "Pedro Barria",
+    "date": "2026-02-27",
+    "amount": 35000
+  },
+  {
+    "name": "Sofía Aravalé",
+    "date": "2026-03-03",
+    "amount": 35000
+  },
+  {
+    "name": "Javier Riquelme",
+    "date": "2026-03-11",
+    "amount": 20000
+  },
+  {
+    "name": "Leonardo Pereira",
+    "date": "2026-03-05",
+    "amount": 40000
+  },
+  {
+    "name": "Pablo Muñoz",
+    "date": "2025-12-02",
+    "amount": 35000
+  },
+  {
+    "name": "Daniel Muñoz",
+    "date": "2025-12-30",
+    "amount": 35000
+  },
+  {
+    "name": "Carlos Carvajal",
+    "date": "2025-12-30",
+    "amount": 35000
+  },
+  {
+    "name": "Camilé Espinoza",
+    "date": "2026-03-03",
+    "amount": 40000
+  },
+  {
+    "name": "Ignacio Vásquez",
+    "date": "2026-02-26",
+    "amount": 35000
+  },
+  {
+    "name": "Joaquín Parra",
+    "date": "2026-03-11",
+    "amount": 45000
+  },
+  {
+    "name": "Felipe Campos",
+    "date": "2026-02-28",
+    "amount": 40000
+  },
+  {
+    "name": "Cristóbal Moraga",
+    "date": "2026-03-10",
+    "amount": 20000
+  },
+  {
+    "name": "Jonathan Orellana",
+    "date": "2026-01-13",
+    "amount": 45000
+  },
+  {
+    "name": "Joaquín Sandoval",
+    "date": "2026-01-15",
+    "amount": 35000
+  },
+  {
+    "name": "Bernel Ortega",
+    "date": "2026-03-04",
+    "amount": 40000
+  },
+  {
+    "name": "Lucas Uribe",
+    "date": "2025-11-27",
+    "amount": 40000
+  },
+  {
+    "name": "Camilo Rivera",
+    "date": "2026-02-23",
+    "amount": 45000
+  },
+  {
+    "name": "Cristian Moya",
+    "date": "2026-02-02",
+    "amount": 50000
+  },
+  {
+    "name": "Roberto Novoa",
+    "date": "2026-03-10",
+    "amount": 25000
+  },
+  {
+    "name": "Jorge Jara",
+    "date": "2026-01-16",
+    "amount": 35000
+  },
+  {
+    "name": "Kevin soto",
+    "date": "2026-03-10",
+    "amount": 35000
+  },
+  {
+    "name": "Maximiliano Carrasco",
+    "date": "2026-02-26",
+    "amount": 20000
+  },
+  {
+    "name": "Benjamín Mella",
+    "date": "2026-03-04",
+    "amount": 40000
+  },
+  {
+    "name": "Cristóbal Hernández",
+    "date": "2026-03-08",
+    "amount": 40000
+  },
+  {
+    "name": "Samuel Urrea",
+    "date": "2026-02-23",
+    "amount": 40000
+  },
+  {
+    "name": "Benjamín Vera",
+    "date": "2025-09-05",
+    "amount": 40000
+  },
+  {
+    "name": "Carolina Martínez",
+    "date": "2025-09-08",
+    "amount": 35000
+  },
+  {
+    "name": "Felipe Muñoz",
+    "date": "2025-10-02",
+    "amount": 35000
+  },
+  {
+    "name": "Joaquín Vidal",
+    "date": "2026-01-28",
+    "amount": 50000
+  },
+  {
+    "name": "Lucas Araneda",
+    "date": "2026-03-17",
+    "amount": 45000
+  },
+  {
+    "name": "Matías Salgado",
+    "date": "2026-02-02",
+    "amount": 40000
+  },
+  {
+    "name": "Diego Echeverria",
+    "date": "2026-02-18",
+    "amount": 35000
+  },
+  {
+    "name": "Luis Martínez",
+    "date": "2026-01-03",
+    "amount": 35000
+  },
+  {
+    "name": "Guillermo Palma",
+    "date": "2026-01-06",
+    "amount": 40000
+  },
+  {
+    "name": "Matías Rozas",
+    "date": "2025-12-02",
+    "amount": 35000
+  },
+  {
+    "name": "Martin Hernández",
+    "date": "2026-03-16",
+    "amount": 20000
+  },
+  {
+    "name": "Cristóbal Alarcon",
+    "date": "2026-03-03",
+    "amount": 40000
+  },
+  {
+    "name": "Christopher Sepúlveda",
+    "date": "2026-01-16",
+    "amount": 20000
+  },
+  {
+    "name": "Jorge Ormeño",
+    "date": "2026-03-12",
+    "amount": 40000
+  },
+  {
+    "name": "Matías Riffo",
+    "date": "2026-03-02",
+    "amount": 35000
+  },
+  {
+    "name": "José Gómez",
+    "date": "2026-01-24",
+    "amount": 4000
+  },
+  {
+    "name": "Nicolás Sánchez",
+    "date": "2026-03-04",
+    "amount": 35000
+  },
+  {
+    "name": "Matías Ormeño",
+    "date": "2026-02-09",
+    "amount": 45000
+  },
+  {
+    "name": "Jaime Amunategui",
+    "date": "2026-03-06",
+    "amount": 40000
+  },
+  {
+    "name": "Mateo Martínez",
+    "date": "2026-03-03",
+    "amount": 35000
+  },
+  {
+    "name": "Pablo Pereira",
+    "date": "2026-01-16",
+    "amount": 20000
+  },
+  {
+    "name": "Christian Jaque",
+    "date": "2026-01-20",
+    "amount": 35000
+  },
+  {
+    "name": "Ricardo Olmos",
+    "date": "2026-01-30",
+    "amount": 35000
+  },
+  {
+    "name": "Nicolás Esparza",
+    "date": "2026-02-03",
+    "amount": 40000
+  },
+  {
+    "name": "Sebastián Plaza",
+    "date": "2026-03-05",
+    "amount": 50000
+  },
+  {
+    "name": "Liz Méndez",
+    "date": "2026-03-18",
+    "amount": 30000
+  },
+  {
+    "name": "Damian Parra",
+    "date": "2026-02-04",
+    "amount": 35000
+  },
+  {
+    "name": "Agustín Ramírez",
+    "date": "2026-02-09",
+    "amount": 40000
+  },
+  {
+    "name": "Rodrigo Salgado x3",
+    "date": "2026-02-27",
+    "amount": 50000
+  },
+  {
+    "name": "Jael Varas",
+    "date": "2026-03-02",
+    "amount": 40000
+  },
+  {
+    "name": "José Montecinos",
+    "date": "2026-03-04",
+    "amount": 35000
+  },
+  {
+    "name": "Lucas Barriga",
+    "date": "2026-03-09",
+    "amount": 50000
+  },
+  {
+    "name": "Milenko Monsalves",
+    "date": "2026-03-13",
+    "amount": 50000
+  },
+  {
+    "name": "Diego Rojas",
+    "date": "2026-03-19",
+    "amount": 20000
+  },
+  {
+    "name": "Yoshua Burgos",
+    "date": "2026-03-23",
+    "amount": 50000
+  }
 ]

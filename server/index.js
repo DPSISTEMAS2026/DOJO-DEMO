@@ -5,6 +5,7 @@ import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import nodemailer from 'nodemailer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -420,6 +421,16 @@ app.put('/api/students/:id', async (req, res) => {
     }
 });
 
+app.delete('/api/students/:id', async (req, res) => {
+    try {
+        const { error } = await supabase.from('students').delete().eq('id', req.params.id);
+        if (error) throw error;
+        res.json({ success: true, message: 'Alumno eliminado correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- SYNC PAYMENTS FROM MERCADO PAGO ---
 app.post('/api/students/:id/sync-payments', async (req, res) => {
     try {
@@ -523,6 +534,67 @@ app.post('/api/checkout', async (req, res) => {
     } catch (error) {
         console.error('MP Preference Error:', error);
         res.status(500).json({ error: 'Failed to create payment link' });
+    }
+});
+
+// Enviar credenciales (contraseñas masivas)
+app.post('/api/admin/send-credentials', async (req, res) => {
+    try {
+        if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            return res.status(400).json({ error: 'Configuración SMTP incompleta en el archivo .env' });
+        }
+
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: Number(process.env.SMTP_PORT) || 587,
+            secure: process.env.SMTP_SECURE === 'true', // true para 465, false para otros
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS,
+            },
+        });
+
+        // Asegúrate de que los estudiantes vivan con password disponible
+        // Aquí asumimos que students vive en Supabase!
+        const { data: students, error: selectError } = await supabase.from('students').select('*');
+        if (selectError) throw selectError;
+
+        let sentCount = 0;
+        let errors = [];
+
+        for (const student of students) {
+            if (!student.email || !student.password) continue;
+
+            try {
+                await transporter.sendMail({
+                    from: `"Dojo Ranas" <${process.env.SMTP_USER}>`,
+                    to: student.email,
+                    subject: 'Tus credenciales de acceso - Dojo Ranas 🐸',
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+                            <h2 style="color: #05a86a;">¡Hola ${student.name}!</h2>
+                            <p>Te enviamos tus datos de acceso para la plataforma de <strong>Dojo Ranas Administration</strong>.</p>
+                            <div style="background: #f4f4f4; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <p style="margin: 5px 0;"><strong>Usuario:</strong> ${student.email}</p>
+                                <p style="margin: 5px 0;"><strong>Contraseña Provisional:</strong> ${student.password}</p>
+                            </div>
+                            <p style="font-size: 0.9rem; color: #666;">Te aconsejamos cambiar tu contraseña una vez hayas iniciado sesión en tu perfil. 👍</p>
+                            <p>¡Nos vemos en el tatami!</p>
+                            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                            <p style="font-size: 0.8rem; color: #999;">Dojo Ranas - Lautaro 581</p>
+                        </div>
+                    `,
+                });
+                sentCount++;
+            } catch (e) {
+                errors.push({ email: student.email, error: e.message });
+            }
+        }
+
+        res.json({ success: true, message: `Acaban de enviarse ${sentCount} correos con éxito.`, errors });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

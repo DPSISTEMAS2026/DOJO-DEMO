@@ -28,7 +28,8 @@ import {
   Save,
   Camera,
   ImageIcon,
-  Monitor
+  Monitor,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'react-qr-code';
@@ -176,7 +177,7 @@ const App: React.FC = () => {
   }, []);
   const [activeHeroVideo, setActiveHeroVideo] = useState(0);
   const [activeNews, setActiveNews] = useState(0);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'students' | 'attendance' | 'payments' | 'settings' | 'videos' | 'website'>(() => localStorage.getItem('activeTab') as any || 'dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'students' | 'payments' | 'settings' | 'videos' | 'website'>(() => localStorage.getItem('activeTab') as any || 'dashboard');
 
   useEffect(() => {
     localStorage.setItem('viewMode', viewMode);
@@ -345,6 +346,23 @@ const App: React.FC = () => {
     }
   };
 
+
+  const handleDeleteStudent = async (studentId: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/students/${studentId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (response.ok) {
+        setStudents(prev => prev.filter(s => s.id !== studentId));
+        setSelectedStudent(null);
+      } else {
+        alert('Error al eliminar alumno');
+      }
+    } catch (error) {
+      console.error("Error deleting student:", error);
+    }
+  };
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>, student: Student) => {
     const file = e.target.files?.[0];
@@ -1287,19 +1305,7 @@ const App: React.FC = () => {
               </motion.div >
             )}
 
-            {
-              activeTab === 'attendance' && (
-                <motion.div key="attendance" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
-                  <div style={{ padding: '3rem 2rem', textAlign: 'center', background: 'var(--panel-card)', borderRadius: '1.5rem', border: '1px solid var(--panel-border)' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>📅</div>
-                    <h3 style={{ marginBottom: '0.8rem', fontWeight: 900, fontSize: '1.4rem' }}>Historial de Asistencia</h3>
-                    <p style={{ color: 'var(--panel-muted)', fontSize: '0.9rem', lineHeight: 1.5 }}>
-                      Pronto podrás ver el detalle de todas tus clases asistidas aquí. ¡Sigue entrenando duro!
-                    </p>
-                  </div>
-                </motion.div>
-              )
-            }
+
 
             {
               activeTab === 'settings' && (
@@ -1414,14 +1420,14 @@ const App: React.FC = () => {
           {[
             { id: 'dashboard', label: 'Resumen', icon: <TrendingUp size={17} /> },
             { id: 'students', label: 'Alumnos', icon: <Users size={17} /> },
-            { id: 'attendance', label: 'Asistencia', icon: <QrCode size={17} /> },
+
             { id: 'payments', label: 'Finanzas', icon: <CreditCard size={17} /> },
             { id: 'videos', label: 'Biblioteca', icon: <Play size={17} /> },
             { id: 'website', label: 'Sitio Web', icon: <Monitor size={17} /> },
             { id: 'settings', label: 'Ajustes', icon: <Settings size={17} /> },
           ].filter(item => {
               if (isMobile) {
-                  return ['dashboard', 'students', 'attendance', 'payments'].includes(item.id);
+                  return ['dashboard', 'students', 'payments'].includes(item.id);
               }
               return true;
           }).map(item => (
@@ -1487,12 +1493,12 @@ const App: React.FC = () => {
             <motion.div key="dashboard" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
               style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.2rem' }}>
               {[
-                { title: 'Total Alumnos', value: students.length, icon: <Users size={18} />, sub: '+12% este mes', color: 'var(--panel-green-bg)', border: 'var(--panel-green-border)' },
-                { title: 'Alumnos al Día', value: students.filter(s => s.isPaid).length, icon: <Award size={18} />, sub: 'Pagos vigentes', color: 'var(--panel-green-bg)', border: 'var(--panel-green-border)' },
-                { title: 'Pendientes', value: students.filter(s => !s.isPaid).length, icon: <CreditCard size={18} />, sub: 'Requieren atención', color: 'var(--panel-red-bg)', border: 'var(--panel-red-border)' },
+                { title: 'Total Alumnos', value: students.length, icon: <Users size={18} />, sub: '+12% este mes', color: 'var(--panel-green-bg)', border: 'var(--panel-green-border)', onClick: () => { setActiveTab('students'); setStudentFilterPayment('ALL'); } },
+                { title: 'Alumnos al Día', value: students.filter(s => s.isPaid).length, icon: <Award size={18} />, sub: 'Pagos vigentes', color: 'var(--panel-green-bg)', border: 'var(--panel-green-border)', onClick: () => { setActiveTab('students'); setStudentFilterPayment('PAID'); } },
+                { title: 'Pendientes', value: students.filter(s => !s.isPaid).length, icon: <CreditCard size={18} />, sub: 'Requieren atención', color: 'var(--panel-red-bg)', border: 'var(--panel-red-border)', onClick: () => { setActiveTab('students'); setStudentFilterPayment('PENDING'); } },
               ].map((card, i) => (
-                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-                  style={{ background: card.color, border: `1px solid ${card.border}`, borderRadius: '1.2rem', padding: '1.5rem' }}>
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} onClick={card.onClick} whileHover={{ y: -4, scale: 1.02 }}
+                  style={{ background: card.color, border: `1px solid ${card.border}`, borderRadius: '1.2rem', padding: '1.5rem', cursor: 'pointer' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.2rem' }}>
                     <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(5,168,106,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}>{card.icon}</div>
                     <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.05em' }}>{card.sub}</span>
@@ -1574,51 +1580,7 @@ const App: React.FC = () => {
             </motion.div>
           )}
 
-          {activeTab === 'attendance' && (
-            <motion.div key="attendance" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(300px, 1fr) 2fr', gap: isMobile ? '1.5rem' : '2.5rem' }}>
-                <div className="glass" style={{ padding: '3.5rem', borderRadius: '3rem', textAlign: 'center', height: 'fit-content' }}>
-                  <div style={{ width: '220px', height: '220px', margin: '0 auto 2rem', padding: '2rem', background: 'white', borderRadius: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <QRCode value="https://ranasjiujitsu.cl/checkin" size={180} />
-                  </div>
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: '0.8rem' }}>Check-in Tatami</h3>
-                  <p style={{ color: 'var(--logo-green)', fontWeight: 800, fontSize: '0.7rem', letterSpacing: '0.15em' }}>REGISTRO DIGITAL</p>
-                </div>
 
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 900, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <Calendar size={20} color="var(--logo-green)" />
-                    Alumnos Registrados esta Semana
-                  </h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.2rem' }}>
-                    {Object.keys(daysMap).map(day => {
-                      const cWeekStart = getWeekStart(new Date());
-                      const dailyStudents = students.filter(s =>
-                        (s.scheduledClasses || []).some(c => c.day === day && c.timestamp >= cWeekStart)
-                      );
-                      if (dailyStudents.length === 0) return null;
-                      return (
-                        <div key={day} className="glass" style={{ padding: '1.5rem', borderRadius: '1.8rem', border: '1px solid var(--glass-border)' }}>
-                          <h4 style={{ color: 'var(--logo-green)', fontWeight: 900, fontSize: '0.9rem', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{day}</h4>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                            {dailyStudents.map(s => {
-                              const cls = s.scheduledClasses?.find(c => c.day === day && c.timestamp >= cWeekStart);
-                              return (
-                                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>{s.name.split(' ')[0]} {s.name.split(' ').slice(-1)}</div>
-                                  <div style={{ fontSize: '0.75rem', color: 'var(--panel-muted)', fontWeight: 800 }}>{cls?.time}</div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
 
           {activeTab === 'students' && (
             <motion.div key="students" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
@@ -1694,7 +1656,12 @@ const App: React.FC = () => {
                             <span style={{ color: student.isPaid ? 'var(--logo-green)' : '#ef4444', fontWeight: 900, fontSize: '0.75rem' }}>{student.isPaid ? 'AL DÍA' : 'PENDIENTE'}</span>
                           </td>
                           <td style={{ padding: '1.5rem', textAlign: 'right' }}>
-                            <button onClick={() => setSelectedStudent(student)} style={{ background: 'none', border: '1px solid var(--glass-border)', padding: '0.6rem 1.2rem', borderRadius: '0.8rem', color: 'var(--text-main)', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>DETALLES</button>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                              <button onClick={() => setSelectedStudent(student)} style={{ background: 'none', border: '1px solid var(--glass-border)', padding: '0.6rem 1.2rem', borderRadius: '0.8rem', color: 'var(--text-main)', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>DETALLES</button>
+                              <button onClick={() => { if (window.confirm(`¿Estás seguro de que deseas eliminar a ${student.name}?`)) handleDeleteStudent(student.id); }} style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Eliminar Alumno">
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
