@@ -15,8 +15,9 @@ services:
         sync: false # Will be set manually in Render Dashboard
 
   # Frontend Client
-  - type: static
+  - type: web
     name: dojo-demo-client
+    runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     rootDir: client
