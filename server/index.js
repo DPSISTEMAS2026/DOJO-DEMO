@@ -222,17 +222,22 @@ app.post('/api/videos', async (req, res) => {
 });
 
 // News
-app.get('/api/news', (req, res) => {
+app.get('/api/news', async (req, res) => {
     try {
-        res.json(readData(newsFile) || []);
+        const { data, error } = await supabase.from('news').select('*').order('id', { ascending: true });
+        if (error) throw error;
+        res.json(data || []);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-app.post('/api/news', (req, res) => {
+app.post('/api/news', async (req, res) => {
     try {
-        writeData(newsFile, req.body);
+        // Limpiamos y reinsertamos para mantener la sincronización masiva igual que en el JSON
+        await supabase.from('news').delete().neq('id', 0);
+        const { error } = await supabase.from('news').insert(Array.isArray(req.body) ? req.body : [req.body]);
+        if (error) throw error;
         res.status(200).json(req.body);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -240,17 +245,21 @@ app.post('/api/news', (req, res) => {
 });
 
 // Gallery
-app.get('/api/gallery', (req, res) => {
+app.get('/api/gallery', async (req, res) => {
     try {
-        res.json(readData(galleryFile) || []);
+        const { data, error } = await supabase.from('gallery').select('*').order('id', { ascending: true });
+        if (error) throw error;
+        res.json(data || []);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-app.post('/api/gallery', (req, res) => {
+app.post('/api/gallery', async (req, res) => {
     try {
-        writeData(galleryFile, req.body);
+        await supabase.from('gallery').delete().neq('id', 0);
+        const { error } = await supabase.from('gallery').insert(Array.isArray(req.body) ? req.body : [req.body]);
+        if (error) throw error;
         res.status(200).json(req.body);
     } catch (error) {
         res.status(500).json({ error: error.message });
