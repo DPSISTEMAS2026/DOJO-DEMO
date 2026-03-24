@@ -211,7 +211,7 @@ const App: React.FC = () => {
   ]);
   const [isAddingGallery, setIsAddingGallery] = useState(false);
   const [newGalleryData, setNewGalleryData] = useState<{ img: string, size: 'small' | 'wide' | 'tall' | 'large' }>({ img: '', size: 'small' });
-  const [videoFilter, setVideoFilter] = useState<Belt | 'ALL'>('ALL');
+
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
@@ -532,10 +532,6 @@ const App: React.FC = () => {
     alert(`✅ Contraseñas generadas y "enviadas" para ${generatedCount} alumno(s) antiguo(s).`);
   };
 
-  const handleMercadoPagoPayment = (_data: any) => {
-    alert('Simulación de pago exitosa');
-    return true;
-  };
 
   const handleAddVideo = async () => {
     try {
@@ -2280,7 +2276,7 @@ const App: React.FC = () => {
                            lastPaymentMonth: new Date().toISOString().substring(0, 7),
                            history: [
                                ...(selectedStudent.history || []),
-                               { date: new Date().toISOString().split('T')[0], status: 'Completado', amount: selectedStudent.monthlyFee || 0, method: 'Manual/Transferencia' }
+                               { date: new Date().toISOString().split('T')[0], status: 'Completado' as "Completado" | "Pendiente", amount: selectedStudent.monthlyFee || 0, method: 'Manual/Transferencia' }
                            ]
                        };
                        handleUpdateStudent(updated);
