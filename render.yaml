@@ -3,7 +3,6 @@ services:
   - type: web
     name: dojo-demo-server
     runtime: node
-    plan: free
     buildCommand: npm install
     startCommand: npm start
     rootDir: server
@@ -16,10 +15,8 @@ services:
         sync: false # Will be set manually in Render Dashboard
 
   # Frontend Client
-  - type: web
+  - type: static
     name: dojo-demo-client
-    runtime: static
-    plan: free
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     rootDir: client
