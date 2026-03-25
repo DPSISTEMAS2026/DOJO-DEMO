@@ -155,17 +155,34 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(() => localStorage.getItem('viewMode') as ViewMode || 'landing');
   const [noticeData, setNoticeData] = useState({ 
     subject: 'Tus credenciales de acceso - Dojo Ranas 🐸', 
-    message: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-  <h2 style="color: #05a86a;">¡Hola {{name}}!</h2>
-  <p>Te enviamos tus datos de acceso para la plataforma de <strong>Dojo Ranas Administration</strong>.</p>
-  <div style="background: #f4f4f4; padding: 15px; border-radius: 8px; margin: 20px 0;">
-    <p style="margin: 5px 0;"><strong>Usuario:</strong> {{email}}</p>
-    <p style="margin: 5px 0;"><strong>Contraseña Provisional:</strong> {{password}}</p>
+    message: `<div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; background: #ffffff; padding: 2.5rem; border-radius: 2rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <h2 style="color: #05a86a; margin-top: 1rem; font-size: 1.8rem;">¡Hola {{name}}!</h2>
+    <p style="font-size: 1.1rem; color: #64748b; margin-top: 0.5rem;">Te enviamos tus credenciales para acceder al portal oficial de <strong>Dojo Ranas</strong>.</p>
   </div>
-  <p style="font-size: 0.9rem; color: #666;">Te aconsejamos cambiar tu contraseña una vez hayas iniciado sesión en tu perfil. 👍</p>
-  <p>¡Nos vemos en el tatami!</p>
-  <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-  <p style="font-size: 0.8rem; color: #999;">Dojo Ranas - Lautaro 581</p>
+  
+  <div style="background: #f8fafc; padding: 2rem; border-radius: 1.5rem; margin-bottom: 2rem; border: 1px solid #e2e8f0;">
+    <p style="margin: 0 0 1rem 0; font-weight: 800; font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">DATOS DE ACCESO:</p>
+    <p style="margin: 0.5rem 0; font-size: 1.1rem;"><strong>Email:</strong> {{email}}</p>
+    <p style="margin: 0.5rem 0; font-size: 1.1rem;"><strong>Contraseña:</strong> <span style="background: #05a86a; color: #fff; padding: 2px 8px; border-radius: 6px;">{{password}}</span></p>
+    
+    <a href="https://dojoranas.onrender.com" style="display: block; background: #05a86a; color: #fff; padding: 1.2rem; text-decoration: none; border-radius: 1rem; font-weight: 800; text-align: center; margin-top: 2rem; box-shadow: 0 10px 20px rgba(5,168,106,0.2);">ENTRAR AL PORTAL 🥋</a>
+  </div>
+
+  <div style="margin-top: 2rem;">
+    <p style="font-weight: 800; font-size: 0.85rem; color: #64748b; text-transform: uppercase;">¿QUÉ PUEDES HACER EN EL PORTAL?</p>
+    <ul style="padding-left: 1.2rem; line-height: 1.6; color: #475569; font-size: 0.95rem;">
+        <li><strong>📅 Reservas Semanales:</strong> Organiza tus entrenamientos.</li>
+        <li><strong>💳 Pago Online:</strong> Gestiona tu mensualidad con Mercado Pago.</li>
+        <li><strong>🥋 Biblioteca Técnica:</strong> Videos exclusivos según tu cinturón.</li>
+        <li><strong>📰 Noticias:</strong> Todo lo que necesitas saber del Dojo.</li>
+    </ul>
+  </div>
+
+  <p style="font-size: 0.85rem; color: #94a3b8; text-align: center; margin-top: 3rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem;">
+    Te aconsejamos cambiar tu contraseña en la sección <strong>Mi Perfil</strong> al ingresar.<br>
+    <strong>Dojo Ranas Concepción</strong> - Lautaro 581
+  </p>
 </div>`
   });
   const [role, setRole] = useState<UserRole>(() => localStorage.getItem('role') as UserRole || 'guest');
