@@ -1,5 +1,5 @@
 // Version: 1.0.1 - Automatic Sync Implemented
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Users,
   CreditCard,
@@ -2582,9 +2582,30 @@ export default App;
 const AcceptTermsModal: React.FC<{ student: Student, onAccept: () => void }> = ({ student, onAccept }) => {
   const [accepted, setAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const termsRef = useRef<HTMLDivElement>(null);
+
+  // Comprobar si no necesita scroll inicial (textos cortos)
+  useEffect(() => {
+    if (termsRef.current) {
+      if (termsRef.current.scrollHeight <= termsRef.current.clientHeight + 10) {
+        setHasScrolledToBottom(true);
+      }
+    }
+  }, []);
+
+  const handleScroll = () => {
+    if (termsRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = termsRef.current;
+      // 10px de margen de error al scrollear
+      if (scrollTop + clientHeight >= scrollHeight - 10) {
+        setHasScrolledToBottom(true);
+      }
+    }
+  };
 
   const handleConfirm = async () => {
-    if (!accepted) return;
+    if (!accepted || !hasScrolledToBottom) return;
     setIsSubmitting(true);
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
@@ -2610,7 +2631,11 @@ const AcceptTermsModal: React.FC<{ student: Student, onAccept: () => void }> = (
           <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.5 }}>Hola <strong>{student.name}</strong>, para ingresar al portal es necesario que leas y aceptes la liberación de responsabilidad.</p>
         </div>
         
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 2.5rem', margin: '0.5rem 0' }}>
+        <div 
+          ref={termsRef}
+          onScroll={handleScroll}
+          style={{ flex: 1, overflowY: 'auto', padding: '0 2.5rem', margin: '0.5rem 0' }}
+        >
           <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '1.5rem', padding: '1.5rem', fontSize: '0.8rem', color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
             <h4 style={{ textAlign: 'center', margin: '0 0 1rem 0', fontWeight: 900 }}>LIBERACIÓN DE RESPONSABILIDAD</h4>
             {`CLUB DEPORTIVO SOCIAL Y CULTURAL RANAS JIU JITSU
@@ -2627,11 +2652,14 @@ const AcceptTermsModal: React.FC<{ student: Student, onAccept: () => void }> = (
         </div>
 
         <div style={{ padding: '1.5rem 2.5rem 2.5rem' }}>
-          <label style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', cursor: 'pointer', marginBottom: '1.5rem' }}>
-            <input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} style={{ width: '20px', height: '20px', marginTop: '2px', accentColor: 'var(--logo-green)' }} />
+          {!hasScrolledToBottom && (
+            <p style={{ fontSize: '0.75rem', color: '#ef4444', textAlign: 'center', marginBottom: '1rem', fontWeight: 800 }}>Por favor desliza y lee hasta el final para poder aceptar.</p>
+          )}
+          <label style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', cursor: hasScrolledToBottom ? 'pointer' : 'not-allowed', marginBottom: '1.5rem', opacity: hasScrolledToBottom ? 1 : 0.5 }}>
+            <input type="checkbox" disabled={!hasScrolledToBottom} checked={accepted} onChange={e => setAccepted(e.target.checked)} style={{ width: '20px', height: '20px', marginTop: '2px', accentColor: 'var(--logo-green)' }} />
             <span style={{ fontSize: '0.85rem', color: '#111', fontWeight: 600 }}>He leído y entiendo a cabalidad este documento y sus términos de responsabilidad.</span>
           </label>
-          <button onClick={handleConfirm} disabled={!accepted || isSubmitting} style={{ width: '100%', padding: '1.3rem', borderRadius: '1.2rem', border: 'none', background: accepted ? 'var(--logo-green)' : '#cbd5e1', color: '#fff', fontWeight: 900, fontSize: '1rem', cursor: accepted ? 'pointer' : 'not-allowed', transition: 'all 0.3s' }}>
+          <button onClick={handleConfirm} disabled={!accepted || !hasScrolledToBottom || isSubmitting} style={{ width: '100%', padding: '1.3rem', borderRadius: '1.2rem', border: 'none', background: (accepted && hasScrolledToBottom) ? 'var(--logo-green)' : '#cbd5e1', color: '#fff', fontWeight: 900, fontSize: '1rem', cursor: (accepted && hasScrolledToBottom) ? 'pointer' : 'not-allowed', transition: 'all 0.3s' }}>
             {isSubmitting ? 'Guardando...' : 'ACEPTAR Y ENTRAR AL PORTAL'}
           </button>
         </div>
