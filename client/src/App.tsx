@@ -154,36 +154,8 @@ const newsItems = [
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(() => localStorage.getItem('viewMode') as ViewMode || 'landing');
   const [noticeData, setNoticeData] = useState({ 
-    subject: 'Tus credenciales de acceso - Dojo Ranas 🐸', 
-    message: `<div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; background: #ffffff; padding: 2.5rem; border-radius: 2rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-  <div style="text-align: center; margin-bottom: 2rem;">
-    <h2 style="color: #05a86a; margin-top: 1rem; font-size: 1.8rem;">¡Hola {{name}}!</h2>
-    <p style="font-size: 1.1rem; color: #64748b; margin-top: 0.5rem;">Te enviamos tus credenciales para acceder al portal oficial de <strong>Dojo Ranas</strong>.</p>
-  </div>
-  
-  <div style="background: #f8fafc; padding: 2rem; border-radius: 1.5rem; margin-bottom: 2rem; border: 1px solid #e2e8f0;">
-    <p style="margin: 0 0 1rem 0; font-weight: 800; font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">DATOS DE ACCESO:</p>
-    <p style="margin: 0.5rem 0; font-size: 1.1rem;"><strong>Email:</strong> {{email}}</p>
-    <p style="margin: 0.5rem 0; font-size: 1.1rem;"><strong>Contraseña:</strong> <span style="background: #05a86a; color: #fff; padding: 2px 8px; border-radius: 6px;">{{password}}</span></p>
-    
-    <a href="https://ranasjiujitsu.cl" style="display: block; background: #05a86a; color: #fff; padding: 1.2rem; text-decoration: none; border-radius: 1rem; font-weight: 800; text-align: center; margin-top: 2rem; box-shadow: 0 10px 20px rgba(5,168,106,0.2);">ENTRAR AL PORTAL 🥋</a>
-  </div>
-
-  <div style="margin-top: 2rem;">
-    <p style="font-weight: 800; font-size: 0.85rem; color: #64748b; text-transform: uppercase;">¿QUÉ PUEDES HACER EN EL PORTAL?</p>
-    <ul style="padding-left: 1.2rem; line-height: 1.6; color: #475569; font-size: 0.95rem;">
-        <li><strong>📅 Reservas Semanales:</strong> Organiza tus entrenamientos.</li>
-        <li><strong>💳 Pago Online:</strong> Gestiona tu mensualidad con Mercado Pago.</li>
-        <li><strong>🥋 Biblioteca Técnica:</strong> Videos exclusivos según tu cinturón.</li>
-        <li><strong>📰 Noticias:</strong> Todo lo que necesitas saber del Dojo.</li>
-    </ul>
-  </div>
-
-  <p style="font-size: 0.85rem; color: #94a3b8; text-align: center; margin-top: 3rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem;">
-    Te aconsejamos cambiar tu contraseña en la sección <strong>Mi Perfil</strong> al ingresar.<br>
-    <strong>Dojo Ranas Concepción</strong> - Orompello 1421
-  </p>
-</div>`
+    subject: '', 
+    message: ''
   });
   const [role, setRole] = useState<UserRole>(() => localStorage.getItem('role') as UserRole || 'guest');
   const [currentUser, setCurrentUser] = useState<Student | null>(() => {
@@ -297,18 +269,20 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [studentsRes, videosRes, newsRes, galleryRes, heroVideosRes] = await Promise.all([
+        const [studentsRes, videosRes, newsRes, galleryRes, heroVideosRes, noticeRes] = await Promise.all([
           fetch(`${API_URL}/api/students`),
           fetch(`${API_URL}/api/videos`),
           fetch(`${API_URL}/api/news`),
           fetch(`${API_URL}/api/gallery`),
-          fetch(`${API_URL}/api/hero-videos`)
+          fetch(`${API_URL}/api/hero-videos`),
+          fetch(`${API_URL}/api/global-notice`)
         ]);
         const studentsData = await studentsRes.json();
         const videosData = await videosRes.json();
         const newsData = await newsRes.json();
         const galleryData = await galleryRes.json();
         const heroVideosData = await heroVideosRes.json();
+        const noticeDataResult = await noticeRes.json();
 
         // Ensure test accounts exist locally if not in DB (for demo)
         const testEmails = ['test@ranas.cl', 'pago@test.cl'];
@@ -337,6 +311,7 @@ const App: React.FC = () => {
         if (newsData !== null) setLiveNews(newsData);
         if (galleryData !== null) setLiveGallery(galleryData);
         if (heroVideosData !== null) setLiveHeroVideos(heroVideosData);
+        if (noticeDataResult !== null) setNoticeData(noticeDataResult);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -396,18 +371,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>, student: Student) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      const updated = { ...student, avatar: base64String };
-      handleUpdateStudent(updated);
-    };
-    reader.readAsDataURL(file);
-  };
 
   const handleGenericImageUpload = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
     const file = e.target.files?.[0];
@@ -492,8 +455,11 @@ const App: React.FC = () => {
   const formatCLP = (amount: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
 
   const handleLogin = (studentToLogin?: Student) => {
-    // Unified login: try admin password first
-    if (authPassword.trim() === 'admin123') {
+    const adminEmails = ['d.diazaraya19@gmail.com', 'manuelplazaarenas@gmail.com', 'contacto@dpsistemas.cl'];
+    const lowerEmail = authEmail.trim().toLowerCase();
+    
+    // Unified login: try admin password first + white-listed emails
+    if (authPassword.trim() === 'admin123' && adminEmails.includes(lowerEmail)) {
       setRole('admin');
       setViewMode('app');
       return;
@@ -549,9 +515,23 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSendMassNotice = () => {
-    alert('Aviso enviado a todos los alumnos');
-    setIsSendingNotice(false);
+  const handleSendMassNotice = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/broadcast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(noticeData)
+      });
+      if (response.ok) {
+        alert('✅ Mensaje enviado exitosamente. Los alumnos lo verán al entrar al portal.');
+        setIsSendingNotice(false);
+      } else {
+        alert('❌ Error al enviar el mensaje.');
+      }
+    } catch (e) {
+      console.error("Error broadcast:", e);
+      alert('❌ Error de conexión.');
+    }
   };
 
   const handleSendPaymentReminder = async (student: Student) => {
@@ -570,17 +550,38 @@ const App: React.FC = () => {
     }
   };
 
-  const handleGeneratePasswordsForAll = () => {
-    let generatedCount = 0;
-    const updatedStudents = students.map(s => {
-      if (!s.password) {
-        generatedCount++;
-        return { ...s, password: Math.random().toString(36).slice(-6).toUpperCase() };
+  const handleGeneratePasswordsForAll = async () => {
+    if (!confirm("¿Deseas generar contraseñas automáticas para TODOS los alumnos que aún no tienen una clave?")) return;
+    try {
+      const response = await fetch(`${API_URL}/api/admin/generate-passwords`, { method: 'POST' });
+      const result = await response.json();
+      if (result.success) {
+        alert(`✅ Se generaron claves para ${result.count} alumnos correctamente en el servidor.`);
+        // Recargar datos para ver las claves reflejadas
+        window.location.reload(); 
       }
-      return s;
-    });
-    setStudents(updatedStudents);
-    alert(`✅ Contraseñas generadas y "enviadas" para ${generatedCount} alumno(s) antiguo(s).`);
+    } catch (e) {
+      alert("Error al generar las claves.");
+    }
+  };
+
+  const handleSendCredentialsByEmail = async (group: 'ALL' | 'KIDS' | 'ADULTS') => {
+    if (!confirm(`¿Deseas enviar un correo de bienvenida y credenciales a todo el grupo ${group === 'ALL' ? 'TODOS' : group}?`)) return;
+    try {
+      const response = await fetch(`${API_URL}/api/admin/send-credentials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ageGroup: group })
+      });
+      const result = await response.json();
+      if (result.success) {
+        alert(`✅ Emails enviados: ${result.message}`);
+      } else {
+        alert("Error: " + result.error);
+      }
+    } catch (e) {
+      alert("Error al enviar correos.");
+    }
   };
 
 
@@ -1226,13 +1227,14 @@ const App: React.FC = () => {
           <div style={{ position: 'absolute', bottom: '10%', left: '-5%', width: '350px', height: '350px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(5,168,106,0.08) 0%, transparent 70%)', filter: 'blur(60px)', opacity: 'var(--panel-orb-opacity)' }} />
         </div>
         <div style={{ maxWidth: '480px', margin: '0 auto', padding: '2rem 1.5rem 8rem', position: 'relative', zIndex: 1 }}>
+
           {/* Header */}
           <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div style={{ position: 'relative', width: '52px', height: '52px' }}>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'conic-gradient(var(--logo-green) 0%, transparent 60%, var(--logo-green) 100%)' }} />
-                <img src={currentUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.name}`} style={{ position: 'absolute', inset: '2px', borderRadius: '50%', background: '#111', objectFit: 'cover' }} />
+                <img src={currentUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} style={{ position: 'absolute', inset: '2px', borderRadius: '50%', background: '#111', objectFit: 'cover' }} />
               </div>
               <div>
                 <div style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>Bienvenido</div>
@@ -1251,6 +1253,21 @@ const App: React.FC = () => {
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
               <motion.div key="dashboard" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                {noticeData.subject && (
+                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                    style={{ background: 'linear-gradient(135deg, rgba(5,168,106,0.1) 0%, rgba(16,244,156,0.1) 100%)', border: '1px solid rgba(5,168,106,0.2)', padding: '1.5rem', borderRadius: '1.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', background: 'var(--logo-green)', filter: 'blur(40px)', opacity: 0.2 }} />
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'start', position: 'relative', zIndex: 1 }}>
+                      <div style={{ background: 'var(--logo-green)', padding: '0.6rem', borderRadius: '12px', color: '#fff' }}>
+                        <Bell size={18} />
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '0.3rem' }}>{noticeData.subject}</h4>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>{noticeData.message}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                   style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.9rem', marginBottom: '1.2rem' }}>
                   <div style={{ background: currentUser?.isPaid ? 'var(--panel-green-bg)' : 'var(--panel-red-bg)', border: `1px solid ${currentUser?.isPaid ? 'var(--panel-green-border)' : 'var(--panel-red-border)'}`, borderRadius: '1.1rem', padding: '1.3rem', textAlign: 'center' }}>
@@ -1370,6 +1387,18 @@ const App: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
                       <Settings size={28} style={{ color: 'var(--logo-green)' }} />
                       <h3 style={{ fontWeight: 900, fontSize: '1.4rem' }}>Mi Perfil</h3>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem', padding: '1rem' }}>
+                      <div style={{ position: 'relative' }}>
+                        <div style={{ width: '85px', height: '85px', borderRadius: '50%', overflow: 'hidden', border: '3px solid var(--logo-green)', background: 'var(--panel-surface)' }}>
+                          <img src={currentUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>TU FOTO DE PERFIL</div>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--panel-muted)', maxWidth: '180px', lineHeight: 1.3 }}>La actualización de fotos está desactivada temporalmente.</p>
+                      </div>
                     </div>
 
                     <div style={{ display: 'grid', gap: '1.5rem', marginBottom: '2.5rem', padding: '1.5rem', background: 'var(--panel-surface)', borderRadius: '1.2rem', border: '1px solid var(--panel-border)' }}>
@@ -1818,82 +1847,94 @@ const App: React.FC = () => {
 
           {activeTab === 'communications' && (
             <motion.div key="communications" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-              style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '2rem' }}>
+              style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '2.5rem' }}>
               
-              {/* Mass Email Card */}
-              <div className="glass" style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'rgba(5,168,106,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}>
-                    <Mail size={22} />
-                  </div>
-                  <div>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>Envío Masivo de Credenciales</h3>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Notifica a tus alumnos sus datos de acceso.</p>
-                  </div>
-                </div>
-
-                <div style={{ padding: '1.5rem', background: 'rgba(5,168,106,0.05)', borderRadius: '1.2rem', border: '1px dashed var(--logo-green)' }}>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: 1.5, marginBottom: '1rem' }}>
-                    <strong>Selecciona el público objetivo:</strong>
-                  </p>
-                  <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
-                    {['Todos', 'Solo Adultos', 'Solo Niños'].map(filter => (
-                      <button key={filter} onClick={() => setStudentFilterAge(filter === 'Todos' ? 'ALL' : (filter === 'Solo Niños' ? 'KIDS' : 'ADULTS'))}
-                        style={{ padding: '0.6rem 1rem', borderRadius: '100px', border: '1px solid var(--logo-green)', background: (filter === 'Todos' && studentFilterAge === 'ALL') || (filter === 'Solo Niños' && studentFilterAge === 'KIDS') || (filter === 'Solo Adultos' && studentFilterAge === 'ADULTS') ? 'var(--logo-green)' : 'transparent', color: (filter === 'Todos' && studentFilterAge === 'ALL') || (filter === 'Solo Niños' && studentFilterAge === 'KIDS') || (filter === 'Solo Adultos' && studentFilterAge === 'ADULTS') ? '#fff' : 'var(--logo-green)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}>
-                        {filter}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button onClick={async () => {
-                   if(confirm(`¿Estás seguro de enviar credenciales a los alumnos seleccionados (${studentFilterAge})?`)) {
-                     try {
-                        setIsSendingNotice(true);
-                        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
-                        const res = await fetch(`${API_URL}/api/admin/send-credentials`, { 
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ 
-                            ageGroup: studentFilterAge,
-                            customSubject: noticeData.subject,
-                            customMessage: noticeData.message
-                          })
-                        });
-                        const data = await res.json();
-                        alert(data.message || 'Proceso finalizado');
-                     } catch(e) { alert('Error en el envío'); }
-                     finally { setIsSendingNotice(false); }
-                   }
-                }} disabled={isSendingNotice} className="btn-primary" style={{ padding: '1.2rem', borderRadius: '1.2rem', fontWeight: 900, justifyContent: 'center' }}>
-                  {isSendingNotice ? 'Enviando...' : '🚀 LANZAR CORREOS DE BIENVENIDA'}
-                </button>
-              </div>
-
-              {/* In-App Notifications / Custom Message (Future Placeholder) */}
+              {/* Notification Editor */}
               <div className="glass" style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'rgba(167,139,250,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
                     <Bell size={22} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>Avisos y Notificaciones</h3>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Mensajes personalizados en el portal del alumno.</p>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>Editor de Notificación</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Redacta el mensaje para el portal y el email.</p>
                   </div>
                 </div>
-                
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>ASUNTO DEL CORREO</label>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>ASUNTO DEL MENSAJE</label>
                   <input type="text" value={noticeData.subject} onChange={e => setNoticeData({ ...noticeData, subject: e.target.value })}
-                    style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none' }} />
-                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>MESAJE HTML O TEXTO (Usa {'{{name}}'}, {'{{email}}'} y {'{{password}}'})</label>
-                  <textarea rows={10} value={noticeData.message} onChange={e => setNoticeData({ ...noticeData, message: e.target.value })}
-                    style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none', resize: 'none', fontSize: '0.75rem', fontFamily: 'monospace' }} />
+                    placeholder="Ej: Cambio de horario este viernes"
+                    style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none', fontWeight: 700 }} />
+                  
+                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>CUERPO DEL AVISO</label>
+                  <textarea rows={6} value={noticeData.message} onChange={e => setNoticeData({ ...noticeData, message: e.target.value })}
+                    placeholder="Escribe aquí el contenido de la notificación..."
+                    style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none', resize: 'none', fontSize: '0.9rem' }} />
                 </div>
 
-                <button style={{ padding: '1.2rem', borderRadius: '1.2rem', background: 'var(--panel-border)', border: 'none', color: 'var(--text-muted)', fontWeight: 800, cursor: 'not-allowed' }}>
-                  PRÓXIMAMENTE: NOTIFICAR EN LA APP
+                <div style={{ padding: '1.2rem', background: 'rgba(5,168,106,0.05)', borderRadius: '1.2rem', border: '1px dashed var(--logo-green)' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--logo-green)', fontWeight: 800, lineHeight: 1.5 }}>
+                    📢 Este mensaje aparecerá exclusivamente como notificación en el portal de los alumnos (No consume créditos de email).
+                  </p>
+                </div>
+
+                <button onClick={async () => {
+                  if(!noticeData.subject || !noticeData.message) return alert('Por favor escribe un asunto y un mensaje.');
+                  if(confirm('¿Deseas LANZAR esta notificación a todos los alumnos?')) {
+                    try {
+                      setIsSendingNotice(true);
+                      const res = await fetch(`${API_URL}/api/admin/broadcast`, { 
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ subject: noticeData.subject, message: noticeData.message })
+                      });
+                      const data = await res.json();
+                      alert(data.message || 'Notificación enviada');
+                    } catch(e) { alert('Error en el envío'); }
+                    finally { setIsSendingNotice(false); }
+                  }
+                }} disabled={isSendingNotice} className="btn-primary" 
+                  style={{ padding: '1.4rem', borderRadius: '1.5rem', fontWeight: 900, justifyContent: 'center', background: 'linear-gradient(135deg, #a78bfa, #8b5cf6)', boxShadow: '0 10px 20px rgba(167,139,250,0.3)' }}>
+                  {isSendingNotice ? 'Enviando...' : '🚀 LANZAR NOTIFICACIÓN'}
                 </button>
+              </div>
+
+              {/* Live Preview Card */}
+              <div className="glass" style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                    <Monitor size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>Vista Previa en Portal</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Así es como lo verán los alumnos en su App.</p>
+                  </div>
+                </div>
+
+                <div style={{ padding: '2rem', background: 'var(--panel-bg)', borderRadius: '2rem', border: '1px solid var(--panel-border)', minHeight: '300px', display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative' }}>
+                   {/* Mockup Header */}
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.3 }}>
+                      <div style={{ width: '40px', height: '40px', background: '#334155', borderRadius: '50%' }} />
+                      <div style={{ width: '80px', height: '12px', background: '#334155', borderRadius: '6px' }} />
+                   </div>
+
+                   {/* The Banner Preview */}
+                   <motion.div style={{ padding: '1.2rem', borderRadius: '1.2rem', background: '#f5f3ff', border: '1px solid #a78bfa', display: 'flex', flexDirection: 'column', gap: '0.4rem', boxShadow: '0 10px 30px rgba(167,139,250,0.15)', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#7c3aed', marginBottom: '0.2rem' }}>
+                        <Bell size={14} fill="#7c3aed" />
+                        <span style={{ fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase' }}>AVISO INTEGRAL</span>
+                      </div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#1e1b4b', lineHeight: 1.2 }}>{noticeData.subject || 'Título de ejemplo'}</div>
+                      <div style={{ fontSize: '0.8rem', color: '#5b21b6', lineHeight: 1.4, margin: 0 }} dangerouslySetInnerHTML={{ __html: noticeData.message ? noticeData.message.replace(/\n/g, '<br>') : 'Aquí se mostrará el cuerpo de tu mensaje redactado a la izquierda...' }} />
+                    </motion.div>
+
+                    {/* Mockup rest of portal */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', opacity: 0.2 }}>
+                      <div style={{ height: '80px', background: '#334155', borderRadius: '1rem' }} />
+                      <div style={{ height: '80px', background: '#334155', borderRadius: '1rem' }} />
+                    </div>
+                </div>
               </div>
             </motion.div>
           )}
@@ -2125,6 +2166,7 @@ const App: React.FC = () => {
                   </div>
                   <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '1.5rem', borderRadius: '2rem' }} onClick={() => setIsSendingNotice(true)}>ENVIAR COMUNICADO MASIVO</button>
                   <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center', padding: '1.5rem', borderRadius: '2rem', borderColor: 'var(--logo-green)', color: 'var(--logo-green)' }} onClick={handleGeneratePasswordsForAll}>GENERAR CLAVES A ALUMNOS ANTIGUOS</button>
+                  <button className="btn-primary" style={{ width: '100%', background: '#111', color: '#fff', border: '1px solid #333', justifyContent: 'center', padding: '1.2rem', borderRadius: '2rem' }} onClick={() => handleSendCredentialsByEmail('ALL')}>SOLO ENVIAR CREDENCIALES POR EMAIL (SIN NOTIFICACIÓN)</button>
                 </div>
               </section>
             </motion.div>
@@ -2211,14 +2253,10 @@ const App: React.FC = () => {
                     <div style={{ position: 'relative' }}>
                       <div style={{ width: '100px', height: '100px', borderRadius: '2.5rem', overflow: 'hidden', background: 'var(--panel-surface)', border: '2px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.05)' }}>
                         <img
-                          src={selectedStudent.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedStudent.name}`}
+                          src={selectedStudent.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedStudent.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       </div>
-                      <label style={{ position: 'absolute', bottom: '-10px', right: '-10px', background: 'var(--logo-green)', color: '#fff', width: '40px', height: '40px', borderRadius: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 10px 20px rgba(5,168,106,0.3)', border: '3px solid #fff' }}>
-                        <Camera size={18} />
-                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleAvatarUpload(e, selectedStudent)} />
-                      </label>
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '0.8rem' }}>{isEditingStudent ? 'Editando Perfil' : 'Ficha del Alumno'}</div>
@@ -2592,6 +2630,7 @@ const App: React.FC = () => {
             </motion.div>
           )
         }
+        
       </AnimatePresence>
     </div>
   );
@@ -2688,3 +2727,4 @@ const AcceptTermsModal: React.FC<{ student: Student, onAccept: () => void }> = (
     </motion.div>
   );
 };
+

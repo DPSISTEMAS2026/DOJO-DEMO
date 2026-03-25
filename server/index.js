@@ -26,7 +26,8 @@ const client = new MercadoPagoConfig({
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Paths to "Database"
 const dbPath = path.join(__dirname, 'data');
@@ -40,6 +41,7 @@ const videosFile = path.join(dbPath, 'videos.json');
 const newsFile = path.join(dbPath, 'news.json');
 const galleryFile = path.join(dbPath, 'gallery.json');
 const heroVideosFile = path.join(dbPath, 'heroVideos.json');
+const noticeFile = path.join(dbPath, 'global_notice.json');
 
 // Servir archivos estáticos de subidas
 app.use('/uploads', express.static(uploadsDir));
@@ -234,8 +236,8 @@ app.get('/api/news', async (req, res) => {
 
 app.post('/api/news', async (req, res) => {
     try {
-        // Limpiamos y reinsertamos para mantener la sincronización masiva igual que en el JSON
-        await supabase.from('news').delete().neq('id', 0);
+        // Borrar noticias previas (exceptuando el aviso global reservado con ID 999999)
+        await supabase.from('news').delete().neq('id', 999999);
         const { error } = await supabase.from('news').insert(Array.isArray(req.body) ? req.body : [req.body]);
         if (error) throw error;
         res.status(200).json(req.body);
@@ -298,7 +300,9 @@ app.get('/api/students', async (req, res) => {
             monthlyFee: s.monthlyfee,
             avatar: s.avatar,
             birthDate: s.birthdate,
-            history: Array.isArray(s.history) ? s.history : []
+            history: Array.isArray(s.history) ? s.history : [],
+            terms_accepted: s.terms_accepted === true,
+            scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : []
         }));
 
         res.json(formatted);
@@ -393,7 +397,8 @@ app.post('/api/students', async (req, res) => {
             monthlyfee: Number(req.body.monthlyFee) || null,
             avatar: req.body.avatar || null,
             birthdate: req.body.birthDate || null,
-            history: Array.isArray(req.body.history) ? req.body.history : []
+            history: Array.isArray(req.body.history) ? req.body.history : [],
+            scheduledclasses: []
         };
         const { error } = await supabase.from('students').insert(newStudent);
         if (error) throw error;
@@ -472,6 +477,7 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.lastPaymentDate !== undefined) updateData.lastpaymentdate = req.body.lastPaymentDate;
         if (req.body.lastPaymentMonth !== undefined) updateData.lastpaymentmonth = req.body.lastPaymentMonth;
         if (req.body.terms_accepted !== undefined) updateData.terms_accepted = req.body.terms_accepted === true;
+        if (req.body.scheduledClasses !== undefined) updateData.scheduledclasses = req.body.scheduledClasses;
 
         const { error } = await supabase.from('students').update(updateData).eq('id', req.params.id);
         if (error) throw error;
@@ -597,6 +603,7 @@ app.post('/api/checkout', async (req, res) => {
             body: {
                 items: [
                     {
+                        id: student.id, // Linking student ID for better tracking
                         title: `Mensualidad Dojo Ranas - ${student.name}`,
                         quantity: 1,
                         currency_id: 'CLP',
@@ -606,6 +613,7 @@ app.post('/api/checkout', async (req, res) => {
                 payer: {
                     email: student.email
                 },
+                external_reference: student.id.toString(), // CRITICAL for webhook reliability
                 back_urls: {
                     success: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=success',
                     failure: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=failure',
@@ -689,6 +697,24 @@ app.post('/api/students/:id/send-payment-reminder', async (req, res) => {
         res.json({ success: true, message: 'Recordatorio enviado' });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Generar contraseñas para los que no tienen (Alumnos Antiguos)
+app.post('/api/admin/generate-passwords', async (req, res) => {
+    try {
+        const { data: students, error: selectError } = await supabase.from('students').select('*').is('password', null);
+        if (selectError) throw selectError;
+
+        let counts = 0;
+        for (const s of (students || [])) {
+            const pass = Math.random().toString(36).slice(-6).toUpperCase();
+            await supabase.from('students').update({ password: pass }).eq('id', s.id);
+            counts++;
+        }
+        res.json({ success: true, count: counts });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 
@@ -817,14 +843,19 @@ app.post('/api/webhooks', async (req, res) => {
 
             console.log(`Payment Approved: ${paymentId} - Email: ${payerEmail} - Amount: ${amount}`);
 
-            // Buscamos alumno en Supabase
-            const { data: student, error: selectError } = await supabase
-                .from('students')
-                .select('*')
-                .eq('email', payerEmail.toLowerCase())
-                .maybeSingle();
+            // Buscamos alumno en Supabase usando Preferencia de ID o Email como fallback
+            const studentId = payDetails.external_reference;
+            let student = null;
 
-            if (selectError) throw selectError;
+            if (studentId) {
+                const { data } = await supabase.from('students').select('*').eq('id', studentId).maybeSingle();
+                student = data;
+            }
+
+            if (!student && payerEmail) {
+                const { data } = await supabase.from('students').select('*').eq('email', payerEmail.toLowerCase()).maybeSingle();
+                student = data;
+            }
 
             if (student) {
                 const history = Array.isArray(student.history) ? student.history : [];
@@ -859,6 +890,54 @@ app.post('/api/webhooks', async (req, res) => {
     }
 
     res.sendStatus(200);
+});
+
+
+// Broadcast global (Notificación en App Exclusivamente)
+app.post('/api/admin/broadcast', async (req, res) => {
+    try {
+        const { subject, message } = req.body;
+        if (!subject || !message) return res.status(400).json({ error: 'Asunto y mensaje requeridos' });
+
+        const noticeData = {
+            subject,
+            message,
+            date: new Date().toISOString()
+        };
+        
+        // Persistencia en Render vía Supabase (Usamos ID reservado 999999 en tabla news)
+        try {
+            await supabase.from('news').upsert({
+                id: 999999,
+                title: subject,
+                description: message,
+                date: noticeData.date
+            });
+        } catch (supaErr) {
+            console.error('Error saving notice to Supabase:', supaErr);
+        }
+
+        writeData(noticeFile, noticeData);
+        res.json({ success: true, message: `Aviso publicado en los portales de todos los alumnos.` });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/global-notice', async (req, res) => {
+    try {
+        // Intentar Supabase primero para persistencia post-reinicio en Render
+        const { data: supaNotice } = await supabase.from('news').select('*').eq('id', 999999).single();
+        if (supaNotice) {
+            return res.json({ subject: supaNotice.title, message: supaNotice.description });
+        }
+
+        if (fs.existsSync(noticeFile)) {
+            const data = fs.readFileSync(noticeFile, 'utf-8');
+            return res.json(JSON.parse(data));
+        }
+        res.json(null);
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.listen(PORT, () => {
