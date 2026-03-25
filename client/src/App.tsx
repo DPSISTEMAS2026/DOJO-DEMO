@@ -153,6 +153,21 @@ const newsItems = [
 
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(() => localStorage.getItem('viewMode') as ViewMode || 'landing');
+  const [noticeData, setNoticeData] = useState({ 
+    subject: 'Tus credenciales de acceso - Dojo Ranas 🐸', 
+    message: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+  <h2 style="color: #05a86a;">¡Hola {{name}}!</h2>
+  <p>Te enviamos tus datos de acceso para la plataforma de <strong>Dojo Ranas Administration</strong>.</p>
+  <div style="background: #f4f4f4; padding: 15px; border-radius: 8px; margin: 20px 0;">
+    <p style="margin: 5px 0;"><strong>Usuario:</strong> {{email}}</p>
+    <p style="margin: 5px 0;"><strong>Contraseña Provisional:</strong> {{password}}</p>
+  </div>
+  <p style="font-size: 0.9rem; color: #666;">Te aconsejamos cambiar tu contraseña una vez hayas iniciado sesión en tu perfil. 👍</p>
+  <p>¡Nos vemos en el tatami!</p>
+  <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+  <p style="font-size: 0.8rem; color: #999;">Dojo Ranas - Lautaro 581</p>
+</div>`
+  });
   const [role, setRole] = useState<UserRole>(() => localStorage.getItem('role') as UserRole || 'guest');
   const [currentUser, setCurrentUser] = useState<Student | null>(() => {
     const u = localStorage.getItem('currentUser');
@@ -1819,7 +1834,11 @@ const App: React.FC = () => {
                         const res = await fetch(`${API_URL}/api/admin/send-credentials`, { 
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ ageGroup: studentFilterAge })
+                          body: JSON.stringify({ 
+                            ageGroup: studentFilterAge,
+                            customSubject: noticeData.subject,
+                            customMessage: noticeData.message
+                          })
                         });
                         const data = await res.json();
                         alert(data.message || 'Proceso finalizado');
@@ -1844,12 +1863,12 @@ const App: React.FC = () => {
                 </div>
                 
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>ASUNTO DEL MENSAJE</label>
-                  <input type="text" value={noticeData.subject} onChange={e => setNoticeData({...noticeData, subject: e.target.value})}
+                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>ASUNTO DEL CORREO</label>
+                  <input type="text" value={noticeData.subject} onChange={e => setNoticeData({ ...noticeData, subject: e.target.value })}
                     style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none' }} />
-                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>MESAJE HTML O TEXTO</label>
-                  <textarea rows={5} value={noticeData.message} onChange={e => setNoticeData({...noticeData, message: e.target.value})}
-                    style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none', resize: 'none' }} />
+                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>MESAJE HTML O TEXTO (Usa {{name}}, {{email}} y {{password}})</label>
+                  <textarea rows={10} value={noticeData.message} onChange={e => setNoticeData({ ...noticeData, message: e.target.value })}
+                    style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none', resize: 'none', fontSize: '0.75rem', fontFamily: 'monospace' }} />
                 </div>
 
                 <button style={{ padding: '1.2rem', borderRadius: '1.2rem', background: 'var(--panel-border)', border: 'none', color: 'var(--text-muted)', fontWeight: 800, cursor: 'not-allowed' }}>
