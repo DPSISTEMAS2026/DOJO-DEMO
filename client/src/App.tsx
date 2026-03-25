@@ -1132,82 +1132,36 @@ const App: React.FC = () => {
   }
 
   // --- RENDERING STUDENT PANEL ---
-  const studentAge = calculateAge(currentUser?.birthDate) as any;
-  const isKid = studentAge !== 'N/A' && studentAge < 18;
-  const scheduleData = isKid ? [
-    { day: 'Martes', classes: [{ time: '18:00', name: 'Pequeños Campeones' }] },
-    { day: 'Miércoles', classes: [{ time: '16:45', name: 'Pequeños Campeones' }] },
-    { day: 'Jueves', classes: [{ time: '18:00', name: 'Pequeños Campeones' }] },
-    { day: 'Viernes', classes: [{ time: '16:45', name: 'Pequeños Campeones' }] },
-    { day: 'Sábado', classes: [{ time: '11:00', name: 'Pequeños Campeones' }] }
-  ] : [
-    { day: 'Lunes', classes: [{ time: '19:30', name: 'Ranas On Fire' }] },
-    { day: 'Martes', classes: [{ time: '06:45', name: 'Valientes' }, { time: '19:00', name: 'Ranas On Fire' }] },
-    { day: 'Miércoles', classes: [{ time: '19:30', name: 'Ranas No-Gi' }] },
-    { day: 'Jueves', classes: [{ time: '06:45', name: 'Valientes' }, { time: '19:00', name: 'Ranas On Fire' }] },
-    { day: 'Viernes', classes: [{ time: '20:00', name: 'Competidor' }] },
-    { day: 'Sábado', classes: [{ time: '12:00', name: 'Open Mat' }] }
-  ];
-
-  const daysMap: Record<string, number> = { 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5, 'Sábado': 6, 'Domingo': 7 };
-
-  const isClassDisabled = (day: string) => {
-    const currentDayRaw = new Date().getDay();
-    const currentDay = currentDayRaw === 0 ? 7 : currentDayRaw;
-    const targetDay = daysMap[day];
-    return targetDay !== undefined && targetDay < currentDay;
+  const getMarchDays = () => {
+    const days = [];
+    // March 2024 starts on Friday (5)
+    for (let i = 0; i < 4; i++) days.push(new Date(0)); // empty slots
+    for (let i = 1; i <= 31; i++) days.push(new Date(2024, 2, i));
+    return days;
   };
 
-  const getWeekStart = (date: Date) => {
-    const d = new Date(date);
-    const day = d.getDay() || 7;
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - day + 1);
-    return d.getTime();
-  };
-
-  const handleSelectNextClass = (day: string, time: string, name: string) => {
-    if (isClassDisabled(day)) return;
-
-    const currentDayRaw = new Date().getDay();
-    const currentDay = currentDayRaw === 0 ? 7 : currentDayRaw;
-    const targetDay = daysMap[day];
-    if (targetDay === undefined) return;
-
-    let distance = targetDay - currentDay;
-    if (distance < 0) return;
-
-    let d = new Date();
-    d.setDate(d.getDate() + distance);
-    d.setHours(12, 0, 0, 0); // safe mid-day target
-    const targetTimestamp = d.getTime();
-
-    if (!currentUser) return;
-
-    const currentWeekStart = getWeekStart(new Date());
-    const scheduled = currentUser.scheduledClasses || [];
-    const thisWeekClasses = scheduled.filter(c => c.timestamp >= currentWeekStart);
-
-    const isAlreadySelected = thisWeekClasses.some(c => c.day === day && c.time === time);
-
-    let newScheduled: any[];
-    if (isAlreadySelected) {
-      newScheduled = scheduled.filter(c => !(c.day === day && c.time === time && c.timestamp >= currentWeekStart));
+  const handleBookClass = (timestamp: number) => {
+    const isBooked = (currentUser?.scheduledClasses || []).some(c => c.timestamp === timestamp);
+    let newScheduled = [];
+    if (isBooked) {
+      newScheduled = (currentUser?.scheduledClasses || []).filter(c => c.timestamp !== timestamp);
     } else {
       const planLimits: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4, 'Ilimitado': 99 };
       let planMax = 2;
-      const planVal = currentUser.plan ? currentUser.plan[0] : '2';
-      if (currentUser.plan?.toLowerCase().includes('ilimitado')) planMax = 99;
+      const planVal = currentUser?.plan ? currentUser.plan[0] : '2';
+      if (currentUser?.plan?.toLowerCase().includes('ilimitado')) planMax = 99;
       else planMax = planLimits[planVal] || 2;
 
-      if (thisWeekClasses.length >= planMax) {
-        alert(`❌ Tu plan permite un máximo de ${planMax} clase(s) por semana.`);
+      const currentWeekStart = getWeekStart(new Date());
+      const thisWeekCount = (currentUser?.scheduledClasses || []).filter(c => c.timestamp >= currentWeekStart).length;
+
+      if (thisWeekCount >= planMax) {
+        alert(`Has alcanzado el límite de tu plan (${planMax} clases por semana).`);
         return;
       }
-      newScheduled = [...scheduled, { day, time, name, timestamp: targetTimestamp }];
+      newScheduled = [...(currentUser?.scheduledClasses || []), { id: Date.now().toString(), timestamp, day: '', time: '', name: 'Reserva' }];
     }
-
-    handleUpdateStudent({ ...currentUser, scheduledClasses: newScheduled });
+    handleUpdateStudent({ ...currentUser!, scheduledClasses: newScheduled });
   };
 
   if (viewMode === 'app' && role === 'student' && currentUser) {
@@ -1259,9 +1213,15 @@ const App: React.FC = () => {
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' && (
               <motion.div key="dashboard" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                {noticeData.subject && (
+                {noticeData.subject && !isNoticeDismissed && (
                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
                     style={{ background: 'linear-gradient(135deg, rgba(5,168,106,0.1) 0%, rgba(16,244,156,0.1) 100%)', border: '1px solid rgba(5,168,106,0.2)', padding: '1.5rem', borderRadius: '1.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
+                    <button 
+                      onClick={() => setIsNoticeDismissed(true)}
+                      style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(0,0,0,0.05)', border: 'none', color: 'var(--text-main)', padding: '5px', borderRadius: '50%', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <X size={16} />
+                    </button>
                     <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', background: 'var(--logo-green)', filter: 'blur(40px)', opacity: 0.2 }} />
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'start', position: 'relative', zIndex: 1 }}>
                       <div style={{ background: 'var(--logo-green)', padding: '0.6rem', borderRadius: '12px', color: '#fff' }}>
@@ -1301,74 +1261,68 @@ const App: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {(!currentUser?.isPaid) && (
-                  <motion.button initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
-                    whileHover={{ scale: 1.02, boxShadow: '0 15px 30px rgba(0,157,255,0.25)' }} whileTap={{ scale: 0.97 }}
-                    onClick={() => handleCreatePaymentLink(currentUser)}
-                    style={{ width: '100%', padding: '1.2rem', background: '#009EE3', border: 'none', borderRadius: '1.3rem', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.7rem', letterSpacing: '0.05em', marginBottom: '1.2rem', boxShadow: '0 8px 30px rgba(0,157,255,0.15)' }}>
-                    <CreditCard size={20} /> PAGAR CON MERCADO PAGO
-                  </motion.button>
-                )}
-
-                {/* Horarios */}
-                <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} style={{ marginBottom: '2rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 900 }}>Tus Horarios ({isKid ? 'Niños - Gimnasio Fénix' : 'Adultos'})</h3>
+                {/* Class Booking Subsystem */}
+                <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                  style={{ background: 'var(--panel-card)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid var(--panel-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+                    <h3 style={{ fontWeight: 900, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={18} style={{ color: 'var(--logo-green)' }} /> Calendario</h3>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--panel-muted)', fontWeight: 700 }}>Marzo 2024</div>
                   </div>
-                  <div style={{ display: 'flex', overflowX: 'auto', gap: '0.8rem', paddingBottom: '0.5rem', margin: '0 -1.5rem', padding: '0 1.5rem', WebkitOverflowScrolling: 'touch' }}>
-                    {scheduleData.map((dayItem, idx) => (
-                      <div key={idx} style={{ flexShrink: 0, width: '135px', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1.1rem', padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                        <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{dayItem.day}</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          {dayItem.classes.map((cls, cIdx) => {
-                            const disabled = isClassDisabled(dayItem.day);
-                            const cWeekStart = getWeekStart(new Date());
-                            const isSelected = (currentUser?.scheduledClasses || []).some(sc => sc.timestamp >= cWeekStart && sc.day === dayItem.day && sc.time === cls.time && sc.name === cls.name);
-                            return (
-                              <motion.div key={cIdx}
-                                whileHover={!disabled ? { scale: 1.02 } : {}}
-                                whileTap={!disabled ? { scale: 0.98 } : {}}
-                                onClick={() => !disabled && handleSelectNextClass(dayItem.day, cls.time, cls.name)}
-                                style={{
-                                  background: isSelected ? 'var(--logo-green)' : (disabled ? 'transparent' : 'var(--panel-bg)'),
-                                  borderRadius: '0.6rem',
-                                  padding: '0.7rem',
-                                  border: isSelected ? '1px solid var(--logo-green)' : (disabled ? '1px dashed var(--panel-input-border)' : '1px solid var(--panel-input-border)'),
-                                  cursor: disabled ? 'not-allowed' : 'pointer',
-                                  opacity: disabled ? 0.35 : 1
-                                }}>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: isSelected ? '#fff' : 'var(--text-main)', marginBottom: '0.2rem' }}>{cls.time}</div>
-                                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: isSelected ? 'rgba(255,255,255,0.85)' : 'var(--panel-muted)', textTransform: 'capitalize' }}>{cls.name}</div>
-                              </motion.div>
-                            )
-                          })}
-                        </div>
-                      </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+                    {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
+                      <div key={i} style={{ textAlign: 'center', fontSize: '0.6rem', color: 'var(--panel-muted)', fontWeight: 900 }}>{d}</div>
                     ))}
                   </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem' }}>
+                    {getMarchDays().map((day, i) => {
+                      const isBooked = (currentUser?.scheduledClasses || []).some(c => c.timestamp === day.getTime());
+                      const isPast = day.getTime() < new Date().setHours(0, 0, 0, 0);
+                      const isToday = day.getTime() === new Date().setHours(0, 0, 0, 0);
+
+                      return (
+                        <motion.button key={i} whileTap={{ scale: 0.9 }}
+                          onClick={() => day.getDate() > 0 && !isPast && handleBookClass(day.getTime())}
+                          style={{
+                            aspectRatio: '1/1', borderRadius: '12px', border: 'none', fontSize: '0.8rem', fontWeight: 800, cursor: (day.getDate() > 0 && !isPast) ? 'pointer' : 'default',
+                            background: isBooked ? 'var(--logo-green)' : (isToday ? 'rgba(5,168,106,0.1)' : 'var(--panel-surface)'),
+                            color: isBooked ? '#000' : (isPast ? 'rgba(255,255,255,0.1)' : (isToday ? 'var(--logo-green)' : 'var(--panel-text)')),
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}>
+                          {day.getDate() > 0 ? day.getDate() : ''}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                  {(!currentUser?.isPaid) && (
+                    <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', borderRadius: '1rem', border: '1px solid rgba(239,68,68,0.2)', textAlign: 'center' }}>
+                      <p style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.8rem' }}>⚠️ Tu mensualidad está pendiente. Paga para habilitar reservas.</p>
+                      <button className="btn-primary" style={{ width: '100%', background: '#ef4444', color: '#fff', fontSize: '0.8rem' }} onClick={() => handleCreatePaymentLink(currentUser!)}>PAGAR AHORA</button>
+                    </div>
+                  )}
                 </motion.section>
 
-                {/* Videos */}
-                <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 900 }}>Técnicas para ti</h3>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>VER TODO</span>
+                {/* Library Highlights */}
+                <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                  style={{ marginBottom: '6rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', padding: '0 0.5rem' }}>
+                    <h3 style={{ fontWeight: 900, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Award size={18} style={{ color: 'var(--logo-green)' }} /> Para tu grado</h3>
+                    <button style={{ background: 'none', border: 'none', color: 'var(--logo-green)', fontWeight: 800, fontSize: '0.7rem' }}>Ver todo</button>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                     {videos.filter(v => v.beltLevel === currentUser?.belt).length > 0 ? (
-                      videos.filter(v => v.beltLevel === currentUser?.belt).map((video, i) => (
-                        <motion.div key={video.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 + i * 0.07 }}
-                          whileHover={{ x: 6 }}
-                          style={{ display: 'flex', gap: '1rem', padding: '0.9rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '1.1rem', alignItems: 'center', cursor: 'pointer' }}>
-                          <div style={{ position: 'relative', width: '72px', height: '50px', borderRadius: '0.7rem', overflow: 'hidden', flexShrink: 0 }}>
-                            <img src={video.thumbnail} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <Play size={16} fill="#fff" color="#fff" />
-                            </div>
+                      videos.filter(v => v.beltLevel === currentUser?.belt).slice(0, 3).map(video => (
+                        <motion.div key={video.id} whileTap={{ scale: 0.98 }} onClick={() => window.open(video.url)}
+                          style={{ background: 'var(--panel-card)', borderRadius: '1.2rem', padding: '0.8rem', display: 'flex', gap: '1rem', alignItems: 'center', border: '1px solid var(--panel-border)' }}>
+                          <div style={{ width: '70px', height: '50px', borderRadius: '8px', overflow: 'hidden', background: '#000', position: 'relative' }}>
+                            <img src={video.thumbnail} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
+                            <Play size={12} fill="#fff" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#fff' }} />
                           </div>
                           <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 900, fontSize: '0.85rem', marginBottom: '2px' }}>{video.title}</div>
-                            <div style={{ fontSize: '0.65rem', color: 'var(--logo-green)', fontWeight: 800 }}>{video.category.toUpperCase()}</div>
+                            <h5 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.2rem' }}>{video.title}</h5>
+                            <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--panel-muted)', fontWeight: 700 }}>{video.category}</p>
                           </div>
                           <ChevronRight size={14} style={{ opacity: 0.25 }} />
                         </motion.div>
@@ -1381,7 +1335,7 @@ const App: React.FC = () => {
                     )}
                   </div>
                 </motion.section>
-              </motion.div >
+              </motion.div>
             )}
 
 
