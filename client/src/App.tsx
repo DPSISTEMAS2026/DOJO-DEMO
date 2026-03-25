@@ -218,7 +218,7 @@ const App: React.FC = () => {
   
   const handleManualPayment = async (studentId: string) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
       const response = await fetch(`${API_URL}/api/students/${studentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -1732,7 +1732,7 @@ const App: React.FC = () => {
                               <button className="btn-primary" style={{ flex: 1, padding: '0.6rem', fontSize: '0.75rem' }} onClick={() => window.open(video.url)}>VER</button>
                               <button style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', padding: '0.5rem', cursor: 'pointer' }} onClick={async () => {
                                 if(confirm('¿Eliminar video?')) {
-                                  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+                                  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
                                   await fetch(`${API_URL}/api/videos/${video.id}`, { method: 'DELETE' });
                                   setVideos(videos.filter(v => v.id !== video.id));
                                 }
