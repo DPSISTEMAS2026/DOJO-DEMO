@@ -397,6 +397,39 @@ app.post('/api/students', async (req, res) => {
         };
         const { error } = await supabase.from('students').insert(newStudent);
         if (error) throw error;
+        
+        // --- EVNIO AUTOMÁTICO AL REGISTRAR ---
+        if (newStudent.email && newStudent.password && process.env.SMTP_HOST) {
+            try {
+                const transporter = nodemailer.createTransport({
+                    host: process.env.SMTP_HOST,
+                    port: Number(process.env.SMTP_PORT) || 587,
+                    secure: process.env.SMTP_SECURE === 'true',
+                    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+                });
+                const html = `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+                        <h2 style="color: #05a86a;">¡Hola ${newStudent.name}!</h2>
+                        <p>Has sido registrado exitosamente. Te enviamos los datos de acceso para nuestro <strong>Portal de Alumnos de Dojo Ranas</strong>.</p>
+                        <div style="background: #f4f4f4; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Usuario:</strong> ${newStudent.email}</p>
+                            <p style="margin: 5px 0;"><strong>Contraseña Provisional:</strong> ${newStudent.password}</p>
+                        </div>
+                        <p style="font-size: 0.9rem; color: #666;">Te aconsejamos cambiar tu contraseña una vez hayas iniciado sesión en tu perfil. 👍</p>
+                        <p>¡Nos vemos en el tatami!</p>
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                        <p style="font-size: 0.8rem; color: #999;">Dojo Ranas - Lautaro 581</p>
+                    </div>
+                `;
+                transporter.sendMail({
+                    from: '"Dojo Ranas 🐸" <' + (process.env.SMTP_FROM || process.env.SMTP_USER) + '>',
+                    to: newStudent.email,
+                    subject: 'Tus credenciales de acceso - Dojo Ranas 🐸',
+                    html
+                }).catch(err => console.error("Auto Welcome Mail Error:", err));
+            } catch(e) { console.error("SMTP Setup Error:", e); }
+        }
+
         res.status(201).json({ ...req.body, id: newId });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -541,12 +574,12 @@ app.post('/api/checkout', async (req, res) => {
                     email: student.email
                 },
                 back_urls: {
-                    success: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=success`,
-                    failure: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=failure`,
-                    pending: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=pending`,
+                    success: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=success',
+                    failure: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=failure',
+                    pending: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=pending'
                 },
                 auto_return: "approved",
-                notification_url: `${process.env.BACKEND_URL}/api/webhooks`
+                notification_url: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/webhooks` : 'https://dojoranas.onrender.com/api/webhooks'
             }
         });
 
@@ -582,12 +615,12 @@ app.post('/api/students/:id/send-payment-reminder', async (req, res) => {
                 ],
                 payer: { email: student.email },
                 back_urls: {
-                    success: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=success`,
-                    failure: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=failure`,
-                    pending: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=pending`,
+                    success: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=success',
+                    failure: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=failure',
+                    pending: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=pending'
                 },
                 auto_return: "approved",
-                notification_url: `${process.env.BACKEND_URL}/api/webhooks`
+                notification_url: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/webhooks` : 'https://dojoranas.onrender.com/api/webhooks'
             }
         });
 
