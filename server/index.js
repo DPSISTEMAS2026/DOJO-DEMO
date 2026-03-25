@@ -576,7 +576,7 @@ app.post('/api/admin/send-credentials', async (req, res) => {
 
             try {
                 await transporter.sendMail({
-                    from: `"Dojo Ranas" <${process.env.SMTP_USER}>`,
+                    from: `"Dojo Ranas" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
                     to: student.email,
                     subject: 'Tus credenciales de acceso - Dojo Ranas 🐸',
                     html: `
