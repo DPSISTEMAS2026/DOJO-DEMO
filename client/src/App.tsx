@@ -104,7 +104,7 @@ import type {
   AutomationConfig
 } from './types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname.includes('localhost') ? 'http://localhost:3002' : 'https://dojo-demo-server.onrender.com');
 
 const newsItems = [
   {
@@ -256,6 +256,8 @@ const App: React.FC = () => {
   const [isEditingStudent, setIsEditingStudent] = useState(false);
   const [editedStudent, setEditedStudent] = useState<Student | null>(null);
   const [studentNewPassword, setStudentNewPassword] = useState('');
+
+  const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -1833,8 +1835,7 @@ const App: React.FC = () => {
                               <button className="btn-primary" style={{ flex: 1, padding: '0.6rem', fontSize: '0.75rem' }} onClick={() => window.open(video.url)}>VER</button>
                               <button style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', padding: '0.5rem', cursor: 'pointer' }} onClick={async () => {
                                 if(confirm('¿Eliminar video?')) {
-                                  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
-                                  await fetch(`${API_URL}/api/videos/${video.id}`, { method: 'DELETE' });
+                                                                    await fetch(`${API_URL}/api/videos/${video.id}`, { method: 'DELETE' });
                                   setVideos(videos.filter(v => v.id !== video.id));
                                 }
                               }}>Eliminar</button>
@@ -1923,6 +1924,23 @@ const App: React.FC = () => {
                       <div style={{ width: '80px', height: '12px', background: '#334155', borderRadius: '6px' }} />
                    </div>
 
+                   {/* Global Broadcast Notice */}
+        {noticeData.subject && !isNoticeDismissed && (
+          <section style={{ margin: '0 1.5rem 2rem', padding: '1.5rem', background: 'linear-gradient(135deg, #1e1b4b, #312e81)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.1)', position: 'relative', overflow: 'hidden' }}>
+            <button 
+              onClick={() => setIsNoticeDismissed(true)}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '5px', borderRadius: '50%', cursor: 'pointer', zIndex: 10 }}
+            >
+              <X size={16} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.8rem', color: '#a78bfa' }}>
+              <Bell size={18} fill="#a78bfa" />
+              <span style={{ fontSize: '0.7rem', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase' }}>AVISO IMPORTANTE</span>
+            </div>
+            <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#fff', marginBottom: '0.6rem', lineHeight: 1.3 }}>{noticeData.subject}</h4>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: noticeData.message.replace(/\n/g, '<br>') }} />
+          </section>
+        )}
                    {/* The Banner Preview */}
                    <motion.div style={{ padding: '1.2rem', borderRadius: '1.2rem', background: '#f5f3ff', border: '1px solid #a78bfa', display: 'flex', flexDirection: 'column', gap: '0.4rem', boxShadow: '0 10px 30px rgba(167,139,250,0.15)', position: 'relative', overflow: 'hidden' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#7c3aed', marginBottom: '0.2rem' }}>
