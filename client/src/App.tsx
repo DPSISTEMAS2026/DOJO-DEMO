@@ -163,7 +163,46 @@ const App: React.FC = () => {
     return u ? JSON.parse(u) : null;
   });
 
+  // --- UTILITIES ---
+  const getWeekStart = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay() || 7;
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - day + 1);
+    return d.getTime();
+  };
 
+  const getMarchDays = () => {
+    const days = [];
+    // March 2024 starts on Friday (5 slots)
+    for (let i = 0; i < 4; i++) days.push(new Date(0)); 
+    for (let i = 1; i <= 31; i++) days.push(new Date(2024, 2, i));
+    return days;
+  };
+
+  const handleBookClass = (timestamp: number) => {
+    const isBooked = (currentUser?.scheduledClasses || []).some(c => c.timestamp === timestamp);
+    let newScheduled = [];
+    if (isBooked) {
+      newScheduled = (currentUser?.scheduledClasses || []).filter(c => c.timestamp !== timestamp);
+    } else {
+      const planLimits: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4, 'Ilimitado': 99 };
+      let planMax = 2;
+      const planVal = currentUser?.plan ? currentUser.plan[0] : '2';
+      if (currentUser?.plan?.toLowerCase().includes('ilimitado')) planMax = 99;
+      else planMax = planLimits[planVal] || 2;
+
+      const currentWeekStart = getWeekStart(new Date());
+      const thisWeekCount = (currentUser?.scheduledClasses || []).filter(c => c.timestamp >= currentWeekStart).length;
+
+      if (thisWeekCount >= planMax) {
+        alert(`Has alcanzado el límite de tu plan (${planMax} clases por semana).`);
+        return;
+      }
+      newScheduled = [...(currentUser?.scheduledClasses || []), { timestamp, day: '', time: '', name: 'Reserva' }];
+    }
+    handleUpdateStudent({ ...currentUser!, scheduledClasses: newScheduled as any[] });
+  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -1131,38 +1170,8 @@ const App: React.FC = () => {
     );
   }
 
-  // --- RENDERING STUDENT PANEL ---
-  const getMarchDays = () => {
-    const days = [];
-    // March 2024 starts on Friday (5)
-    for (let i = 0; i < 4; i++) days.push(new Date(0)); // empty slots
-    for (let i = 1; i <= 31; i++) days.push(new Date(2024, 2, i));
-    return days;
-  };
 
-  const handleBookClass = (timestamp: number) => {
-    const isBooked = (currentUser?.scheduledClasses || []).some(c => c.timestamp === timestamp);
-    let newScheduled = [];
-    if (isBooked) {
-      newScheduled = (currentUser?.scheduledClasses || []).filter(c => c.timestamp !== timestamp);
-    } else {
-      const planLimits: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4, 'Ilimitado': 99 };
-      let planMax = 2;
-      const planVal = currentUser?.plan ? currentUser.plan[0] : '2';
-      if (currentUser?.plan?.toLowerCase().includes('ilimitado')) planMax = 99;
-      else planMax = planLimits[planVal] || 2;
 
-      const currentWeekStart = getWeekStart(new Date());
-      const thisWeekCount = (currentUser?.scheduledClasses || []).filter(c => c.timestamp >= currentWeekStart).length;
-
-      if (thisWeekCount >= planMax) {
-        alert(`Has alcanzado el límite de tu plan (${planMax} clases por semana).`);
-        return;
-      }
-      newScheduled = [...(currentUser?.scheduledClasses || []), { id: Date.now().toString(), timestamp, day: '', time: '', name: 'Reserva' }];
-    }
-    handleUpdateStudent({ ...currentUser!, scheduledClasses: newScheduled });
-  };
 
   if (viewMode === 'app' && role === 'student' && currentUser) {
     return (
