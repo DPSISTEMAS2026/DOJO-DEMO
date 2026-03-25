@@ -29,7 +29,8 @@ import {
   Camera,
   ImageIcon,
   Monitor,
-  Trash2
+  Trash2,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'react-qr-code';
@@ -435,6 +436,7 @@ const App: React.FC = () => {
         },
         body: JSON.stringify({
           student: {
+            id: student.id,
             name: student.name,
             email: student.email || "test_user_123@testuser.com"
           },
@@ -1305,9 +1307,18 @@ const App: React.FC = () => {
                     })}
                   </div>
                   {(!currentUser?.isPaid) && (
-                    <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(239,68,68,0.1)', borderRadius: '1rem', border: '1px solid rgba(239,68,68,0.2)', textAlign: 'center' }}>
-                      <p style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.8rem' }}>⚠️ Tu mensualidad está pendiente. Paga para habilitar reservas.</p>
-                      <button className="btn-primary" style={{ width: '100%', background: '#ef4444', color: '#fff', fontSize: '0.8rem' }} onClick={() => handleCreatePaymentLink(currentUser!)}>PAGAR AHORA</button>
+                    <div style={{ margin: '0 1.5rem 2rem', padding: '1.5rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.1)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: '#ef4444' }}>
+                        <AlertCircle size={20} />
+                        <span style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: '0.05em' }}>MANTÉN TU CUENTA AL DÍA</span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#ef4444', opacity: 0.8, lineHeight: 1.4, fontWeight: 600 }}>Tu mensualidad actual está pendiente. Recuerda regularizarla para mantener el dojo operando, puedes seguir reservando tus clases normalmente.</p>
+                      <button 
+                        onClick={() => handleCreatePaymentLink(currentUser)}
+                        style={{ width: '100%', padding: '1.2rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '1.1rem', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', boxShadow: '0 10px 20px rgba(239,68,68,0.2)' }}
+                      >
+                        PAGAR AHORA CON MERCADO PAGO
+                      </button>
                     </div>
                   )}
                 </motion.section>
