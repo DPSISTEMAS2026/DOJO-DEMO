@@ -1526,7 +1526,7 @@ const App: React.FC = () => {
               </button>
             )}
             <div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '0.3rem' }}>Ranas · Lautaro 581</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '0.3rem' }}>Ranas · Orompello 1421</div>
               <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px', color: 'var(--logo-green)' }}>{tabLabels[activeTab]}</h1>
             </div>
           </div>

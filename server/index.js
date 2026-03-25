@@ -681,7 +681,7 @@ app.post('/api/students/:id/send-payment-reminder', async (req, res) => {
                     <p style="font-size: 0.9rem; color: #666;">También puedes revisar tu estado de cuenta iniciando sesión en nuestro portal de alumnos.</p>
                     <p>¡Nos vemos en el tatami!</p>
                     <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-                    <p style="font-size: 0.8rem; color: #999;">Dojo Ranas Team - Lautaro 581</p>
+                    <p style="font-size: 0.8rem; color: #999;">Dojo Ranas Team - Orompello 1421</p>
                 </div>
             `,
         });
