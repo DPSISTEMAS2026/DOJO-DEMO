@@ -441,6 +441,16 @@ app.delete('/api/students/:id', async (req, res) => {
     }
 });
 
+app.post('/api/students/:id/accept-terms', async (req, res) => {
+    try {
+        const { error } = await supabase.from('students').update({ terms_accepted: true }).eq('id', req.params.id);
+        if (error) throw error;
+        res.json({ success: true, message: 'Términos aceptados correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- SYNC PAYMENTS FROM MERCADO PAGO ---
 app.post('/api/students/:id/sync-payments', async (req, res) => {
     try {
