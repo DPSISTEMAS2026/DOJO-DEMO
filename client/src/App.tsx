@@ -222,7 +222,6 @@ const App: React.FC = () => {
   
   const handleManualPayment = async (studentId: string) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
       const response = await fetch(`${API_URL}/api/students/${studentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -1214,10 +1213,15 @@ const App: React.FC = () => {
       <div style={{ background: 'var(--panel-bg)', minHeight: '100vh', color: 'var(--panel-text)', overflowX: 'hidden' }}>
         {/* Waiver / Terms Modal Check */}
         {currentUser && !currentUser.terms_accepted && (
-          <AcceptTermsModal student={currentUser} onAccept={() => {
-            const updated = { ...currentUser, terms_accepted: true };
-            setCurrentUser(updated);
-            setStudents(prev => prev.map(s => s.id === updated.id ? updated : s));
+          <AcceptTermsModal student={currentUser} onAccept={async () => {
+             const updated = { ...currentUser, terms_accepted: true };
+             // Sincronizar con el servidor inmediatamente
+             try {
+               await fetch(`${API_URL}/api/students/${currentUser.id}/accept-terms`, { method: 'POST' });
+             } catch(e) { console.error("Sync error:", e); }
+             
+             setCurrentUser(updated);
+             setStudents(prev => prev.map(s => s.id === updated.id ? updated : s));
           }} />
         )}
 
@@ -2668,7 +2672,6 @@ const AcceptTermsModal: React.FC<{ student: Student, onAccept: () => void }> = (
     if (!accepted || !hasScrolledToBottom) return;
     setIsSubmitting(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
       const res = await fetch(`${API_URL}/api/students/${student.id}/accept-terms`, { method: 'POST' });
       if (res.ok) {
         onAccept();
