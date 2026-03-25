@@ -434,7 +434,7 @@ app.post('/api/students', async (req, res) => {
 
                         <p style="font-size: 0.85rem; color: #94a3b8; text-align: center; margin-top: 3rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem;">
                             Te aconsejamos cambiar tu contraseña en la sección <strong>Mi Perfil</strong> al ingresar.<br>
-                            <strong>Dojo Ranas Concepción</strong> - Lautaro 581
+                            <strong>Dojo Ranas Concepción</strong> - Orompello 1421
                         </p>
                     </div>
                 `;
@@ -747,7 +747,7 @@ app.post('/api/admin/send-credentials', async (req, res) => {
 
                         <p style="font-size: 0.85rem; color: #94a3b8; text-align: center; margin-top: 3rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem;">
                             Te aconsejamos cambiar tu contraseña en la sección <strong>Mi Perfil</strong> al ingresar.<br>
-                            <strong>Dojo Ranas Concepción</strong> - Lautaro 581
+                            <strong>Dojo Ranas Concepción</strong> - Orompello 1421
                         </p>
                     </div>
                 `;

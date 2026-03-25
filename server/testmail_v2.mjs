@@ -56,7 +56,7 @@ const transporter = nodemailer.createTransport({
 
     <p style="font-size: 0.85rem; color: #94a3b8; text-align: center; margin-top: 3rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem;">
         Recomendamos cambiar tu contraseña en la sección <strong>Mi Perfil</strong> al completar tu primer acceso.<br>
-        <strong>Dojo Ranas Concepción</strong> - Lautaro 581
+        <strong>Dojo Ranas Concepción</strong> - Orompello 1421
     </p>
 </div>`;
         await transporter.sendMail({
