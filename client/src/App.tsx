@@ -104,7 +104,7 @@ import type {
   AutomationConfig
 } from './types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 
 const newsItems = [
   {
@@ -233,7 +233,7 @@ const App: React.FC = () => {
   
   const handleManualPayment = async (studentId: string) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
       const response = await fetch(`${API_URL}/api/students/${studentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -436,7 +436,6 @@ const App: React.FC = () => {
     }
   };
   const [newStudentData, setNewStudentData] = useState({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000 });
-  const [noticeData, setNoticeData] = useState({ subject: 'Aviso Importante', message: 'Legado Ranas BJJ' });
 
   const [fees, setFees] = useState<PlanFees>({
     adults: { '1': 5000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 },
@@ -1780,7 +1779,7 @@ const App: React.FC = () => {
                               <button className="btn-primary" style={{ flex: 1, padding: '0.6rem', fontSize: '0.75rem' }} onClick={() => window.open(video.url)}>VER</button>
                               <button style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', padding: '0.5rem', cursor: 'pointer' }} onClick={async () => {
                                 if(confirm('¿Eliminar video?')) {
-                                  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                                  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
                                   await fetch(`${API_URL}/api/videos/${video.id}`, { method: 'DELETE' });
                                   setVideos(videos.filter(v => v.id !== video.id));
                                 }
@@ -1830,7 +1829,7 @@ const App: React.FC = () => {
                    if(confirm(`¿Estás seguro de enviar credenciales a los alumnos seleccionados (${studentFilterAge})?`)) {
                      try {
                         setIsSendingNotice(true);
-                        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
                         const res = await fetch(`${API_URL}/api/admin/send-credentials`, { 
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
@@ -1866,7 +1865,7 @@ const App: React.FC = () => {
                   <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>ASUNTO DEL CORREO</label>
                   <input type="text" value={noticeData.subject} onChange={e => setNoticeData({ ...noticeData, subject: e.target.value })}
                     style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none' }} />
-                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>MESAJE HTML O TEXTO (Usa {{name}}, {{email}} y {{password}})</label>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>MESAJE HTML O TEXTO (Usa {'{{name}}'}, {'{{email}}'} y {'{{password}}'})</label>
                   <textarea rows={10} value={noticeData.message} onChange={e => setNoticeData({ ...noticeData, message: e.target.value })}
                     style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none', resize: 'none', fontSize: '0.75rem', fontFamily: 'monospace' }} />
                 </div>
@@ -2588,7 +2587,7 @@ const AcceptTermsModal: React.FC<{ student: Student, onAccept: () => void }> = (
     if (!accepted) return;
     setIsSubmitting(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
       const res = await fetch(`${API_URL}/api/students/${student.id}/accept-terms`, { method: 'POST' });
       if (res.ok) {
         onAccept();
