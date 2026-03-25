@@ -46,6 +46,7 @@ export interface Student {
         name: string;
         timestamp: number;
     }[];
+    terms_accepted?: boolean;
 }
 
 export type PlanFees = {

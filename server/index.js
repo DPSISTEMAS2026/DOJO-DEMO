@@ -421,6 +421,7 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.history !== undefined) updateData.history = req.body.history;
         if (req.body.lastPaymentDate !== undefined) updateData.lastpaymentdate = req.body.lastPaymentDate;
         if (req.body.lastPaymentMonth !== undefined) updateData.lastpaymentmonth = req.body.lastPaymentMonth;
+        if (req.body.terms_accepted !== undefined) updateData.terms_accepted = req.body.terms_accepted === true;
 
         const { error } = await supabase.from('students').update(updateData).eq('id', req.params.id);
         if (error) throw error;
@@ -633,9 +634,22 @@ app.post('/api/admin/send-credentials', async (req, res) => {
         });
 
         // Asegúrate de que los estudiantes vivan con password disponible
-        // Aquí asumimos que students vive en Supabase!
-        const { data: students, error: selectError } = await supabase.from('students').select('*');
+        let { data: students, error: selectError } = await supabase.from('students').select('*');
         if (selectError) throw selectError;
+
+        // Filtrar según el grupo solicitado
+        const { ageGroup } = req.body; // 'ALL', 'KIDS', 'ADULTS'
+        if (ageGroup && ageGroup !== 'ALL') {
+            const today = new Date();
+            students = students.filter(s => {
+                if (!s.birthdate) return ageGroup === 'ADULTS';
+                const bd = new Date(s.birthdate);
+                let age = today.getFullYear() - bd.getFullYear();
+                const m = today.getMonth() - bd.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) age--;
+                return ageGroup === 'KIDS' ? age < 18 : age >= 18;
+            });
+        }
 
         let sentCount = 0;
         let errors = [];

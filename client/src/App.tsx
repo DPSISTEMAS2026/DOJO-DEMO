@@ -177,7 +177,7 @@ const App: React.FC = () => {
   }, []);
   const [activeHeroVideo, setActiveHeroVideo] = useState(0);
   const [activeNews, setActiveNews] = useState(0);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'students' | 'payments' | 'settings' | 'videos' | 'website'>(() => localStorage.getItem('activeTab') as any || 'dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'students' | 'payments' | 'settings' | 'videos' | 'website' | 'communications'>(() => localStorage.getItem('activeTab') as any || 'dashboard');
 
   useEffect(() => {
     localStorage.setItem('viewMode', viewMode);
@@ -517,6 +517,22 @@ const App: React.FC = () => {
   const handleSendMassNotice = () => {
     alert('Aviso enviado a todos los alumnos');
     setIsSendingNotice(false);
+  };
+
+  const handleSendPaymentReminder = async (student: Student) => {
+    try {
+      const response = await fetch(`${API_URL}/api/students/${student.id}/send-payment-reminder`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        alert(`✅ Recordatorio de cobra enviado a ${student.name}`);
+      } else {
+        alert('❌ Error al enviar el recordatorio');
+      }
+    } catch (error) {
+      console.error("Error sending payment reminder:", error);
+      alert('❌ Error de red al intentar enviar');
+    }
   };
 
   const handleGeneratePasswordsForAll = () => {
@@ -1160,6 +1176,15 @@ const App: React.FC = () => {
   if (viewMode === 'app' && role === 'student' && currentUser) {
     return (
       <div style={{ background: 'var(--panel-bg)', minHeight: '100vh', color: 'var(--panel-text)', overflowX: 'hidden' }}>
+        {/* Waiver / Terms Modal Check */}
+        {currentUser && !currentUser.terms_accepted && (
+          <AcceptTermsModal student={currentUser} onAccept={() => {
+            const updated = { ...currentUser, terms_accepted: true };
+            setCurrentUser(updated);
+            setStudents(prev => prev.map(s => s.id === updated.id ? updated : s));
+          }} />
+        )}
+
         {/* BG Orbs */}
         <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
           <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(5,168,106,0.12) 0%, transparent 70%)', filter: 'blur(80px)', opacity: 'var(--panel-orb-opacity)' }} />
@@ -1376,7 +1401,7 @@ const App: React.FC = () => {
   }
 
   // --- RENDERING ADMIN PANEL ---
-  const tabLabels: Record<string, string> = { dashboard: 'Resumen', students: 'Alumnos', videos: 'Biblioteca', attendance: 'Asistencia', payments: 'Finanzas', settings: 'Ajustes', website: 'Sitio Web' };
+  const tabLabels: Record<string, string> = { dashboard: 'Resumen', students: 'Alumnos', videos: 'Biblioteca', attendance: 'Asistencia', payments: 'Finanzas', settings: 'Ajustes', website: 'Sitio Web', communications: 'Comunicaciones' };
   return (
     <div style={{ background: 'var(--panel-bg)', minHeight: '100vh', display: 'flex', color: 'var(--panel-text)', overflow: 'hidden' }}>
 
@@ -1419,11 +1444,12 @@ const App: React.FC = () => {
 
             { id: 'payments', label: 'Finanzas', icon: <CreditCard size={17} /> },
             { id: 'videos', label: 'Biblioteca', icon: <Play size={17} /> },
+            { id: 'communications', label: 'Comunicaciones', icon: <Mail size={17} /> },
             { id: 'website', label: 'Sitio Web', icon: <Monitor size={17} /> },
             { id: 'settings', label: 'Ajustes', icon: <Settings size={17} /> },
           ].filter(item => {
               if (isMobile) {
-                  return ['dashboard', 'students', 'payments'].includes(item.id);
+                  return ['dashboard', 'students', 'payments', 'communications'].includes(item.id);
               }
               return true;
           }).map(item => (
@@ -1653,6 +1679,13 @@ const App: React.FC = () => {
                           </td>
                           <td style={{ padding: '1.5rem', textAlign: 'right' }}>
                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                              <button onClick={() => {
+                                 if(confirm(`¿Enviar recordatorio de pago a ${student.name}?`)) {
+                                    handleSendPaymentReminder(student);
+                                 }
+                              }} style={{ background: 'rgba(5,168,106,0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Recordatorio de Pago">
+                                <Bell size={15} />
+                              </button>
                               <button onClick={() => setSelectedStudent(student)} style={{ background: 'none', border: '1px solid var(--glass-border)', padding: '0.6rem 1.2rem', borderRadius: '0.8rem', color: 'var(--text-main)', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>DETALLES</button>
                               <button onClick={() => { if (window.confirm(`¿Estás seguro de que deseas eliminar a ${student.name}?`)) handleDeleteStudent(student.id); }} style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Eliminar Alumno">
                                 <Trash2 size={15} />
@@ -1745,6 +1778,84 @@ const App: React.FC = () => {
                   </motion.div>
                 </motion.div>
               )}
+            </motion.div>
+          )}
+
+          {activeTab === 'communications' && (
+            <motion.div key="communications" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+              style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '2rem' }}>
+              
+              {/* Mass Email Card */}
+              <div className="glass" style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'rgba(5,168,106,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}>
+                    <Mail size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>Envío Masivo de Credenciales</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Notifica a tus alumnos sus datos de acceso.</p>
+                  </div>
+                </div>
+
+                <div style={{ padding: '1.5rem', background: 'rgba(5,168,106,0.05)', borderRadius: '1.2rem', border: '1px dashed var(--logo-green)' }}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: 1.5, marginBottom: '1rem' }}>
+                    <strong>Selecciona el público objetivo:</strong>
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+                    {['Todos', 'Solo Adultos', 'Solo Niños'].map(filter => (
+                      <button key={filter} onClick={() => setStudentFilterAge(filter === 'Todos' ? 'ALL' : (filter === 'Solo Niños' ? 'KIDS' : 'ADULTS'))}
+                        style={{ padding: '0.6rem 1rem', borderRadius: '100px', border: '1px solid var(--logo-green)', background: (filter === 'Todos' && studentFilterAge === 'ALL') || (filter === 'Solo Niños' && studentFilterAge === 'KIDS') || (filter === 'Solo Adultos' && studentFilterAge === 'ADULTS') ? 'var(--logo-green)' : 'transparent', color: (filter === 'Todos' && studentFilterAge === 'ALL') || (filter === 'Solo Niños' && studentFilterAge === 'KIDS') || (filter === 'Solo Adultos' && studentFilterAge === 'ADULTS') ? '#fff' : 'var(--logo-green)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer' }}>
+                        {filter}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button onClick={async () => {
+                   if(confirm(`¿Estás seguro de enviar credenciales a los alumnos seleccionados (${studentFilterAge})?`)) {
+                     try {
+                        setIsSendingNotice(true);
+                        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                        const res = await fetch(`${API_URL}/api/admin/send-credentials`, { 
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ ageGroup: studentFilterAge })
+                        });
+                        const data = await res.json();
+                        alert(data.message || 'Proceso finalizado');
+                     } catch(e) { alert('Error en el envío'); }
+                     finally { setIsSendingNotice(false); }
+                   }
+                }} disabled={isSendingNotice} className="btn-primary" style={{ padding: '1.2rem', borderRadius: '1.2rem', fontWeight: 900, justifyContent: 'center' }}>
+                  {isSendingNotice ? 'Enviando...' : '🚀 LANZAR CORREOS DE BIENVENIDA'}
+                </button>
+              </div>
+
+              {/* In-App Notifications / Custom Message (Future Placeholder) */}
+              <div className="glass" style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'rgba(167,139,250,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
+                    <Bell size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>Avisos y Notificaciones</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Mensajes personalizados en el portal del alumno.</p>
+                  </div>
+                </div>
+                
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>ASUNTO DEL MENSAJE</label>
+                  <input type="text" value={noticeData.subject} onChange={e => setNoticeData({...noticeData, subject: e.target.value})}
+                    style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none' }} />
+                  <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text-muted)' }}>MESAJE HTML O TEXTO</label>
+                  <textarea rows={5} value={noticeData.message} onChange={e => setNoticeData({...noticeData, message: e.target.value})}
+                    style={{ padding: '1rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', color: 'var(--text-main)', outline: 'none', resize: 'none' }} />
+                </div>
+
+                <button style={{ padding: '1.2rem', borderRadius: '1.2rem', background: 'var(--panel-border)', border: 'none', color: 'var(--text-muted)', fontWeight: 800, cursor: 'not-allowed' }}>
+                  PRÓXIMAMENTE: NOTIFICAR EN LA APP
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -2448,3 +2559,65 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+// --- SUBSYSTEM: Waiver / Terms Modal ---
+const AcceptTermsModal: React.FC<{ student: Student, onAccept: () => void }> = ({ student, onAccept }) => {
+  const [accepted, setAccepted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleConfirm = async () => {
+    if (!accepted) return;
+    setIsSubmitting(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/api/students/${student.id}/accept-terms`, { method: 'POST' });
+      if (res.ok) {
+        onAccept();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(15px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+      <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ width: '100%', maxWidth: '550px', background: '#fff', borderRadius: '2.5rem', overflow: 'hidden', boxShadow: '0 50px 100px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+        <div style={{ padding: '2.5rem 2.5rem 1.5rem', textAlign: 'center' }}>
+          <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(5,168,106,0.1)', color: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+            <Award size={30} />
+          </div>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 900, color: '#111', letterSpacing: '-1px', marginBottom: '0.5rem' }}>Aviso Importante</h2>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.5 }}>Hola <strong>{student.name}</strong>, para ingresar al portal es necesario que leas y aceptes la liberación de responsabilidad.</p>
+        </div>
+        
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 2.5rem', margin: '0.5rem 0' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '1.5rem', padding: '1.5rem', fontSize: '0.8rem', color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+            <h4 style={{ textAlign: 'center', margin: '0 0 1rem 0', fontWeight: 900 }}>LIBERACIÓN DE RESPONSABILIDAD</h4>
+            {`CLUB DEPORTIVO SOCIAL Y CULTURAL RANAS JIU JITSU
+
+            A través de este documento acepto y libero de toda responsabilidad al Club Deportivo Social y Cultural Ranas Jiu Jitsu, a sus representantes, asociados, recinto que albergue actividades y/o sponsors del club y/o cualquier evento, de responsabilidad ante accidentes que generen lesiones y/o enfermedades, como resultado de mi participación como deportista o espectador en los entrenamientos, competencias y actividades propias de la organización.
+
+            1. He leído y acepto las condiciones de participación y reglamento.
+            2. Entiendo que la participación incluye riesgo de lesiones físicas.
+            3. Estoy en conocimiento de mi condición médica.
+            4. Poseo cobertura médica para estas actividades.
+            5. Acepto el uso de imágenes para efectos de promoción.
+            6. Libero de responsabilidad por pérdida de pertenencias.`}
+          </div>
+        </div>
+
+        <div style={{ padding: '1.5rem 2.5rem 2.5rem' }}>
+          <label style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', cursor: 'pointer', marginBottom: '1.5rem' }}>
+            <input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} style={{ width: '20px', height: '20px', marginTop: '2px', accentColor: 'var(--logo-green)' }} />
+            <span style={{ fontSize: '0.85rem', color: '#111', fontWeight: 600 }}>He leído y entiendo a cabalidad este documento y sus términos de responsabilidad.</span>
+          </label>
+          <button onClick={handleConfirm} disabled={!accepted || isSubmitting} style={{ width: '100%', padding: '1.3rem', borderRadius: '1.2rem', border: 'none', background: accepted ? 'var(--logo-green)' : '#cbd5e1', color: '#fff', fontWeight: 900, fontSize: '1rem', cursor: accepted ? 'pointer' : 'not-allowed', transition: 'all 0.3s' }}>
+            {isSubmitting ? 'Guardando...' : 'ACEPTAR Y ENTRAR AL PORTAL'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
