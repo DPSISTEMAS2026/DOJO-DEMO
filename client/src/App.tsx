@@ -500,7 +500,11 @@ const App: React.FC = () => {
     }
 
     // Try student login
-    const student = studentToLogin || students.find(s => s.email.toLowerCase() === authEmail.trim().toLowerCase() && s.password === authPassword.trim());
+    const student = studentToLogin || students.find(s => 
+      s.email && 
+      s.email.toLowerCase() === authEmail.trim().toLowerCase() && 
+      s.password === authPassword.trim()
+    );
     if (student) {
       setRole('student');
       setCurrentUser(student);
