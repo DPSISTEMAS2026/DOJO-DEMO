@@ -2641,13 +2641,19 @@ const AcceptTermsModal: React.FC<{ student: Student, onAccept: () => void }> = (
             {`CLUB DEPORTIVO SOCIAL Y CULTURAL RANAS JIU JITSU
 
             A través de este documento acepto y libero de toda responsabilidad al Club Deportivo Social y Cultural Ranas Jiu Jitsu, a sus representantes, asociados, recinto que albergue actividades y/o sponsors del club y/o cualquier evento, de responsabilidad ante accidentes que generen lesiones y/o enfermedades, como resultado de mi participación como deportista o espectador en los entrenamientos, competencias y actividades propias de la organización.
+            Por lo cual libero totalmente al Club Deportivo Social y Cultural Ranas Jiu Jitsu, de ser declarado responsable por lesiones que sucedan durante la práctica de la actividad deportiva o como espectador.
 
-            1. He leído y acepto las condiciones de participación y reglamento.
+            Declaro que:
+            1. He leído y acepto las condiciones de participación del Club Deportivo Social y Cultural Ranas Jiu Jitsu también su reglamento y circular de financiamiento.
             2. Entiendo que la participación incluye riesgo de lesiones físicas.
-            3. Estoy en conocimiento de mi condición médica.
+            3. Estoy en conocimiento de alguna condición médica previamente informada en la anamnesis que limite la participación de las actividades del Club Deportivo Social y Cultural Ranas Jiu Jitsu.
             4. Poseo cobertura médica para estas actividades.
-            5. Acepto el uso de imágenes para efectos de promoción.
-            6. Libero de responsabilidad por pérdida de pertenencias.`}
+            5. Entiendo como apoderado, tutor o participante que en el caso de que exista algún accidente o lesión el Club Deportivo Social y Cultural Ranas Jiu Jitsu y sus representantes proveerán los primeros auxilios básicos, derivando al centro asistencial señalado previamente en la anamnesis, informando al tutor o familiar.
+            6. Acepto que el Club Deportivo Social y Cultural Ranas Jiu Jitsu haga uso de fotografías, video o cualquier otra forma de broadcast, para efectos de promoción nacional e internacional.
+            7. A través de mi firma en este documento acepto toda responsabilidad de mis acciones en relación con mi participación del Club Deportivo Social y Cultural Ranas Jiu Jitsu.
+            8. Acepto la responsabilidad por mis posesiones y equipo deportivo durante los entrenamientos.
+            9. A través de este documento libero de toda responsabilidad Club Deportivo Social y Cultural Ranas Jiu Jitsu y a sus representantes, voluntarios, sponsors, directores, miembros, empleados, agentes y administradores de toda compensación o prosecución relacionada a las actividades del club de las cuales pueda resultar lesionado y/o accidentado.
+            10. Libero de toda responsabilidad, posible persecución y responsabilidad económica o demandas de compensación a los organizadores por pérdida de posesiones personales o equipamiento deportivo.`}
           </div>
         </div>
 
