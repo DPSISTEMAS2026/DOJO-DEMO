@@ -546,6 +546,75 @@ app.post('/api/checkout', async (req, res) => {
     }
 });
 
+// Enviar recordatorio de pago individual
+app.post('/api/students/:id/send-payment-reminder', async (req, res) => {
+    try {
+        if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            return res.status(400).json({ error: 'Configuración SMTP incompleta' });
+        }
+        
+        const { data: student, error: selectError } = await supabase.from('students').select('*').eq('id', req.params.id).single();
+        if (selectError || !student) return res.status(404).json({ error: 'Alumno no encontrado' });
+        if (!student.email) return res.status(400).json({ error: 'Alumno sin correo configurado' });
+        if (!student.monthlyfee) return res.status(400).json({ error: 'Alumno no tiene mensualidad configurada' });
+
+        const preference = new Preference(client);
+        const result = await preference.create({
+            body: {
+                items: [
+                    {
+                        title: `Mensualidad Dojo Ranas - ${student.name}`,
+                        quantity: 1,
+                        currency_id: 'CLP',
+                        unit_price: Number(student.monthlyfee)
+                    }
+                ],
+                payer: { email: student.email },
+                back_urls: {
+                    success: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=success`,
+                    failure: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=failure`,
+                    pending: `${process.env.FRONTEND_URL || 'http://localhost:5173'}?payment=pending`,
+                },
+                auto_return: "approved",
+                notification_url: `${process.env.BACKEND_URL}/api/webhooks`
+            }
+        });
+
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: Number(process.env.SMTP_PORT) || 587,
+            secure: process.env.SMTP_SECURE === 'true',
+            auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        });
+
+        await transporter.sendMail({
+            from: `"Dojo Ranas" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+            to: student.email,
+            subject: 'Aviso de Cobro Mensual - Dojo Ranas 🐸',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+                    <h2 style="color: #05a86a;">¡Hola ${student.name}!</h2>
+                    <p>Esperamos que estés teniendo un gran mes de entrenamiento. Te recordamos que tu pago mensual se encuentra pendiente.</p>
+                    <div style="background: #f4f4f4; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                        <p style="margin: 0; font-size: 1.2rem;"><strong>Mensualidad:</strong> $${student.monthlyfee.toLocaleString('es-CL')}</p>
+                        <a href="${result.init_point}" style="display: inline-block; background: #009ee3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 15px;">
+                            Pagar con Mercado Pago
+                        </a>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #666;">También puedes revisar tu estado de cuenta iniciando sesión en nuestro portal de alumnos.</p>
+                    <p>¡Nos vemos en el tatami!</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                    <p style="font-size: 0.8rem; color: #999;">Dojo Ranas Team - Lautaro 581</p>
+                </div>
+            `,
+        });
+
+        res.json({ success: true, message: 'Recordatorio enviado' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Enviar credenciales (contraseñas masivas)
 app.post('/api/admin/send-credentials', async (req, res) => {
     try {
