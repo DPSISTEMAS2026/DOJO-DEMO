@@ -572,6 +572,22 @@ app.post('/api/students/:id/sync-payments', async (req, res) => {
     }
 });
 
+// Aceptar Términos y Condiciones
+app.post('/api/students/:id/accept-terms', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { error } = await supabase
+            .from('students')
+            .update({ terms_accepted: true })
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ success: true, message: 'Términos aceptados' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/checkout', async (req, res) => {
     try {
         const { student, amount } = req.body;
