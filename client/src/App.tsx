@@ -317,28 +317,6 @@ const App: React.FC = () => {
         const heroVideosData = await heroVideosRes.json();
         const noticeDataResult = await noticeRes.json();
 
-        // Ensure test accounts exist locally if not in DB (for demo)
-        const testEmails = ['test@ranas.cl', 'pago@test.cl'];
-        testEmails.forEach(email => {
-          if (!studentsData.some((s: Student) => s.email === email)) {
-            studentsData.push({
-              id: email === 'test@ranas.cl' ? 'demo-test-account-123' : 'pago-test-account-456',
-              name: email === 'test@ranas.cl' ? 'ALUMNO DE PRUEBA' : 'PAGO TEST',
-              email: email,
-              password: email === 'test@ranas.cl' ? 'TEST' : 'PAGO',
-              phone: '+5690000000',
-              belt: 'WHITE',
-              classesAttended: 15,
-              classesToNextBelt: 40,
-              lastPaymentMonth: email === 'pago@test.cl' ? 'Enero 2024' : 'Marzo 2024',
-              isPaid: email === 'pago@test.cl' ? false : true,
-              history: [],
-              plan: '3',
-              monthlyFee: 40000
-            });
-          }
-        });
-
         setStudents(studentsData || []);
         setVideos(videosData || []);
         if (newsData !== null) setLiveNews(newsData);
