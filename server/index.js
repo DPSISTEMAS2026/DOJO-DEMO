@@ -306,7 +306,7 @@ app.get('/api/students', async (req, res) => {
         }));
 
         res.json(formatted);
-        syncStudentsBackground(formatted);
+        // syncStudentsBackground desactivado - sobreescribía cambios manuales del admin
 
     } catch (error) {
         res.status(500).json({ error: error.message });
