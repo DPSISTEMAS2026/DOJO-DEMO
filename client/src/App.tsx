@@ -1687,7 +1687,8 @@ const App: React.FC = () => {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem' }}>
                   {getUpcomingBirthdays().map((student: any) => {
-                    const bd = new Date(student.birthDate!);
+                    const parts = student.birthDate!.split('-');
+                    const bd = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
                     return (
                       <motion.div key={student.id} whileHover={{ y: -5 }} onClick={() => setSelectedStudent(student)}
                         style={{ 
