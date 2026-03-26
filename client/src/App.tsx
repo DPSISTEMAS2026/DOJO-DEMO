@@ -105,7 +105,7 @@ import type {
   AutomationConfig
 } from './types';
 
-const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname.includes('localhost') ? 'http://localhost:3002' : 'https://dojoranas.onrender.com');
+const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname.includes('localhost') ? 'http://localhost:3002' : 'https://dojo-demo-server.onrender.com');
 
 const newsItems = [
   {
@@ -786,7 +786,7 @@ const App: React.FC = () => {
                   Domina el arte suave bajo el linaje de Manuel Plaza. Excelencia técnica y el máximo rendimiento deportivo en el corazón de Concepción.
                 </p>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: window.innerWidth < 1024 ? 'center' : 'flex-start' }}>
-                  <button className="btn-cartoon" style={{ padding: '0.8rem 1.5rem', fontSize: '1rem' }} onClick={() => window.open('https://wa.me/56939601560?text=Hola,%20me%20gustaría%20reservar%20una%20clase%20de%20Jiu%20Jitsu')}>Reservar Clase</button>
+                  <button className="btn-cartoon" style={{ padding: '0.8rem 1.5rem', fontSize: '1rem' }} onClick={() => window.location.href = 'mailto:ranasjiujitsu@gmail.com'}>Contacto</button>
                   <button className="btn-secondary" style={{ padding: '0.8rem 1.5rem', fontSize: '0.9rem' }} onClick={() => window.open('https://www.instagram.com/ranasjiujitsu/?hl=es')}>Instagram</button>
                 </div>
               </motion.div>
@@ -1017,9 +1017,7 @@ const App: React.FC = () => {
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginTop: '1rem' }}>
                     <a 
-                      href="https://wa.me/56939601560" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
+                      href="mailto:ranasjiujitsu@gmail.com" 
                       className="btn-primary hover-lift" 
                       style={{ 
                         padding: '1.5rem 2.5rem', 
@@ -1028,13 +1026,15 @@ const App: React.FC = () => {
                         textDecoration: 'none', 
                         display: 'flex', 
                         alignItems: 'center', 
-                        textAlign: 'center',
                         justifyContent: 'center',
-                        gap: '1rem',
-                        width: '100%'
+                        gap: '0.8rem',
+                        fontWeight: 900,
+                        borderRadius: '1.5rem',
+                        color: '#fff',
+                        boxShadow: '0 20px 40px rgba(5,168,106,0.2)'
                       }}
                     >
-                      WHATSAPP +56 9 3960 1560
+                      <Mail size={24} /> CONTACTO
                     </a>
                   </div>
                 </div>
