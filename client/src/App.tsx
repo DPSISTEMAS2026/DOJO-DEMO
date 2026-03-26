@@ -253,6 +253,7 @@ const App: React.FC = () => {
   const [showQRModal, setShowQRModal] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [manualPaymentDates, setManualPaymentDates] = useState<Record<string, string>>({});
+  const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
   
   const handleManualPayment = async (studentId: string, customDate?: string) => {
     try {
@@ -467,6 +468,7 @@ const App: React.FC = () => {
       return;
     }
 
+    setIsGeneratingPayment(true);
     try {
       const response = await fetch(`${API_URL}/api/checkout`, {
         method: 'POST',
@@ -486,14 +488,18 @@ const App: React.FC = () => {
       const data = await response.json();
 
       if (data.init_point) {
-        window.open(data.init_point, '_blank');
+        // Essential for mobile: Use location.href instead of window.open
+        // as window.open is blocked in async callbacks by most mobile browsers.
+        window.location.href = data.init_point;
       } else {
         console.error("Respuesta Error:", data);
-        alert("❌ Error: No se pudo generar el link de pago.");
+        alert("❌ Error: No se pudo generar el link de pago. Verifica tu conexión.");
       }
     } catch (error) {
       console.error("Error conectando al backend:", error);
-      alert("❌ Ocurrió un error al intentar conectarse con el servidor.");
+      alert("❌ Error de red: No se pudo contactar al servidor de pagos.");
+    } finally {
+      setIsGeneratingPayment(false);
     }
   };
   const [newStudentData, setNewStudentData] = useState({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000 });
@@ -2713,10 +2719,27 @@ const App: React.FC = () => {
 
                 <div style={{ display: 'flex', gap: '1rem', position: 'relative', zIndex: 1 }}>
                     {!selectedStudent.isPaid && (
-                      <motion.button whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(0,157,255,0.2)' }} whileTap={{ scale: 0.98 }}
-                        style={{ flex: 1, background: '#009EE3', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem' }}
+                      <motion.button 
+                        whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(0,157,255,0.2)' }} 
+                        whileTap={{ scale: 0.98 }}
+                        disabled={isGeneratingPayment}
+                        style={{ 
+                          flex: 1, 
+                          background: isGeneratingPayment ? '#94a3b8' : '#009EE3', 
+                          color: '#fff', 
+                          border: 'none', 
+                          padding: '1.2rem', 
+                          borderRadius: '1rem', 
+                          fontWeight: 900, 
+                          cursor: isGeneratingPayment ? 'not-allowed' : 'pointer', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '0.8rem',
+                          opacity: isGeneratingPayment ? 0.7 : 1
+                        }}
                         onClick={() => handleCreatePaymentLink(selectedStudent)}>
-                        <CreditCard size={18} /> PAGAR CON MERCADO PAGO
+                        <CreditCard size={18} /> {isGeneratingPayment ? 'GENERANDO...' : 'PAGAR CON MERCADO PAGO'}
                       </motion.button>
                     )}
                     <motion.button whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(37, 211, 102, 0.2)' }} whileTap={{ scale: 0.98 }}
