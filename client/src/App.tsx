@@ -29,8 +29,7 @@ import {
   Camera,
   ImageIcon,
   Monitor,
-  Trash2,
-  AlertCircle
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'react-qr-code';
@@ -173,13 +172,6 @@ const App: React.FC = () => {
     return d.getTime();
   };
 
-  const getMarchDays = () => {
-    const days = [];
-    // March 2024 starts on Friday (5 slots)
-    for (let i = 0; i < 4; i++) days.push(new Date(0)); 
-    for (let i = 1; i <= 31; i++) days.push(new Date(2024, 2, i));
-    return days;
-  };
 
   const handleBookClass = (timestamp: number) => {
     const isBooked = (currentUser?.scheduledClasses || []).some(c => c.timestamp === timestamp);
