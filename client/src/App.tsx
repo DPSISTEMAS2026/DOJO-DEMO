@@ -345,6 +345,16 @@ const App: React.FC = () => {
         if (galleryData !== null) setLiveGallery(galleryData);
         if (heroVideosData !== null) setLiveHeroVideos(heroVideosData);
         if (noticeDataResult !== null) setNoticeData(noticeDataResult);
+
+        // Sync currentUser with fresh data from server (e.g. admin changed payment status)
+        const cachedUser = localStorage.getItem('currentUser');
+        if (cachedUser) {
+          const cached = JSON.parse(cachedUser);
+          const fresh = (studentsData || []).find((s: Student) => s.id === cached.id);
+          if (fresh) {
+            setCurrentUser(fresh);
+          }
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
