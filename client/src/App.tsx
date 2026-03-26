@@ -367,14 +367,31 @@ const App: React.FC = () => {
 
   const handleUpdateStudent = async (updatedStudent: Student) => {
     try {
+      // Only send fields that exist in the Supabase table
+      const payload: any = { id: updatedStudent.id };
+      if (updatedStudent.name !== undefined) payload.name = updatedStudent.name;
+      if (updatedStudent.email !== undefined) payload.email = updatedStudent.email;
+      if (updatedStudent.phone !== undefined) payload.phone = updatedStudent.phone;
+      if (updatedStudent.password !== undefined) payload.password = updatedStudent.password;
+      if (updatedStudent.belt !== undefined) payload.belt = updatedStudent.belt;
+      if (updatedStudent.classesAttended !== undefined) payload.classesAttended = updatedStudent.classesAttended;
+      if (updatedStudent.classesToNextBelt !== undefined) payload.classesToNextBelt = updatedStudent.classesToNextBelt;
+      if (updatedStudent.isPaid !== undefined) payload.isPaid = updatedStudent.isPaid;
+      if (updatedStudent.plan !== undefined) payload.plan = updatedStudent.plan;
+      if (updatedStudent.monthlyFee !== undefined) payload.monthlyFee = updatedStudent.monthlyFee;
+      if (updatedStudent.birthDate !== undefined) payload.birthDate = updatedStudent.birthDate;
+      if (updatedStudent.avatar !== undefined) payload.avatar = updatedStudent.avatar;
+      if (updatedStudent.history !== undefined) payload.history = updatedStudent.history;
+      if (updatedStudent.lastPaymentDate !== undefined) payload.lastPaymentDate = updatedStudent.lastPaymentDate;
+      if (updatedStudent.lastPaymentMonth !== undefined) payload.lastPaymentMonth = updatedStudent.lastPaymentMonth;
+      if (updatedStudent.scheduledClasses !== undefined) payload.scheduledClasses = updatedStudent.scheduledClasses;
+
       const response = await fetch(`${API_URL}/api/students/${updatedStudent.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedStudent)
+        body: JSON.stringify(payload)
       });
       if (response.ok) {
-        // Use the locally built updatedStudent object (camelCase) instead of the raw server response
-        // because the server echoes back the request body which may not have all fields
         const mergedStudent = { ...students.find(s => s.id === updatedStudent.id), ...updatedStudent };
         setStudents(prev => prev.map(s => s.id === updatedStudent.id ? mergedStudent : s));
         setSelectedStudent(mergedStudent);
@@ -382,9 +399,14 @@ const App: React.FC = () => {
         if (currentUser?.id === updatedStudent.id) {
           setCurrentUser(mergedStudent);
         }
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        console.error('Server error:', errData);
+        alert('❌ Error al guardar los cambios. Revisa la consola.');
       }
     } catch (error) {
       console.error("Error updating student:", error);
+      alert('❌ Error de conexión al guardar.');
     }
   };
 

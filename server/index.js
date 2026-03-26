@@ -302,10 +302,7 @@ app.get('/api/students', async (req, res) => {
             birthDate: s.birthdate,
             history: Array.isArray(s.history) ? s.history : [],
             terms_accepted: s.terms_accepted === true,
-            scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : [],
-            tutorName: s.tutorname || null,
-            tutorEmail: s.tutoremail || null,
-            tutorPhone: s.tutorphone || null
+            scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : []
         }));
 
         res.json(formatted);
@@ -481,9 +478,6 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.lastPaymentMonth !== undefined) updateData.lastpaymentmonth = req.body.lastPaymentMonth;
         if (req.body.terms_accepted !== undefined) updateData.terms_accepted = req.body.terms_accepted === true || req.body.terms_accepted === 'true';
         if (req.body.scheduledClasses !== undefined) updateData.scheduledclasses = req.body.scheduledClasses;
-        if (req.body.tutorName !== undefined) updateData.tutorname = req.body.tutorName;
-        if (req.body.tutorEmail !== undefined) updateData.tutoremail = req.body.tutorEmail;
-        if (req.body.tutorPhone !== undefined) updateData.tutorphone = req.body.tutorPhone;
 
         console.log(`PUT /api/students/${req.params.id}`, JSON.stringify(updateData));
         const { error } = await supabase.from('students').update(updateData).eq('id', req.params.id);
