@@ -1247,11 +1247,23 @@ const App: React.FC = () => {
                 )}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                   style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.9rem', marginBottom: '1.2rem' }}>
-                  <div style={{ background: currentUser?.isPaid ? 'var(--panel-green-bg)' : 'var(--panel-red-bg)', border: `1px solid ${currentUser?.isPaid ? 'var(--panel-green-border)' : 'var(--panel-red-border)'}`, borderRadius: '1.1rem', padding: '1.3rem', textAlign: 'center' }}>
+                  <motion.div 
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => !currentUser?.isPaid && handleCreatePaymentLink(currentUser)}
+                    style={{ 
+                      background: currentUser?.isPaid ? 'var(--panel-green-bg)' : 'var(--panel-red-bg)', 
+                      border: `1px solid ${currentUser?.isPaid ? 'var(--panel-green-border)' : 'var(--panel-red-border)'}`, 
+                      borderRadius: '1.1rem', 
+                      padding: '1.3rem', 
+                      textAlign: 'center',
+                      cursor: currentUser?.isPaid ? 'default' : 'pointer',
+                      position: 'relative'
+                    }}>
                     <CreditCard size={22} style={{ color: currentUser?.isPaid ? 'var(--logo-green)' : '#ef4444', marginBottom: '0.6rem' }} />
                     <div style={{ fontSize: '0.6rem', color: 'var(--panel-muted)', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.2rem' }}>MENSUALIDAD</div>
                     <div style={{ fontWeight: 900, color: currentUser?.isPaid ? 'var(--logo-green)' : '#ef4444', fontSize: '0.85rem' }}>{currentUser?.isPaid ? '✓ AL DÍA' : '⚠ PENDIENTE'}</div>
-                  </div>
+                    {!currentUser?.isPaid && <div style={{ fontSize: '0.55rem', color: '#ef4444', fontWeight: 800, marginTop: '4px' }}>TOCA PARA PAGAR</div>}
+                  </motion.div>
                   <div style={{ background: 'var(--panel-purple-bg)', border: '1px solid var(--panel-purple-border)', borderRadius: '1.1rem', padding: '1.3rem', textAlign: 'center' }}>
                     <Calendar size={22} style={{ color: '#a78bfa', marginBottom: '0.6rem' }} />
                     <div style={{ fontSize: '0.6rem', color: 'var(--panel-muted)', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.4rem' }}>CLASES RESERVADAS</div>
@@ -1272,56 +1284,53 @@ const App: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Class Booking Subsystem */}
-                <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                  style={{ background: 'var(--panel-card)', borderRadius: '1.5rem', padding: '1.5rem', marginBottom: '1.5rem', border: '1px solid var(--panel-border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
-                    <h3 style={{ fontWeight: 900, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={18} style={{ color: 'var(--logo-green)' }} /> Calendario</h3>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--panel-muted)', fontWeight: 700 }}>Marzo 2024</div>
-                  </div>
+                {/* Weekly Schedule Subsystem */}
+                 <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                   style={{ marginBottom: '1.5rem' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+                     <h3 style={{ fontWeight: 900, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Calendar size={18} style={{ color: 'var(--logo-green)' }} /> Horario de Clases</h3>
+                     <div style={{ fontSize: '0.7rem', color: 'var(--panel-muted)', fontWeight: 700 }}>Esta Semana</div>
+                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
-                    {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
-                      <div key={i} style={{ textAlign: 'center', fontSize: '0.6rem', color: 'var(--panel-muted)', fontWeight: 900 }}>{d}</div>
-                    ))}
-                  </div>
+                   <div style={{ display: 'flex', overflowX: 'auto', gap: '0.8rem', paddingBottom: '1rem', margin: '0 -1.5rem', padding: '0 1.5rem', WebkitOverflowScrolling: 'touch' }} className="no-scrollbar">
+                     {((typeof calculateAge(currentUser?.birthDate) === 'number' ? (calculateAge(currentUser?.birthDate) as number) : parseInt(calculateAge(currentUser?.birthDate) as string)) < 18 ? [
+                       { day: 'Martes', classes: [{ time: '18:00', name: 'Pequeños Campeones' }] },
+                       { day: 'Miércoles', classes: [{ time: '16:45', name: 'Pequeños Campeones' }] },
+                       { day: 'Jueves', classes: [{ time: '18:00', name: 'Pequeños Campeones' }] },
+                       { day: 'Viernes', classes: [{ time: '16:45', name: 'Pequeños Campeones' }] },
+                       { day: 'Sábado', classes: [{ time: '11:00', name: 'Pequeños Campeones' }] }
+                     ] : [
+                       { day: 'Lunes', classes: [{ time: '19:30', name: 'Ranas On Fire' }] },
+                       { day: 'Martes', classes: [{ time: '06:45', name: 'Valientes' }, { time: '19:00', name: 'Ranas On Fire' }] },
+                       { day: 'Miércoles', classes: [{ time: '19:30', name: 'Ranas No-Gi' }] },
+                       { day: 'Jueves', classes: [{ time: '06:45', name: 'Valientes' }, { time: '19:00', name: 'Ranas On Fire' }] },
+                       { day: 'Viernes', classes: [{ time: '20:00', name: 'Competidor' }] },
+                       { day: 'Sábado', classes: [{ time: '12:00', name: 'Open Mat' }] }
+                     ]).map((dayItem, idx) => (
+                       <div key={idx} style={{ flexShrink: 0, width: '140px', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                         <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{dayItem.day}</div>
+                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                           {dayItem.classes.map((cls, cIdx) => {
+                             const cWeekStart = getWeekStart(new Date());
+                             const isBooked = (currentUser?.scheduledClasses || []).some(sc => sc.timestamp >= cWeekStart && sc.day === dayItem.day && sc.time === cls.time);
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem' }}>
-                    {getMarchDays().map((day, i) => {
-                      const isBooked = (currentUser?.scheduledClasses || []).some(c => c.timestamp === day.getTime());
-                      const isPast = day.getTime() < new Date().setHours(0, 0, 0, 0);
-                      const isToday = day.getTime() === new Date().setHours(0, 0, 0, 0);
-
-                      return (
-                        <motion.button key={i} whileTap={{ scale: 0.9 }}
-                          onClick={() => day.getDate() > 0 && !isPast && handleBookClass(day.getTime())}
-                          style={{
-                            aspectRatio: '1/1', borderRadius: '12px', border: 'none', fontSize: '0.8rem', fontWeight: 800, cursor: (day.getDate() > 0 && !isPast) ? 'pointer' : 'default',
-                            background: isBooked ? 'var(--logo-green)' : (isToday ? 'rgba(5,168,106,0.1)' : 'var(--panel-surface)'),
-                            color: isBooked ? '#000' : (isPast ? 'rgba(255,255,255,0.1)' : (isToday ? 'var(--logo-green)' : 'var(--panel-text)')),
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                          }}>
-                          {day.getDate() > 0 ? day.getDate() : ''}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                  {(!currentUser?.isPaid) && (
-                    <div style={{ margin: '0 1.5rem 2rem', padding: '1.5rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '1.5rem', border: '1px solid rgba(239, 68, 68, 0.1)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', color: '#ef4444' }}>
-                        <AlertCircle size={20} />
-                        <span style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: '0.05em' }}>MANTÉN TU CUENTA AL DÍA</span>
-                      </div>
-                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#ef4444', opacity: 0.8, lineHeight: 1.4, fontWeight: 600 }}>Tu mensualidad actual está pendiente. Recuerda regularizarla para mantener el dojo operando, puedes seguir reservando tus clases normalmente.</p>
-                      <button 
-                        onClick={() => handleCreatePaymentLink(currentUser)}
-                        style={{ width: '100%', padding: '1.2rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '1.1rem', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', boxShadow: '0 10px 20px rgba(239,68,68,0.2)' }}
-                      >
-                        PAGAR AHORA CON MERCADO PAGO
-                      </button>
-                    </div>
-                  )}
-                </motion.section>
+                             return (
+                               <motion.button key={cIdx} whileTap={{ scale: 0.95 }}
+                                 onClick={() => handleBookClass(new Date().getTime())} // Simulating booking logic
+                                 style={{
+                                   background: isBooked ? 'var(--logo-green)' : 'var(--panel-surface)',
+                                   borderRadius: '0.8rem', padding: '0.8rem', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%'
+                                 }}>
+                                 <div style={{ fontSize: '1rem', fontWeight: 900, color: isBooked ? '#000' : 'var(--panel-text)', marginBottom: '2px' }}>{cls.time}</div>
+                                 <div style={{ fontSize: '0.6rem', fontWeight: 700, color: isBooked ? 'rgba(0,0,0,0.6)' : 'var(--panel-muted)', textTransform: 'uppercase' }}>{cls.name}</div>
+                               </motion.button>
+                             );
+                           })}
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 </motion.section>
 
                 {/* Library Highlights */}
                 <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
