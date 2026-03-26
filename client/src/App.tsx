@@ -492,7 +492,6 @@ const App: React.FC = () => {
       .filter(s => s.birthDate)
       .map(s => {
         const parts = s.birthDate!.split('-');
-        const bYear = parseInt(parts[0]);
         const bMonth = parseInt(parts[1]) - 1;
         const bDay = parseInt(parts[2]);
 
@@ -1343,7 +1342,7 @@ const App: React.FC = () => {
                    </div>
 
                    <div style={{ display: 'flex', overflowX: 'auto', gap: '0.8rem', paddingBottom: '1rem', margin: '0 -1.5rem', padding: '0 1.5rem', WebkitOverflowScrolling: 'touch' }} className="no-scrollbar">
-                     {((typeof calculateAge(currentUser?.birthDate) === 'number' ? (calculateAge(currentUser?.birthDate) as number) : parseInt(calculateAge(currentUser?.birthDate) as string)) < 18 ? [
+                     {((typeof calculateAge(currentUser?.birthDate || null) === 'number' ? (calculateAge(currentUser?.birthDate || null) as number) : parseInt(calculateAge(currentUser?.birthDate || null) as string)) < 18 ? [
                        { day: 'Martes', classes: [{ time: '18:00', name: 'Pequeños Campeones' }] },
                        { day: 'Miércoles', classes: [{ time: '16:45', name: 'Pequeños Campeones' }] },
                        { day: 'Jueves', classes: [{ time: '18:00', name: 'Pequeños Campeones' }] },
@@ -1858,7 +1857,7 @@ const App: React.FC = () => {
                         })
                         .filter(s => {
                           if (studentFilterAge === 'ALL') return true;
-                          const ageStr = calculateAge(s.birthDate);
+                           const ageStr = calculateAge(s.birthDate || null);
                           if (ageStr === 'N/A') return false;
                           const age = parseInt(ageStr.toString());
                           if (studentFilterAge === 'KIDS') return age < 18;
@@ -2586,7 +2585,7 @@ const App: React.FC = () => {
                         value={editedStudent?.plan || '3'}
                         onChange={e => {
                           const val = e.target.value;
-                          const age = calculateAge(editedStudent?.birthDate) as any;
+                           const age = calculateAge(editedStudent?.birthDate || null) as any;
                           const category = (age !== 'N/A' && age < 18) ? 'kids' : 'adults';
                           const autoFee = fees[category][val] || 0;
                           setEditedStudent(prev => prev ? { ...prev, plan: val, monthlyFee: autoFee } : null);
