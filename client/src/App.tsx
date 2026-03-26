@@ -517,13 +517,23 @@ const App: React.FC = () => {
     }
   };
 
-  const handleUpdateStudentPassword = () => {
+  const handleUpdateStudentPassword = async () => {
     if (!studentNewPassword || !currentUser) return;
     const updated = { ...currentUser, password: studentNewPassword };
-    setCurrentUser(updated);
-    setStudents(prev => prev.map(s => s.id === updated.id ? updated : s));
-    setStudentNewPassword('');
-    alert('✅ Contraseña actualizada exitosamente.');
+    try {
+      await fetch(`${API_URL}/api/students/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: studentNewPassword })
+      });
+      setCurrentUser(updated);
+      setStudents(prev => prev.map(s => s.id === updated.id ? updated : s));
+      setStudentNewPassword('');
+      alert('✅ Contraseña actualizada exitosamente.');
+    } catch (e) {
+      console.error('Error updating password:', e);
+      alert('❌ Error al actualizar la contraseña.');
+    }
   };
 
   const handleAddStudent = async () => {
@@ -2473,24 +2483,25 @@ const App: React.FC = () => {
                   </motion.button>
                 )}
 
-                {!selectedStudent.isPaid && (
-                  <div style={{ display: 'flex', gap: '1rem', position: 'relative', zIndex: 1 }}>
-                    <motion.button whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(0,157,255,0.2)' }} whileTap={{ scale: 0.98 }}
-                      style={{ flex: 1, background: '#009EE3', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem' }}
-                      onClick={() => handleCreatePaymentLink(selectedStudent)}>
-                      <CreditCard size={18} /> PAGAR CON MERCADO PAGO
-                    </motion.button>
+                <div style={{ display: 'flex', gap: '1rem', position: 'relative', zIndex: 1 }}>
+                    {!selectedStudent.isPaid && (
+                      <motion.button whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(0,157,255,0.2)' }} whileTap={{ scale: 0.98 }}
+                        style={{ flex: 1, background: '#009EE3', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem' }}
+                        onClick={() => handleCreatePaymentLink(selectedStudent)}>
+                        <CreditCard size={18} /> PAGAR CON MERCADO PAGO
+                      </motion.button>
+                    )}
                     <motion.button whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(37, 211, 102, 0.2)' }} whileTap={{ scale: 0.98 }}
                       style={{ flex: 1, background: '#25D366', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem' }}
                       onClick={() => window.open(`https://wa.me/${selectedStudent.phone.replace(/\D/g, '')}?text=Hola ${selectedStudent.name}...`)}>
                       CONTACTAR POR WHATSAPP
                     </motion.button>
                     <motion.button whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(0,0,0,0.1)' }} whileTap={{ scale: 0.98 }}
-                      style={{ flex: 1, background: 'var(--panel-text)', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer' }}>
+                      style={{ flex: 1, background: 'var(--panel-text)', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer' }}
+                      onClick={() => handleSendPaymentReminder(selectedStudent)}>
                       ENVIAR RECORDATORIO EMAIL
                     </motion.button>
                   </div>
-                )}
               </motion.div>
             </motion.div>
           )
