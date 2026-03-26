@@ -29,7 +29,8 @@ import {
   Camera,
   ImageIcon,
   Monitor,
-  Trash2
+  Trash2,
+  Phone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'react-qr-code';
@@ -1669,101 +1670,188 @@ const App: React.FC = () => {
             </motion.div>
           )}
 
+          {/* Mobile Quick Actions on Dashboard */}
+          {activeTab === 'dashboard' && isMobile && (
+            <motion.div key="mobile-quick-actions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginTop: '1rem' }}>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsAddingStudent(true)}
+                style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '1.2rem', padding: '1.2rem', color: '#fff', fontWeight: 900, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                <Plus size={22} /> NUEVO ALUMNO
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsSendingNotice(true)}
+                style={{ background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1.2rem', color: 'var(--panel-text)', fontWeight: 900, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                <Bell size={22} style={{ color: 'var(--logo-green)' }} /> NOTIFICACIÓN
+              </motion.button>
+            </motion.div>
+          )}
 
 
           {activeTab === 'students' && (
             <motion.div key="students" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                <select className="glass" style={{ padding: '0.8rem 1.2rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700 }}
+              {/* Filters + Search for Mobile */}
+              <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                {isMobile && (
+                  <div style={{ width: '100%', position: 'relative', marginBottom: '0.3rem' }}>
+                    <Search size={15} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--logo-green)', opacity: 0.7 }} />
+                    <input type="text" placeholder="Buscar alumno..."
+                      style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700, fontSize: '0.85rem' }}
+                      value={studentSearchTerm} onChange={e => setStudentSearchTerm(e.target.value)} />
+                  </div>
+                )}
+                <select className="glass" style={{ padding: '0.7rem 1rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700, fontSize: isMobile ? '0.75rem' : '0.85rem', flex: isMobile ? 1 : 'none' }}
                   value={studentFilterPayment} onChange={e => setStudentFilterPayment(e.target.value as any)}>
-                  <option value="ALL">Todos los Estados</option>
+                  <option value="ALL">Todos</option>
                   <option value="PAID">Al Día</option>
                   <option value="PENDING">Pendiente</option>
                 </select>
-                <select className="glass" style={{ padding: '0.8rem 1.2rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700 }}
-                  value={studentFilterAge} onChange={e => setStudentFilterAge(e.target.value as any)}>
-                  <option value="ALL">Todas las edades</option>
-                  <option value="KIDS">Niños (Menores de 18)</option>
-                  <option value="ADULTS">Adultos (18+)</option>
-                </select>
-                <select className="glass" style={{ padding: '0.8rem 1.2rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700 }}
-                  value={studentFilterBelt} onChange={e => setStudentFilterBelt(e.target.value as any)}>
-                  <option value="ALL">Todos los cinturones</option>
-                  {Object.keys(beltLabels).map(b => (
-                    <option key={b} value={b}>{beltLabels[b as Belt]}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="glass" style={{ borderRadius: '3.5rem', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-                <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ background: 'rgba(5, 168, 106, 0.05)', borderBottom: '1px solid var(--glass-border)' }}>
-                      <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ALUMNO</th>
-                      <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>CINTURÓN</th>
-                      <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ASISTENCIAS</th>
-                      <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ESTADO</th>
-                      <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em', textAlign: 'right' }}>ACCIONES</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students
-                      .filter(s => s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()))
-                      .filter(s => studentFilterBelt === 'ALL' || s.belt === studentFilterBelt)
-                      .filter(s => {
-                        if (studentFilterPayment === 'ALL') return true;
-                        if (studentFilterPayment === 'PAID') return s.isPaid;
-                        if (studentFilterPayment === 'PENDING') return !s.isPaid;
-                        return true;
-                      })
-                      .filter(s => {
-                        if (studentFilterAge === 'ALL') return true;
-                        const ageStr = calculateAge(s.birthDate);
-                        if (ageStr === 'N/A') return false;
-                        const age = parseInt(ageStr.toString());
-                        if (studentFilterAge === 'KIDS') return age < 18;
-                        if (studentFilterAge === 'ADULTS') return age >= 18;
-                        return true;
-                      })
-                      .map((student) => (
-                        <tr key={student.id} style={{ borderBottom: '1px solid var(--glass-border)', transition: 'all 0.3s' }} className="hover-light">
-                          <td style={{ padding: '1.5rem' }}>
-                            <p style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--text-main)' }}>{student.name}</p>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{student.email}</p>
-                          </td>
-                          <td style={{ padding: '1.5rem' }}>
-                            <div className={`belt-badge belt-${student.belt}`} style={{ display: 'inline-block', padding: '0.5rem 1rem', fontSize: '0.65rem' }}>{beltLabels[student.belt]}</div>
-                          </td>
-                          <td style={{ padding: '1.5rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                              <div style={{ flex: 1, height: '5px', background: 'var(--glass-border)', borderRadius: '10px', maxWidth: '80px', overflow: 'hidden' }}>
-                                <div style={{ width: `${(student.classesAttended / student.classesToNextBelt) * 100}%`, height: '100%', background: 'var(--logo-green)' }}></div>
-                              </div>
-                              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)' }}>{student.classesAttended}</span>
-                            </div>
-                          </td>
-                          <td style={{ padding: '1.5rem' }}>
-                            <span style={{ color: student.isPaid ? 'var(--logo-green)' : '#ef4444', fontWeight: 900, fontSize: '0.75rem' }}>{student.isPaid ? 'AL DÍA' : 'PENDIENTE'}</span>
-                          </td>
-                          <td style={{ padding: '1.5rem', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                              <button onClick={() => {
-                                 if(confirm(`¿Enviar recordatorio de pago a ${student.name}?`)) {
-                                    handleSendPaymentReminder(student);
-                                 }
-                              }} style={{ background: 'rgba(5,168,106,0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Recordatorio de Pago">
-                                <Bell size={15} />
-                              </button>
-                              <button onClick={() => setSelectedStudent(student)} style={{ background: 'none', border: '1px solid var(--glass-border)', padding: '0.6rem 1.2rem', borderRadius: '0.8rem', color: 'var(--text-main)', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>DETALLES</button>
-                              <button onClick={() => { if (window.confirm(`¿Estás seguro de que deseas eliminar a ${student.name}?`)) handleDeleteStudent(student.id); }} style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Eliminar Alumno">
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                {isMobile && (
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsAddingStudent(true)}
+                    style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '1rem', padding: '0.7rem 1.2rem', color: '#fff', fontWeight: 900, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Plus size={14} /> Nuevo
+                  </motion.button>
+                )}
+                {!isMobile && (
+                  <>
+                    <select className="glass" style={{ padding: '0.8rem 1.2rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700 }}
+                      value={studentFilterAge} onChange={e => setStudentFilterAge(e.target.value as any)}>
+                      <option value="ALL">Todas las edades</option>
+                      <option value="KIDS">Niños (Menores de 18)</option>
+                      <option value="ADULTS">Adultos (18+)</option>
+                    </select>
+                    <select className="glass" style={{ padding: '0.8rem 1.2rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700 }}
+                      value={studentFilterBelt} onChange={e => setStudentFilterBelt(e.target.value as any)}>
+                      <option value="ALL">Todos los cinturones</option>
+                      {Object.keys(beltLabels).map(b => (
+                        <option key={b} value={b}>{beltLabels[b as Belt]}</option>
                       ))}
-                  </tbody>
-                </table></div>
+                    </select>
+                  </>
+                )}
               </div>
+
+              {/* MOBILE: Compact student cards */}
+              {isMobile ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {students
+                    .filter(s => s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()))
+                    .filter(s => {
+                      if (studentFilterPayment === 'ALL') return true;
+                      if (studentFilterPayment === 'PAID') return s.isPaid;
+                      return !s.isPaid;
+                    })
+                    .map((student) => (
+                      <motion.div key={student.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', padding: '0.8rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flex: 1, minWidth: 0 }}>
+                          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: student.isPaid ? 'rgba(5,168,106,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${student.isPaid ? 'rgba(5,168,106,0.2)' : 'rgba(239,68,68,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: student.isPaid ? 'var(--logo-green)' : '#ef4444', fontSize: '0.85rem', flexShrink: 0 }}>
+                            {student.name[0]}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--panel-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{student.name}</div>
+                            <div style={{ fontSize: '0.65rem', fontWeight: 700, color: student.isPaid ? 'var(--logo-green)' : '#ef4444' }}>
+                              {student.isPaid ? '✅ Al día' : '⚠️ Pendiente'}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                          <motion.button whileTap={{ scale: 0.9 }}
+                            onClick={() => {
+                              if (window.confirm(`¿Registrar pago de ${student.name} por ${formatCLP(student.monthlyFee || 0)}?`)) {
+                                handleUpdateStudent({ ...student, isPaid: true, lastPaymentDate: new Date().toISOString().split('T')[0], lastPaymentMonth: new Date().toISOString().substring(0, 7), history: [...(student.history || []), { date: new Date().toISOString().split('T')[0], status: 'Completado' as const, amount: student.monthlyFee || 0 }] });
+                              }
+                            }}
+                            style={{ background: 'rgba(5,168,106,0.1)', border: 'none', width: '34px', height: '34px', borderRadius: '8px', color: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            title="Registrar pago">
+                            <DollarSign size={15} />
+                          </motion.button>
+                          <motion.button whileTap={{ scale: 0.9 }}
+                            onClick={() => window.open(`https://wa.me/${student.phone?.replace(/\D/g, '')}?text=Hola ${student.name}...`)}
+                            style={{ background: 'rgba(37,211,102,0.1)', border: 'none', width: '34px', height: '34px', borderRadius: '8px', color: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            title="WhatsApp">
+                            <Phone size={15} />
+                          </motion.button>
+                          <motion.button whileTap={{ scale: 0.9 }}
+                            onClick={() => setSelectedStudent(student)}
+                            style={{ background: 'none', border: '1px solid var(--panel-border)', height: '34px', paddingInline: '0.8rem', borderRadius: '8px', color: 'var(--panel-text)', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            Detalle
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    ))}
+                </div>
+              ) : (
+                /* DESKTOP: Full table */
+                <div className="glass" style={{ borderRadius: '3.5rem', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
+                  <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(5, 168, 106, 0.05)', borderBottom: '1px solid var(--glass-border)' }}>
+                        <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ALUMNO</th>
+                        <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>CINTURÓN</th>
+                        <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ASISTENCIAS</th>
+                        <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ESTADO</th>
+                        <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em', textAlign: 'right' }}>ACCIONES</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {students
+                        .filter(s => s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()))
+                        .filter(s => studentFilterBelt === 'ALL' || s.belt === studentFilterBelt)
+                        .filter(s => {
+                          if (studentFilterPayment === 'ALL') return true;
+                          if (studentFilterPayment === 'PAID') return s.isPaid;
+                          if (studentFilterPayment === 'PENDING') return !s.isPaid;
+                          return true;
+                        })
+                        .filter(s => {
+                          if (studentFilterAge === 'ALL') return true;
+                          const ageStr = calculateAge(s.birthDate);
+                          if (ageStr === 'N/A') return false;
+                          const age = parseInt(ageStr.toString());
+                          if (studentFilterAge === 'KIDS') return age < 18;
+                          if (studentFilterAge === 'ADULTS') return age >= 18;
+                          return true;
+                        })
+                        .map((student) => (
+                          <tr key={student.id} style={{ borderBottom: '1px solid var(--glass-border)', transition: 'all 0.3s' }} className="hover-light">
+                            <td style={{ padding: '1.5rem' }}>
+                              <p style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--text-main)' }}>{student.name}</p>
+                              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{student.email}</p>
+                            </td>
+                            <td style={{ padding: '1.5rem' }}>
+                              <div className={`belt-badge belt-${student.belt}`} style={{ display: 'inline-block', padding: '0.5rem 1rem', fontSize: '0.65rem' }}>{beltLabels[student.belt]}</div>
+                            </td>
+                            <td style={{ padding: '1.5rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                <div style={{ flex: 1, height: '5px', background: 'var(--glass-border)', borderRadius: '10px', maxWidth: '80px', overflow: 'hidden' }}>
+                                  <div style={{ width: `${(student.classesAttended / student.classesToNextBelt) * 100}%`, height: '100%', background: 'var(--logo-green)' }}></div>
+                                </div>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)' }}>{student.classesAttended}</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '1.5rem' }}>
+                              <span style={{ color: student.isPaid ? 'var(--logo-green)' : '#ef4444', fontWeight: 900, fontSize: '0.75rem' }}>{student.isPaid ? 'AL DÍA' : 'PENDIENTE'}</span>
+                            </td>
+                            <td style={{ padding: '1.5rem', textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                <button onClick={() => {
+                                   if(confirm(`¿Enviar recordatorio de pago a ${student.name}?`)) {
+                                      handleSendPaymentReminder(student);
+                                   }
+                                }} style={{ background: 'rgba(5,168,106,0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Recordatorio de Pago">
+                                  <Bell size={15} />
+                                </button>
+                                <button onClick={() => setSelectedStudent(student)} style={{ background: 'none', border: '1px solid var(--glass-border)', padding: '0.6rem 1.2rem', borderRadius: '0.8rem', color: 'var(--text-main)', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>DETALLES</button>
+                                <button onClick={() => { if (window.confirm(`¿Estás seguro de que deseas eliminar a ${student.name}?`)) handleDeleteStudent(student.id); }} style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Eliminar Alumno">
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table></div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -2244,13 +2332,13 @@ const App: React.FC = () => {
         {
           isSendingNotice && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(10px)' }}>
-              <motion.div className="glass" style={{ width: '100%', maxWidth: '600px', padding: '4rem', borderRadius: '3rem', border: '1px solid var(--glass-border)' }}>
-                <h2 style={{ marginBottom: '2rem' }}>Comunicado Masivo</h2>
-                <input className="glass" style={{ width: '100%', padding: '1.2rem', marginBottom: '1.5rem' }} value={noticeData.subject} onChange={e => setNoticeData({ ...noticeData, subject: e.target.value })} />
-                <textarea className="glass" style={{ width: '100%', height: '200px', padding: '1.5rem', resize: 'none' }} value={noticeData.message} onChange={e => setNoticeData({ ...noticeData, message: e.target.value })} />
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                  <button onClick={() => setIsSendingNotice(false)} style={{ flex: 1, background: 'none', border: '1px solid var(--glass-border)', padding: '1.2rem', borderRadius: '1rem', color: 'var(--text-main)' }}>CANCELAR</button>
-                  <button className="btn-primary" style={{ flex: 2 }} onClick={handleSendMassNotice}>ENVIAR A TODOS</button>
+              <motion.div className="glass" style={{ width: '100%', maxWidth: '600px', padding: isMobile ? '2rem' : '4rem', borderRadius: isMobile ? '2rem' : '3rem', border: '1px solid var(--glass-border)', background: 'var(--panel-surface)' }}>
+                <h2 style={{ marginBottom: '2rem', color: 'var(--panel-text)' }}>Comunicado Masivo</h2>
+                <input className="glass" style={{ width: '100%', padding: '1.2rem', marginBottom: '1.5rem', background: 'var(--panel-bg)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)' }} placeholder="Asunto del correo" value={noticeData.subject} onChange={e => setNoticeData({ ...noticeData, subject: e.target.value })} />
+                <textarea className="glass" style={{ width: '100%', height: '200px', padding: '1.5rem', resize: 'none', background: 'var(--panel-bg)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)' }} placeholder="Mensaje para todos los alumnos..." value={noticeData.message} onChange={e => setNoticeData({ ...noticeData, message: e.target.value })} />
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', flexDirection: isMobile ? 'column' : 'row' }}>
+                  <button onClick={() => setIsSendingNotice(false)} style={{ flex: 1, background: 'none', border: '1px solid var(--glass-border)', padding: '1.2rem', borderRadius: '1rem', color: 'var(--text-main)', cursor: 'pointer' }}>CANCELAR</button>
+                  <button className="btn-primary" style={{ flex: 2, justifyContent: 'center', background: 'var(--logo-green)', padding: '1.2rem', borderRadius: '1rem' }} onClick={handleSendMassNotice}>ENVIAR A TODOS</button>
                 </div>
               </motion.div>
             </motion.div>
