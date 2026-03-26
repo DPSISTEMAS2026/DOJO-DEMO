@@ -302,7 +302,10 @@ app.get('/api/students', async (req, res) => {
             birthDate: s.birthdate,
             history: Array.isArray(s.history) ? s.history : [],
             terms_accepted: s.terms_accepted === true,
-            scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : []
+            scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : [],
+            tutorName: s.tutorname || null,
+            tutorEmail: s.tutoremail || null,
+            tutorPhone: s.tutorphone || null
         }));
 
         res.json(formatted);
@@ -468,7 +471,7 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.belt !== undefined) updateData.belt = req.body.belt;
         if (req.body.classesAttended !== undefined) updateData.classesattended = Number(req.body.classesAttended);
         if (req.body.classesToNextBelt !== undefined) updateData.classestonextbelt = Number(req.body.classesToNextBelt);
-        if (req.body.isPaid !== undefined) updateData.ispaid = req.body.isPaid === true;
+        if (req.body.isPaid !== undefined) updateData.ispaid = req.body.isPaid === true || req.body.isPaid === 'true';
         if (req.body.plan !== undefined) updateData.plan = req.body.plan ? req.body.plan.toString() : null;
         if (req.body.monthlyFee !== undefined) updateData.monthlyfee = Number(req.body.monthlyFee);
         if (req.body.birthDate !== undefined) updateData.birthdate = req.body.birthDate;
@@ -476,13 +479,21 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.history !== undefined) updateData.history = req.body.history;
         if (req.body.lastPaymentDate !== undefined) updateData.lastpaymentdate = req.body.lastPaymentDate;
         if (req.body.lastPaymentMonth !== undefined) updateData.lastpaymentmonth = req.body.lastPaymentMonth;
-        if (req.body.terms_accepted !== undefined) updateData.terms_accepted = req.body.terms_accepted === true;
+        if (req.body.terms_accepted !== undefined) updateData.terms_accepted = req.body.terms_accepted === true || req.body.terms_accepted === 'true';
         if (req.body.scheduledClasses !== undefined) updateData.scheduledclasses = req.body.scheduledClasses;
+        if (req.body.tutorName !== undefined) updateData.tutorname = req.body.tutorName;
+        if (req.body.tutorEmail !== undefined) updateData.tutoremail = req.body.tutorEmail;
+        if (req.body.tutorPhone !== undefined) updateData.tutorphone = req.body.tutorPhone;
 
+        console.log(`PUT /api/students/${req.params.id}`, JSON.stringify(updateData));
         const { error } = await supabase.from('students').update(updateData).eq('id', req.params.id);
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase update error:', error);
+            throw error;
+        }
         res.json({ ...req.body, id: req.params.id });
     } catch (error) {
+        console.error('PUT student error:', error.message);
         res.status(500).json({ error: error.message });
     }
 });
