@@ -252,16 +252,49 @@ const App: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
+  const [manualPaymentDates, setManualPaymentDates] = useState<Record<string, string>>({});
   
-  const handleManualPayment = async (studentId: string) => {
+  const handleManualPayment = async (studentId: string, customDate?: string) => {
     try {
+      const student = students.find(s => s.id === studentId);
+      if (!student) return;
+
+      const finalDate = customDate || new Date().toISOString().split('T')[0];
+      const finalMonth = finalDate.substring(0, 7);
+      
+      const newHistoryEntry = {
+        date: finalDate,
+        amount: Number(student.monthlyFee) || 0,
+        status: 'Completado' as 'Completado' | 'Pendiente',
+        method: 'Manual',
+        transaction_id: `MANUAL_${finalDate.replace(/-/g, '')}_${student.monthlyFee}`
+      };
+
+      const updatedHistory = [...(Array.isArray(student.history) ? student.history : []), newHistoryEntry];
+
       const response = await fetch(`${API_URL}/api/students/${studentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPaid: true, lastPaymentDate: new Date().toISOString().split('T')[0], lastPaymentMonth: new Date().toISOString().substring(0, 7) })
+        body: JSON.stringify({ 
+          isPaid: true, 
+          lastPaymentDate: finalDate, 
+          lastPaymentMonth: finalMonth,
+          history: updatedHistory
+        })
       });
+
       if (response.ok) {
-        setStudents(prev => prev.map(s => s.id === studentId ? { ...s, isPaid: true, lastPaymentDate: new Date().toISOString().split('T')[0], lastPaymentMonth: new Date().toISOString().substring(0, 7) } : s));
+        setStudents(prev => prev.map(s => s.id === studentId ? { 
+          ...s, 
+          isPaid: true, 
+          lastPaymentDate: finalDate, 
+          lastPaymentMonth: finalMonth,
+          history: updatedHistory
+        } : s));
+        
+        if (selectedStudent?.id === studentId) {
+          setSelectedStudent(prev => prev ? { ...prev, isPaid: true, lastPaymentDate: finalDate, lastPaymentMonth: finalMonth, history: updatedHistory } : null);
+        }
       }
     } catch (e) {
       console.error("Error updating payment:", e);
@@ -2169,10 +2202,19 @@ const App: React.FC = () => {
                             <td style={{ padding: '1rem', fontWeight: 700, color: 'var(--text-main)', fontSize: '0.85rem' }}>{s.name}</td>
                             <td style={{ padding: '1rem', fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{formatCLP(s.monthlyFee || 0)}</td>
                             <td style={{ padding: '1rem', textAlign: 'center' }}>
-                              <button onClick={() => {
-                                handleManualPayment(s.id);
-                                alert(`Pago registrado manualmente para ${s.name}`);
-                              }} style={{ background: 'rgba(5,168,106,0.1)', border: 'none', color: 'var(--logo-green)', padding: '0.5rem 0.8rem', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>Registrar</button>
+                              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center' }}>
+                                <input 
+                                  type="date" 
+                                  defaultValue={new Date().toISOString().split('T')[0]}
+                                  onChange={(e) => setManualPaymentDates(prev => ({ ...prev, [s.id]: e.target.value }))}
+                                  style={{ padding: '0.4rem', borderRadius: '6px', border: '1px solid var(--glass-border)', fontSize: '0.7rem', background: 'transparent', color: 'var(--text-main)', outline: 'none' }}
+                                />
+                                <button onClick={() => {
+                                  const customDate = manualPaymentDates[s.id];
+                                  handleManualPayment(s.id, customDate);
+                                  alert(`Pago registrado el ${customDate || 'hoy'} para ${s.name}`);
+                                }} style={{ background: 'rgba(5,168,106,0.1)', border: 'none', color: 'var(--logo-green)', padding: '0.5rem 0.8rem', borderRadius: '8px', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>Registrar</button>
+                              </div>
                             </td>
                           </tr>
                         ))}
