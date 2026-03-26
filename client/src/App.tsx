@@ -384,7 +384,6 @@ const App: React.FC = () => {
       if (updatedStudent.history !== undefined) payload.history = updatedStudent.history;
       if (updatedStudent.lastPaymentDate !== undefined) payload.lastPaymentDate = updatedStudent.lastPaymentDate;
       if (updatedStudent.lastPaymentMonth !== undefined) payload.lastPaymentMonth = updatedStudent.lastPaymentMonth;
-      if (updatedStudent.scheduledClasses !== undefined) payload.scheduledClasses = updatedStudent.scheduledClasses;
 
       const response = await fetch(`${API_URL}/api/students/${updatedStudent.id}`, {
         method: 'PUT',
