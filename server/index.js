@@ -397,8 +397,7 @@ app.post('/api/students', async (req, res) => {
             monthlyfee: Number(req.body.monthlyFee) || null,
             avatar: req.body.avatar || null,
             birthdate: req.body.birthDate || null,
-            history: Array.isArray(req.body.history) ? req.body.history : [],
-            scheduledclasses: []
+            history: Array.isArray(req.body.history) ? req.body.history : []
         };
         const { error } = await supabase.from('students').insert(newStudent);
         if (error) throw error;
@@ -406,11 +405,13 @@ app.post('/api/students', async (req, res) => {
         // --- EVNIO AUTOMÁTICO AL REGISTRAR ---
         if (newStudent.email && newStudent.password && process.env.SMTP_HOST) {
             try {
+                const smtpUser = process.env.SMTP_USER || process.env.SMTP_FROM;
+                console.log(`📧 Enviando email de bienvenida a ${newStudent.email} via ${process.env.SMTP_HOST} (user: ${smtpUser})`);
                 const transporter = nodemailer.createTransport({
                     host: process.env.SMTP_HOST,
                     port: Number(process.env.SMTP_PORT) || 587,
                     secure: process.env.SMTP_SECURE === 'true',
-                    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+                    auth: { user: smtpUser, pass: process.env.SMTP_PASS }
                 });
                 const html = `
                     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; background: #ffffff; padding: 2.5rem; border-radius: 2rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
@@ -444,12 +445,13 @@ app.post('/api/students', async (req, res) => {
                     </div>
                 `;
                 transporter.sendMail({
-                    from: '"Dojo Ranas 🐸" <' + (process.env.SMTP_FROM || process.env.SMTP_USER) + '>',
+                    from: '"Dojo Ranas 🐸" <' + (process.env.SMTP_FROM || smtpUser) + '>',
                     to: newStudent.email,
                     subject: 'Tus credenciales de acceso - Dojo Ranas 🐸',
                     html
-                }).catch(err => console.error("Auto Welcome Mail Error:", err));
-            } catch(e) { console.error("SMTP Setup Error:", e); }
+                }).then(() => console.log(`✅ Email enviado a ${newStudent.email}`))
+                  .catch(err => console.error("❌ Auto Welcome Mail Error:", err.message));
+            } catch(e) { console.error("❌ SMTP Setup Error:", e.message); }
         }
 
         res.status(201).json({ ...req.body, id: newId });
