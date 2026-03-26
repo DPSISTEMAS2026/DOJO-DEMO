@@ -1582,6 +1582,21 @@ const App: React.FC = () => {
           {activeTab === 'dashboard' && (
             <motion.div key="dashboard" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
               style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.2rem' }}>
+              {/* Mobile Quick Actions on Dashboard (Moved to top) */}
+              {isMobile && (
+                <motion.div key="mobile-quick-actions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                  style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', gridColumn: 'span 1' }}>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsAddingStudent(true)}
+                    style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '1.2rem', padding: '1.2rem', color: '#fff', fontWeight: 900, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <Plus size={22} /> NUEVO ALUMNO
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsSendingNotice(true)}
+                    style={{ background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1.2rem', color: 'var(--panel-text)', fontWeight: 900, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <Bell size={22} style={{ color: 'var(--logo-green)' }} /> NOTIFICACIÓN
+                  </motion.button>
+                </motion.div>
+              )}
+
               {[
                 { title: 'Total Alumnos', value: students.length, icon: <Users size={18} />, sub: '+12% este mes', color: 'var(--panel-green-bg)', border: 'var(--panel-green-border)', onClick: () => { setActiveTab('students'); setStudentFilterPayment('ALL'); } },
                 { title: 'Alumnos al Día', value: students.filter(s => s.isPaid).length, icon: <Award size={18} />, sub: 'Pagos vigentes', color: 'var(--panel-green-bg)', border: 'var(--panel-green-border)', onClick: () => { setActiveTab('students'); setStudentFilterPayment('PAID'); } },
@@ -1670,20 +1685,6 @@ const App: React.FC = () => {
             </motion.div>
           )}
 
-          {/* Mobile Quick Actions on Dashboard */}
-          {activeTab === 'dashboard' && isMobile && (
-            <motion.div key="mobile-quick-actions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', marginTop: '1rem' }}>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsAddingStudent(true)}
-                style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '1.2rem', padding: '1.2rem', color: '#fff', fontWeight: 900, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                <Plus size={22} /> NUEVO ALUMNO
-              </motion.button>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsSendingNotice(true)}
-                style={{ background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1.2rem', color: 'var(--panel-text)', fontWeight: 900, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                <Bell size={22} style={{ color: 'var(--logo-green)' }} /> NOTIFICACIÓN
-              </motion.button>
-            </motion.div>
-          )}
 
 
           {activeTab === 'students' && (
