@@ -79,7 +79,7 @@ for i, row in df.iterrows():
                 
             transaction_id = f"EXCEL_{date_str.replace('-', '')}_{amount}"
 
-            if not any(h.get('transaction_id') == transaction_id for h in history):
+            if not any(h.get('transaction_id') == transaction_id or (h.get('date') == date_str and h.get('amount') == amount) for h in history):
                 history.append({
                     "date": date_str,
                     "status": "Completado",

@@ -1,7 +1,7 @@
 services:
   # Backend Server
   - type: web
-    name: dojo-demo-server
+    name: ranas-jiujitsu-server
     runtime: node
     buildCommand: npm install
     startCommand: npm start
@@ -16,7 +16,7 @@ services:
 
   # Frontend Client
   - type: web
-    name: dojo-demo-client
+    name: ranas-jiujitsu-client
     runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: dist

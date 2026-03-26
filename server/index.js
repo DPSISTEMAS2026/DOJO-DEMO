@@ -6,6 +6,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
+import cron from 'node-cron';
+import { DateTime } from 'luxon';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -284,7 +286,49 @@ app.get('/api/students', async (req, res) => {
         const { data, error } = await supabase.from('students').select('*');
         if (error) throw error;
 
-        const formatted = data.map(s => ({
+        // Logic: if lastpaymentdate + 1 month < today, set as unpaid
+        const now = new Date();
+        const updatedData = [];
+        let anyStatusChanged = false;
+
+        for (const s of data) {
+            let currentStatus = s.ispaid;
+            if (s.lastpaymentdate) {
+                const pDate = new Date(s.lastpaymentdate);
+                pDate.setMonth(pDate.getMonth() + 1);
+                if (now > pDate && currentStatus === true) {
+                    currentStatus = false;
+                    await supabase.from('students').update({ ispaid: false }).eq('id', s.id);
+                    anyStatusChanged = true;
+                }
+            }
+            updatedData.push({ ...s, ispaid: currentStatus });
+        }
+
+        // Logic: Birthdays auto-broadcast
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const searchDate = `-${mm}-${dd}`;
+        const birthdayStudents = updatedData.filter(s => s.birthdate && s.birthdate.includes(searchDate));
+        
+        if (birthdayStudents.length > 0) {
+            const names = birthdayStudents.map(s => s.name.split(' ')[0]).join(', ');
+            const subject = '🎂 ¡Felices Cumpleaños de Hoy!';
+            const message = `Hoy saludamos especialmente a: **${names}**. ¡Que tengan un excelente día de parte de su Dojo Ranas! 🥋🐸`;
+            
+            // Verificamos si el aviso ya existe para hoy para evitar actualizaciones innecesarias
+            const { data: currentNotice } = await supabase.from('news').select('*').eq('id', 999999).maybeSingle();
+            if (!currentNotice || currentNotice.title !== subject || !currentNotice.date.includes(now.toISOString().split('T')[0])) {
+                await supabase.from('news').upsert({
+                    id: 999999,
+                    title: subject,
+                    description: message,
+                    date: now.toISOString()
+                });
+            }
+        }
+
+        const formatted = updatedData.map(s => ({
             id: s.id,
             name: s.name,
             email: s.email,
@@ -898,6 +942,40 @@ app.post('/api/webhooks', async (req, res) => {
 });
 
 
+// Saludos de hoy - Solo como gatillo manual si se necesita forzar
+app.post('/api/admin/check-birthdays', async (req, res) => {
+    try {
+        const { data: students, error } = await supabase.from('students').select('*');
+        if (error) throw error;
+
+        const now = new Date();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const searchDate = `-${mm}-${dd}`;
+
+        const birthdayStudents = students.filter(s => s.birthdate && s.birthdate.includes(searchDate));
+        
+        if (birthdayStudents.length > 0) {
+            const names = birthdayStudents.map(s => s.name.split(' ')[0]).join(', ');
+            const subject = '🎂 ¡Felices Cumpleaños de Hoy!';
+            const message = `Hoy saludamos especialmente a: **${names}**. ¡Que tengan un excelente día de parte de su Dojo Ranas! 🥋🐸`;
+            
+            await supabase.from('news').upsert({
+                id: 999999,
+                title: subject,
+                description: message,
+                date: now.toISOString()
+            });
+
+            res.json({ success: true, message: `Aviso global publicado para: ${names}` });
+        } else {
+            res.json({ success: true, message: 'No hay alumnos de cumpleaños hoy.' });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Broadcast global (Notificación en App Exclusivamente)
 app.post('/api/admin/broadcast', async (req, res) => {
     try {
@@ -943,6 +1021,47 @@ app.get('/api/global-notice', async (req, res) => {
         }
         res.json(null);
     } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Automatización diaria de cumpleaños (09:00 Hora de Chile)
+// Cron: 0 9 * * * (Minuto 0, Hora 9, Todos los días)
+cron.schedule('0 9 * * *', async () => {
+    console.log('[CRON] Iniciando verificación diaria de cumpleaños (09:00 Chile)...');
+    try {
+        const { data: students, error } = await supabase.from('students').select('*');
+        if (error) throw error;
+
+        // Hora actual en Chile
+        const chileTime = DateTime.now().setZone('America/Santiago');
+        const mm = String(chileTime.month).padStart(2, '0');
+        const dd = String(chileTime.day).padStart(2, '0');
+        const searchDate = `-${mm}-${dd}`;
+
+        const birthdayStudents = students.filter(s => s.birthdate && s.birthdate.includes(searchDate));
+        
+        if (birthdayStudents.length > 0) {
+            const names = birthdayStudents.map(s => s.name.split(' ')[0]).join(', ');
+            const subject = '🎂 ¡Felices Cumpleaños de Hoy!';
+            const message = `Hoy saludamos especialmente a **${names}** en su día. ¡Que tengas un excelente cumpleaños y nos vemos pronto en el Dojo! 🥋🐸`;
+            
+            await supabase.from('news').upsert({
+                id: 999999,
+                title: subject,
+                description: message,
+                date: chileTime.toISO()
+            });
+            console.log(`[CRON] Aviso de cumpleaños publicado village: ${names}`);
+        } else {
+            console.log('[CRON] No hay cumpleaños el día de hoy.');
+            // Eliminar el aviso del día anterior si no hay cumpleaños hoy
+            await supabase.from('news').delete().eq('id', 999999);
+        }
+    } catch (e) {
+        console.error('[CRON ERROR] Error en la tarea programada:', e.message);
+    }
+}, {
+    scheduled: true,
+    timezone: "America/Santiago"
 });
 
 app.listen(PORT, () => {

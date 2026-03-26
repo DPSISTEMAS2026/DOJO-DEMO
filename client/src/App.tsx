@@ -105,7 +105,7 @@ import type {
   AutomationConfig
 } from './types';
 
-const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname.includes('localhost') ? 'http://localhost:3002' : 'https://dojo-demo-server.onrender.com');
+const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname.includes('localhost') ? 'http://localhost:3002' : 'https://dojoranas.onrender.com');
 
 const newsItems = [
   {
@@ -291,6 +291,7 @@ const App: React.FC = () => {
   const [studentNewPassword, setStudentNewPassword] = useState('');
 
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
+  const [isSendingBirthdays, setIsSendingBirthdays] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -470,11 +471,12 @@ const App: React.FC = () => {
   });
 
   const [automation, setAutomation] = useState<AutomationConfig>({ reminderDay: 5, whatsappTemplate: "Hola {nombre}...", emailTemplate: "Hola {nombre}..." });
-
-  const calculateAge = (birthDateString?: string) => {
-    if (!birthDateString) return 'N/A';
+  const calculateAge = (birthDateStr: string | null) => {
+    if (!birthDateStr) return 'N/A';
+    const parts = birthDateStr.split('-');
+    if (parts.length < 3) return 'N/A';
+    const birthDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
     const today = new Date();
-    const birthDate = new Date(birthDateString);
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
@@ -485,15 +487,30 @@ const App: React.FC = () => {
 
   const getUpcomingBirthdays = () => {
     const today = new Date();
+    today.setHours(0,0,0,0);
     return students
       .filter(s => s.birthDate)
       .map(s => {
-        const bd = new Date(s.birthDate!);
-        const currentYearBd = new Date(today.getFullYear(), bd.getMonth(), bd.getDate());
-        if (currentYearBd < today) currentYearBd.setFullYear(today.getFullYear() + 1);
-        return { ...s, nextBd: currentYearBd };
+        const parts = s.birthDate!.split('-');
+        const bYear = parseInt(parts[0]);
+        const bMonth = parseInt(parts[1]) - 1;
+        const bDay = parseInt(parts[2]);
+
+        const currentYearBd = new Date(today.getFullYear(), bMonth, bDay);
+        
+        let isToday = false;
+        if (bMonth === today.getMonth() && bDay === today.getDate()) {
+            isToday = true;
+        }
+
+        if (currentYearBd < today && !isToday) currentYearBd.setFullYear(today.getFullYear() + 1);
+        return { ...s, nextBd: currentYearBd, isToday };
       })
-      .sort((a, b) => a.nextBd.getTime() - b.nextBd.getTime())
+      .sort((a, b) => {
+          if (a.isToday) return -1;
+          if (b.isToday) return 1;
+          return a.nextBd.getTime() - b.nextBd.getTime();
+      })
       .slice(0, 5);
   };
 
@@ -604,6 +621,24 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Error sending payment reminder:", error);
       alert('❌ Error de red al intentar enviar');
+    }
+  };
+
+  const handleSendBirthdayGreetings = async () => {
+    try {
+      setIsSendingBirthdays(true);
+      const res = await fetch(`${API_URL}/api/admin/check-birthdays`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert(`🎂 ¡Operación exitosa!\n\n${data.message}`);
+      } else {
+        alert('❌ Hubo un problema al procesar los saludos.');
+      }
+    } catch (e) {
+      console.error("Error sending birthdays:", e);
+      alert('❌ Error de conexión con el servidor.');
+    } finally {
+      setIsSendingBirthdays(false);
     }
   };
 
@@ -1619,14 +1654,26 @@ const App: React.FC = () => {
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--logo-green)' }}>Próximos Cumpleaños 🎂</h3>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '1rem' }}>
-                  {getUpcomingBirthdays().map((student) => {
+                  {getUpcomingBirthdays().map((student: any) => {
                     const bd = new Date(student.birthDate!);
                     return (
                       <motion.div key={student.id} whileHover={{ y: -5 }} onClick={() => setSelectedStudent(student)}
-                        style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1.5rem', textAlign: 'center', cursor: 'pointer' }}>
-                        <div style={{ fontSize: '1.8rem', marginBottom: '0.6rem' }}>🎁</div>
+                        style={{ 
+                          background: student.isToday ? 'var(--panel-green-bg)' : 'var(--panel-surface)', 
+                          border: `1px solid ${student.isToday ? 'var(--logo-green)' : 'var(--panel-border)'}`, 
+                          borderRadius: '1.2rem', 
+                          padding: '1.5rem', 
+                          textAlign: 'center', 
+                          cursor: 'pointer',
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}>
+                        {student.isToday && (
+                          <div style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '0.6rem', fontWeight: 900, color: 'var(--logo-green)', background: 'rgba(5,168,106,0.1)', padding: '2px 8px', borderRadius: '10px' }}>HOY 🎂</div>
+                        )}
+                        <div style={{ fontSize: '1.8rem', marginBottom: '0.6rem' }}>{student.isToday ? '🎉' : '🎁'}</div>
                         <div style={{ fontWeight: 900, fontSize: '0.85rem', color: 'var(--panel-text)', marginBottom: '0.3rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{student.name.split(' ')[0]}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--logo-green)', fontWeight: 800 }}>
+                        <div style={{ fontSize: '0.75rem', color: student.isToday ? 'var(--panel-text)' : 'var(--logo-green)', fontWeight: 800 }}>
                           {bd.toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}
                         </div>
                       </motion.div>
@@ -1757,8 +1804,14 @@ const App: React.FC = () => {
                         <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                           <motion.button whileTap={{ scale: 0.9 }}
                             onClick={() => {
+                              const todayStr = new Date().toISOString().split('T')[0];
+                              const alreadyPaidToday = (student.history || []).some((h: any) => h.date === todayStr);
+                              if (alreadyPaidToday) {
+                                alert(`⚠️ Ya se registró un pago para ${student.name} el día de hoy.`);
+                                return;
+                              }
                               if (window.confirm(`¿Registrar pago de ${student.name} por ${formatCLP(student.monthlyFee || 0)}?`)) {
-                                handleUpdateStudent({ ...student, isPaid: true, lastPaymentDate: new Date().toISOString().split('T')[0], lastPaymentMonth: new Date().toISOString().substring(0, 7), history: [...(student.history || []), { date: new Date().toISOString().split('T')[0], status: 'Completado' as const, amount: student.monthlyFee || 0 }] });
+                                handleUpdateStudent({ ...student, isPaid: true, lastPaymentDate: todayStr, lastPaymentMonth: todayStr.substring(0, 7), history: [...(student.history || []), { date: todayStr, status: 'Completado' as const, amount: student.monthlyFee || 0 }] });
                               }
                             }}
                             style={{ background: 'rgba(5,168,106,0.1)', border: 'none', width: '34px', height: '34px', borderRadius: '8px', color: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
@@ -1783,7 +1836,7 @@ const App: React.FC = () => {
               ) : (
                 /* DESKTOP: Full table */
                 <div className="glass" style={{ borderRadius: '3.5rem', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-                  <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ background: 'rgba(5, 168, 106, 0.05)', borderBottom: '1px solid var(--glass-border)' }}>
                         <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ALUMNO</th>
@@ -1850,7 +1903,7 @@ const App: React.FC = () => {
                           </tr>
                         ))}
                     </tbody>
-                  </table></div>
+                  </table></div></div>
                 </div>
               )}
             </motion.div>
@@ -1991,6 +2044,41 @@ const App: React.FC = () => {
                 </button>
               </div>
 
+              {/* Birthday Greetings Panel */}
+              <div className="glass" style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'rgba(5,168,106,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}>
+                    <Calendar size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>Saludos de Cumpleaños</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Envía felicitaciones automáticas a quienes cumplen hoy.</p>
+                  </div>
+                </div>
+
+                <div style={{ padding: '1.2rem', background: 'rgba(5,168,106,0.05)', borderRadius: '1.2rem', border: '1px dashed var(--logo-green)' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--logo-green)', fontWeight: 800, lineHeight: 1.5 }}>
+                    🎁 El sistema buscará a todos los alumnos que cumplen años hoy ({new Date().toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}) y les enviará un correo especial personalizado de Dojo Ranas.
+                  </p>
+                </div>
+
+                <button 
+                  onClick={handleSendBirthdayGreetings} 
+                  disabled={isSendingBirthdays}
+                  className="btn-primary" 
+                  style={{ padding: '1.4rem', borderRadius: '1.5rem', fontWeight: 900, justifyContent: 'center', background: 'var(--logo-green)', boxShadow: '0 10px 20px rgba(5,168,106,0.2)' }}
+                >
+                  <motion.div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    {isSendingBirthdays ? 'Procesando...' : (
+                      <>
+                        <span style={{ fontSize: '1.2rem' }}>🎂</span> 
+                        ENVIAR SALUDOS DE HOY
+                      </>
+                    )}
+                  </motion.div>
+                </button>
+              </div>
+
               {/* Live Preview Card */}
               <div className="glass" style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -2068,7 +2156,7 @@ const App: React.FC = () => {
                 <div className="glass" style={{ borderRadius: '1.5rem', border: '1px solid var(--glass-border)', overflow: 'hidden', background: 'var(--panel-card)', padding: '1.5rem' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 900, marginBottom: '1.5rem', color: 'var(--text-main)' }}>Lista de Deudores</h3>
                   <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--panel-border)', opacity: 0.6 }}>
                           <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 800 }}>ALUMNO</th>
@@ -2090,7 +2178,7 @@ const App: React.FC = () => {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
+                    </table></div>
                   </div>
                 </div>
               </div>
@@ -2530,7 +2618,7 @@ const App: React.FC = () => {
                   <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>HISTORIAL DE PAGOS</p>
                   <div style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1.5rem', overflow: 'hidden' }}>
                     {selectedStudent.history && selectedStudent.history.length > 0 ? (
-                      <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                      <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
                           <tr style={{ background: 'rgba(5,168,106,0.05)', borderBottom: '1px solid var(--panel-border)' }}>
                             <th style={{ padding: '0.5rem 1rem', fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)' }}>FECHA</th>
@@ -2551,7 +2639,7 @@ const App: React.FC = () => {
                             </tr>
                           ))}
                         </tbody>
-                      </table></div>
+                      </table></div></div>
                     ) : (
                       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--panel-muted)', fontSize: '0.85rem', fontWeight: 600 }}>
                         No hay pagos registrados aún en el sistema. Al sincronizar con Mercado Pago aparecerán aquí.
