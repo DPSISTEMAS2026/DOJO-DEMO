@@ -373,18 +373,21 @@ const App: React.FC = () => {
         body: JSON.stringify(updatedStudent)
       });
       if (response.ok) {
-        const savedStudent = await response.json();
-        setStudents(prev => prev.map(s => s.id === savedStudent.id ? savedStudent : s));
-        setSelectedStudent(savedStudent);
+        // Use the locally built updatedStudent object (camelCase) instead of the raw server response
+        // because the server echoes back the request body which may not have all fields
+        const mergedStudent = { ...students.find(s => s.id === updatedStudent.id), ...updatedStudent };
+        setStudents(prev => prev.map(s => s.id === updatedStudent.id ? mergedStudent : s));
+        setSelectedStudent(mergedStudent);
         setIsEditingStudent(false);
-        if (currentUser?.id === savedStudent.id) {
-          setCurrentUser(savedStudent);
+        if (currentUser?.id === updatedStudent.id) {
+          setCurrentUser(mergedStudent);
         }
       }
     } catch (error) {
       console.error("Error updating student:", error);
     }
   };
+
 
 
   const handleDeleteStudent = async (studentId: string) => {
