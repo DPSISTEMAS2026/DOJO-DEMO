@@ -1392,7 +1392,7 @@ const App: React.FC = () => {
                       <div>
                         <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '0.3rem' }}>{noticeData.subject}</h4>
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                          {noticeData.message.split(/(\*\*.*?\*\*)/g).map((part: string, index: number) => 
+                          {(noticeData.message ?? '').split(/(\*\*.*?\*\*)/g).map((part: string, index: number) => 
                             part.startsWith('**') && part.endsWith('**') ? 
                               <strong key={index} style={{ color: 'var(--logo-green)', fontWeight: 900 }}>{part.slice(2, -2)}</strong> : 
                               part
@@ -2288,7 +2288,7 @@ const App: React.FC = () => {
               <span style={{ fontSize: '0.7rem', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase' }}>AVISO IMPORTANTE</span>
             </div>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#fff', marginBottom: '0.6rem', lineHeight: 1.3 }}>{noticeData.subject}</h4>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: noticeData.message.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#a78bfa; font-weight:900;">$1</strong>') }} />
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: (noticeData.message || '').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#a78bfa; font-weight:900;">$1</strong>') }} />
           </section>
         )}
                    {/* The Banner Preview */}

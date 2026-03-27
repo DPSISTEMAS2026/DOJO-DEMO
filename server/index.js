@@ -1015,7 +1015,7 @@ app.post('/api/admin/broadcast', async (req, res) => {
             await supabase.from('news').upsert({
                 id: 999999,
                 title: subject,
-                description: message,
+                body: message,
                 date: noticeData.date,
                 stats: [],
                 link: '#',
@@ -1037,7 +1037,7 @@ app.get('/api/global-notice', async (req, res) => {
     try {
         const { data: supaNotice, error } = await supabase.from('news').select('*').eq('id', 999999).maybeSingle();
         if (supaNotice) {
-            return res.json({ subject: supaNotice.title, message: supaNotice.description });
+            return res.json({ subject: supaNotice.title, message: supaNotice.body });
         }
 
         if (fs.existsSync(noticeFile)) {
