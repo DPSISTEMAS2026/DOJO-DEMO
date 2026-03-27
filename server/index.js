@@ -645,24 +645,33 @@ app.post('/api/students/:id/accept-terms', async (req, res) => {
 
 app.post('/api/checkout', async (req, res) => {
     try {
-        const { student, amount } = req.body;
+        const { student, students, amount } = req.body;
+        const isGroup = Array.isArray(students) && students.length > 0;
+
+        const items = isGroup ? students.map(s => ({
+            id: s.id,
+            title: `Mensualidad Fam. Ranas - ${s.name}`,
+            quantity: 1,
+            currency_id: 'CLP',
+            unit_price: Number(s.monthlyFee || s.monthlyfee || (amount / students.length))
+        })) : [
+            {
+                id: student.id,
+                title: `Mensualidad Dojo Ranas - ${student.name}`,
+                quantity: 1,
+                currency_id: 'CLP',
+                unit_price: Number(amount)
+            }
+        ];
 
         const preference = new Preference(client);
         const result = await preference.create({
             body: {
-                items: [
-                    {
-                        id: student.id, // Linking student ID for better tracking
-                        title: `Mensualidad Dojo Ranas - ${student.name}`,
-                        quantity: 1,
-                        currency_id: 'CLP',
-                        unit_price: Number(amount)
-                    }
-                ],
+                items: items,
                 payer: {
-                    email: student.email
+                    email: isGroup ? students[0].email : student.email
                 },
-                external_reference: student.id.toString(), // CRITICAL for webhook reliability
+                external_reference: isGroup ? students.map(s => s.id).join(',') : student.id.toString(), // CRITICAL for webhook reliability
                 back_urls: {
                     success: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=success',
                     failure: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=failure',
@@ -892,44 +901,50 @@ app.post('/api/webhooks', async (req, res) => {
 
             console.log(`Payment Approved: ${paymentId} - Email: ${payerEmail} - Amount: ${amount}`);
 
-            // Buscamos alumno en Supabase usando Preferencia de ID o Email como fallback
-            const studentId = payDetails.external_reference;
-            let student = null;
+            // Buscamos alumno(s) en Supabase usando Preferencia de ID
+            const externalRef = payDetails.external_reference;
+            let studentIds = [];
 
-            if (studentId) {
-                const { data } = await supabase.from('students').select('*').eq('id', studentId).maybeSingle();
-                student = data;
+            if (externalRef) {
+                studentIds = externalRef.split(',');
             }
 
-            if (!student && payerEmail) {
+            if (studentIds.length === 0 && payerEmail) {
                 const { data } = await supabase.from('students').select('*').eq('email', payerEmail.toLowerCase()).maybeSingle();
-                student = data;
+                if (data) studentIds.push(data.id);
             }
 
-            if (student) {
-                const history = Array.isArray(student.history) ? student.history : [];
-                if (!history.some(h => h.transaction_id === paymentId.toString())) {
-                    history.push({
-                        date: payDate,
-                        status: 'Completado',
-                        amount: amount,
-                        method: 'Mercado Pago',
-                        transaction_id: paymentId.toString()
-                    });
+            if (studentIds.length > 0) {
+                const historyAmount = studentIds.length > 1 ? (amount / studentIds.length) : amount;
+                
+                for (const sid of studentIds) {
+                    const { data: student } = await supabase.from('students').select('*').eq('id', sid.trim()).maybeSingle();
+                    if (student) {
+                        const history = Array.isArray(student.history) ? student.history : [];
+                        if (!history.some(h => h.transaction_id === paymentId.toString())) {
+                            history.push({
+                                date: payDate,
+                                status: 'Completado',
+                                amount: historyAmount,
+                                method: studentIds.length > 1 ? 'Mercado Pago (Familiar)' : 'Mercado Pago',
+                                transaction_id: paymentId.toString()
+                            });
 
-                    await supabase.from('students').update({
-                        history: history,
-                        ispaid: true,
-                        lastpaymentdate: payDate,
-                        lastpaymentmonth: payDate.substring(0, 7)
-                    }).eq('id', student.id);
+                            await supabase.from('students').update({
+                                history: history,
+                                ispaid: true,
+                                lastpaymentdate: payDate,
+                                lastpaymentmonth: payDate.substring(0, 7)
+                            }).eq('id', student.id);
 
-                    console.log(`Student ${student.name} updated successfully via Webhook.`);
-                } else {
-                    console.log('Payment already exists in history. Skipping.');
+                            console.log(`Student ${student.name} updated successfully via Webhook.`);
+                        } else {
+                            console.log(`Payment already exists in history for ${student.name}. Skipping.`);
+                        }
+                    }
                 }
             } else {
-                console.warn(`No student found for email: ${payerEmail}. Payment ${paymentId} received but not linked.`);
+                console.warn(`No student found for email: ${payerEmail} and no External Ref. Payment ${paymentId} received but not linked.`);
             }
         } else {
             console.log(`Payment ${paymentId} status: ${payDetails.status}. No action taken.`);
@@ -964,8 +979,15 @@ app.post('/api/admin/check-birthdays', async (req, res) => {
                 id: 999999,
                 title: subject,
                 description: message,
-                date: now.toISOString()
+                date: now.toISOString(),
+                stats: [],
+                link: '#',
+                img: '',
+                label: 'Aviso del Dojo'
             });
+
+            // Also save to noticeFile since GET /api/global-notice reads it
+            writeData(noticeFile, { subject, message, date: now.toISOString() });
 
             res.json({ success: true, message: `Aviso global publicado para: ${names}` });
         } else {
@@ -994,7 +1016,11 @@ app.post('/api/admin/broadcast', async (req, res) => {
                 id: 999999,
                 title: subject,
                 description: message,
-                date: noticeData.date
+                date: noticeData.date,
+                stats: [],
+                link: '#',
+                img: '',
+                label: 'Aviso del Dojo'
             });
         } catch (supaErr) {
             console.error('Error saving notice to Supabase:', supaErr);
@@ -1009,8 +1035,7 @@ app.post('/api/admin/broadcast', async (req, res) => {
 
 app.get('/api/global-notice', async (req, res) => {
     try {
-        // Intentar Supabase primero para persistencia post-reinicio en Render
-        const { data: supaNotice } = await supabase.from('news').select('*').eq('id', 999999).single();
+        const { data: supaNotice, error } = await supabase.from('news').select('*').eq('id', 999999).maybeSingle();
         if (supaNotice) {
             return res.json({ subject: supaNotice.title, message: supaNotice.description });
         }

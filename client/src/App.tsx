@@ -163,6 +163,7 @@ const App: React.FC = () => {
     const u = localStorage.getItem('currentUser');
     return u ? JSON.parse(u) : null;
   });
+  const [multiStudentAuthOptions, setMultiStudentAuthOptions] = useState<Student[]>([]);
 
   // --- UTILITIES ---
   const getWeekStart = (date: Date) => {
@@ -461,26 +462,36 @@ const App: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleCreatePaymentLink = async (student: Student) => {
-    const amount = student.monthlyFee || 0;
-    if (amount <= 0) {
-      alert("⚠️ El alumno no tiene una mensualidad asignada.");
-      return;
-    }
-
+  const handleCreatePaymentLink = async (studentsOrStudent: Student | Student[]) => {
     setIsGeneratingPayment(true);
     try {
+      const isGroup = Array.isArray(studentsOrStudent);
+      const studentsToPay = isGroup ? studentsOrStudent : [studentsOrStudent];
+      const amount = studentsToPay.reduce((acc: number, s: Student) => acc + (s.monthlyFee || 40000), 0);
+
+      if (amount <= 0) {
+        alert("⚠️ No hay mensualidades asignadas o el monto es cero.");
+        setIsGeneratingPayment(false);
+        return;
+      }
+
       const response = await fetch(`${API_URL}/api/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          student: {
-            id: student.id,
-            name: student.name,
-            email: student.email || "test_user_123@testuser.com"
-          },
+          student: !isGroup ? {
+            id: studentsOrStudent.id,
+            name: studentsOrStudent.name,
+            email: studentsOrStudent.email || "test_user_123@testuser.com"
+          } : undefined,
+          students: isGroup ? studentsToPay.map(s => ({
+            id: s.id,
+            name: s.name,
+            email: s.email || "test_user_123@testuser.com",
+            monthlyFee: s.monthlyFee || 40000
+          })) : undefined,
           amount
         })
       });
@@ -568,14 +579,23 @@ const App: React.FC = () => {
     }
 
     // Try student login
-    const student = studentToLogin || students.find(s => 
+    const matchingStudents = students.filter(s => 
       s.email && 
-      s.email.toLowerCase() === authEmail.trim().toLowerCase() && 
-      s.password === authPassword.trim()
+      s.email.trim().toLowerCase() === authEmail.trim().toLowerCase() && 
+      s.password && s.password.trim().toLowerCase() === authPassword.trim().toLowerCase()
     );
-    if (student) {
+
+    if (studentToLogin) {
       setRole('student');
-      setCurrentUser(student);
+      setCurrentUser(studentToLogin);
+      setViewMode('app');
+      setMultiStudentAuthOptions([]);
+    } else if (matchingStudents.length > 1) {
+      // Show student selector modal
+      setMultiStudentAuthOptions(matchingStudents);
+    } else if (matchingStudents.length === 1) {
+      setRole('student');
+      setCurrentUser(matchingStudents[0]);
       setViewMode('app');
     } else {
       alert('Correo o contraseña incorrecta');
@@ -606,7 +626,8 @@ const App: React.FC = () => {
       alert("Por favor completa los campos principales (Nombre, Correo, Teléfono).");
       return;
     }
-    const generatedPassword = Math.random().toString(36).slice(-6).toUpperCase();
+    const existingStudentSameEmail = students.find(s => s.email && s.email.trim().toLowerCase() === newStudentData.email.trim().toLowerCase());
+    const generatedPassword = existingStudentSameEmail?.password || Math.random().toString(36).slice(-6).toUpperCase();
     const newStudent = { ...newStudentData, classesAttended: 0, classesToNextBelt: 40, isPaid: false, history: [], lastPaymentMonth: '', password: generatedPassword };
 
     try {
@@ -620,7 +641,11 @@ const App: React.FC = () => {
         setStudents([...students, savedStudent]);
         setNewStudentData({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000 });
         setIsAddingStudent(false);
-        alert(`✅ Alumno registrado con éxito.\n\nClave provisional: ${generatedPassword}`);
+        if (existingStudentSameEmail) {
+          alert(`✅ Familiar registrado con éxito.\nSe asignó automáticamente la misma clave de acceso para vincular las cuentas.`);
+        } else {
+          alert(`✅ Alumno registrado con éxito.\n\nClave provisional: ${generatedPassword}`);
+        }
       }
     } catch (error) {
       console.error("Error adding student:", error);
@@ -1254,6 +1279,44 @@ const App: React.FC = () => {
                 <a href="#contact" onClick={() => setViewMode('landing')} style={{ color: 'var(--logo-green)', fontWeight: 800, textDecoration: 'none' }}>Únete hoy mismo</a>
               </p>
             </div>
+            
+            {/* Multi-Student Selection Modal */}
+            <AnimatePresence>
+              {multiStudentAuthOptions.length > 0 && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+                >
+                  <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }}
+                    style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2.5rem', padding: '3rem 2.5rem', width: '100%', maxWidth: '420px', color: '#fff', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
+                  >
+                    <h3 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '0.8rem', textAlign: 'center', color: '#fff' }}>¿Quién va a entrenar?</h3>
+                    <p style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', fontSize: '0.9rem', marginBottom: '2.5rem' }}>Hemos detectado varias cuentas con este correo.</p>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                      {multiStudentAuthOptions.map(opt => (
+                        <button key={opt.id} onClick={() => handleLogin(opt)}
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--logo-green)', borderRadius: '1.2rem', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.2rem', cursor: 'pointer', textAlign: 'left', color: '#fff', transition: 'all 0.3s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(5, 168, 106, 0.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        >
+                          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '1.2rem', border: '2px solid #fff', boxShadow: '0 0 20px rgba(5,168,106,0.3)' }}>
+                            {opt.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#fff', marginBottom: '2px' }}>{opt.name}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>{beltLabels[opt.belt || 'WHITE']} · {opt.plan?.toString().includes('ilimi') ? 'Plan Ilimitado' : `${opt.plan?.[0] || 2} Clases`}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <button onClick={() => setMultiStudentAuthOptions([])} style={{ width: '100%', padding: '1rem', background: 'transparent', border: 'none', color: '#ef4444', fontWeight: 800, marginTop: '1.5rem', cursor: 'pointer' }}>
+                      Cancelar
+                    </button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       </div>
@@ -1328,30 +1391,102 @@ const App: React.FC = () => {
                       </div>
                       <div>
                         <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '0.3rem' }}>{noticeData.subject}</h4>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>{noticeData.message}</p>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                          {noticeData.message.split(/(\*\*.*?\*\*)/g).map((part: string, index: number) => 
+                            part.startsWith('**') && part.endsWith('**') ? 
+                              <strong key={index} style={{ color: 'var(--logo-green)', fontWeight: 900 }}>{part.slice(2, -2)}</strong> : 
+                              part
+                          )}
+                        </p>
                       </div>
                     </div>
                   </motion.div>
                 )}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                  style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.9rem', marginBottom: '1.2rem' }}>
-                  <motion.div 
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => !currentUser?.isPaid && handleCreatePaymentLink(currentUser)}
-                    style={{ 
-                      background: currentUser?.isPaid ? 'var(--panel-green-bg)' : 'var(--panel-red-bg)', 
-                      border: `1px solid ${currentUser?.isPaid ? 'var(--panel-green-border)' : 'var(--panel-red-border)'}`, 
-                      borderRadius: '1.1rem', 
-                      padding: '1.3rem', 
-                      textAlign: 'center',
-                      cursor: currentUser?.isPaid ? 'default' : 'pointer',
-                      position: 'relative'
-                    }}>
-                    <CreditCard size={22} style={{ color: currentUser?.isPaid ? 'var(--logo-green)' : '#ef4444', marginBottom: '0.6rem' }} />
-                    <div style={{ fontSize: '0.6rem', color: 'var(--panel-muted)', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.2rem' }}>MENSUALIDAD</div>
-                    <div style={{ fontWeight: 900, color: currentUser?.isPaid ? 'var(--logo-green)' : '#ef4444', fontSize: '0.85rem' }}>{currentUser?.isPaid ? '✓ AL DÍA' : '⚠ PENDIENTE'}</div>
-                    {!currentUser?.isPaid && <div style={{ fontSize: '0.55rem', color: '#ef4444', fontWeight: 800, marginTop: '4px' }}>TOCA PARA PAGAR</div>}
-                  </motion.div>
+                {(() => {
+                  const userAge = typeof calculateAge(currentUser?.birthDate || null) === 'number' ? calculateAge(currentUser?.birthDate || null) : parseInt(calculateAge(currentUser?.birthDate || null) as string);
+                  const isAdult = (userAge as number) >= 18;
+                  const familyMembers = students.filter(s => s.email && currentUser?.email && s.email.trim().toLowerCase() === currentUser.email.trim().toLowerCase());
+                  const familyUnpaid = familyMembers.filter(s => !s.isPaid);
+
+                  return (
+                    <>
+                      {isAdult && familyUnpaid.length > 1 && (
+                        <motion.div 
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleCreatePaymentLink(familyUnpaid)}
+                          style={{ background: 'var(--panel-card)', border: '2px solid var(--logo-green)', borderRadius: '1.2rem', padding: '1.5rem', marginBottom: '1.2rem', textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.5rem', boxShadow: '0 10px 30px rgba(5,168,106,0.15)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', color: 'var(--logo-green)', fontWeight: 900, fontSize: '1.1rem' }}>
+                            <Users size={24} /> PAGO FAMILIAR PENDIENTE
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--panel-muted)' }}>
+                            Tienes {familyUnpaid.length} mensualidades pendientes en tu grupo familiar.
+                          </div>
+                          <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--panel-text)' }}>
+                            Total: {formatCLP(familyUnpaid.reduce((acc, s) => acc + (s.monthlyFee || 40000), 0))}
+                          </div>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--logo-green)', fontWeight: 800, textTransform: 'uppercase', marginTop: '0.5rem', letterSpacing: '0.1em' }}>Toca aquí para pagar todo junto</div>
+                        </motion.div>
+                      )}
+                      
+                      {isAdult && familyMembers.length > 1 && (
+                        <motion.section initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.05 }}
+                          style={{ marginBottom: '1.2rem', padding: '1.2rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '1.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1rem', paddingBottom: '0.8rem', borderBottom: '1px solid var(--panel-border-light)' }}>
+                            <div style={{ width: '40px', height: '40px', background: 'var(--panel-green-bg)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}>
+                              <Users size={20} />
+                            </div>
+                            <div>
+                              <h4 style={{ fontSize: '0.9rem', fontWeight: 900, color: 'var(--panel-text)' }}>Gestión Familiar</h4>
+                              <p style={{ fontSize: '0.7rem', color: 'var(--panel-muted)' }}>Tienes {familyMembers.length} alumnos bajo tu cargo.</p>
+                            </div>
+                          </div>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                            {familyMembers.map(member => (
+                              <div key={member.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.8rem 1rem', background: member.isPaid ? 'var(--panel-surface)' : 'rgba(239,68,68,0.03)', borderRadius: '1rem', border: `1px solid ${member.isPaid ? 'var(--panel-border-light)' : 'rgba(239,68,68,0.1)'}` }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: member.isPaid ? 'var(--logo-green)' : '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '0.75rem', fontWeight: 900 }}>
+                                    {member.name.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--panel-text)' }}>{member.name}</div>
+                                    <div style={{ fontSize: '0.65rem', color: 'var(--panel-muted)' }}>{formatCLP(member.monthlyFee || 40000)} / mes</div>
+                                  </div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ fontSize: '0.65rem', fontWeight: 900, color: member.isPaid ? 'var(--logo-green)' : '#ef4444' }}>
+                                    {member.isPaid ? 'PAGADO' : 'PENDIENTE'}
+                                  </div>
+                                  <div style={{ fontSize: '0.55rem', color: 'var(--panel-muted)', fontWeight: 600 }}>Marzo 2026</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </motion.section>
+                      )}
+
+                      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                        style={{ display: 'grid', gridTemplateColumns: isAdult ? '1fr 1fr' : '1fr', gap: '0.9rem', marginBottom: '1.2rem' }}>
+                        
+                        {isAdult && (
+                          <motion.div 
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => !currentUser?.isPaid && handleCreatePaymentLink(currentUser)}
+                            style={{ 
+                              background: currentUser?.isPaid ? 'var(--panel-green-bg)' : 'var(--panel-red-bg)', 
+                              border: `1px solid ${currentUser?.isPaid ? 'var(--panel-green-border)' : 'var(--panel-red-border)'}`, 
+                              borderRadius: '1.1rem', 
+                              padding: '1.3rem', 
+                              textAlign: 'center',
+                              cursor: currentUser?.isPaid ? 'default' : 'pointer',
+                              position: 'relative'
+                            }}>
+                            <CreditCard size={22} style={{ color: currentUser?.isPaid ? 'var(--logo-green)' : '#ef4444', marginBottom: '0.6rem' }} />
+                            <div style={{ fontSize: '0.6rem', color: 'var(--panel-muted)', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.2rem' }}>MENSUALIDAD INDIVIDUAL</div>
+                            <div style={{ fontWeight: 900, color: currentUser?.isPaid ? 'var(--logo-green)' : '#ef4444', fontSize: '0.85rem' }}>{currentUser?.isPaid ? '✓ AL DÍA' : '⚠ PENDIENTE'}</div>
+                            {!currentUser?.isPaid && <div style={{ fontSize: '0.55rem', color: '#ef4444', fontWeight: 800, marginTop: '4px' }}>TOCA PARA PAGAR</div>}
+                          </motion.div>
+                        )}
                   <div style={{ background: 'var(--panel-purple-bg)', border: '1px solid var(--panel-purple-border)', borderRadius: '1.1rem', padding: '1.3rem', textAlign: 'center' }}>
                     <Calendar size={22} style={{ color: '#a78bfa', marginBottom: '0.6rem' }} />
                     <div style={{ fontSize: '0.6rem', color: 'var(--panel-muted)', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '0.4rem' }}>CLASES RESERVADAS</div>
@@ -1371,6 +1506,9 @@ const App: React.FC = () => {
                     })()}
                   </div>
                 </motion.div>
+                    </>
+                  );
+                })()}
 
                 {/* Weekly Schedule Subsystem */}
                  <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
@@ -1511,13 +1649,12 @@ const App: React.FC = () => {
                     </motion.button>
                   </div>
                 </motion.div>
-              )
-            }
-          </AnimatePresence >
-        </div >
+              )}
+            </AnimatePresence>
+          </div>
 
         {/* Tab Bar */}
-        < motion.nav initial={{ y: 100, x: '-50%' }} animate={{ y: 0, x: '-50%' }} transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 30 }}
+        <motion.nav initial={{ y: 100, x: '-50%' }} animate={{ y: 0, x: '-50%' }} transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 30 }}
           style={{ position: 'fixed', bottom: '1.2rem', left: '50%', width: 'calc(100% - 2.5rem)', maxWidth: '440px', height: '66px', display: 'flex', justifyContent: 'space-around', alignItems: 'center', zIndex: 1000, borderRadius: '100px', background: 'var(--panel-sidebar)', backdropFilter: 'blur(30px)', border: '1px solid var(--panel-border)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
           <motion.button whileTap={{ scale: 0.82 }} onClick={() => setActiveTab('dashboard')}
             style={{ background: 'none', border: 'none', color: activeTab === 'dashboard' ? 'var(--logo-green)' : 'var(--panel-muted)', padding: '0.8rem', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
@@ -1536,8 +1673,8 @@ const App: React.FC = () => {
             <Settings size={20} />
             {activeTab === 'settings' && <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--logo-green)' }} />}
           </motion.button>
-        </motion.nav >
-      </div >
+        </motion.nav>
+      </div>
     );
   }
 
@@ -2151,7 +2288,7 @@ const App: React.FC = () => {
               <span style={{ fontSize: '0.7rem', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase' }}>AVISO IMPORTANTE</span>
             </div>
             <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#fff', marginBottom: '0.6rem', lineHeight: 1.3 }}>{noticeData.subject}</h4>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: noticeData.message.replace(/\n/g, '<br>') }} />
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: noticeData.message.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#a78bfa; font-weight:900;">$1</strong>') }} />
           </section>
         )}
                    {/* The Banner Preview */}
@@ -2161,7 +2298,7 @@ const App: React.FC = () => {
                         <span style={{ fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.15em', textTransform: 'uppercase' }}>AVISO INTEGRAL</span>
                       </div>
                       <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#1e1b4b', lineHeight: 1.2 }}>{noticeData.subject || 'Título de ejemplo'}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#5b21b6', lineHeight: 1.4, margin: 0 }} dangerouslySetInnerHTML={{ __html: noticeData.message ? noticeData.message.replace(/\n/g, '<br>') : 'Aquí se mostrará el cuerpo de tu mensaje redactado a la izquierda...' }} />
+                      <div style={{ fontSize: '0.8rem', color: '#5b21b6', lineHeight: 1.4, margin: 0 }} dangerouslySetInnerHTML={{ __html: noticeData.message ? noticeData.message.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--logo-green); font-weight:900;">$1</strong>') : 'Aquí se mostrará el cuerpo de tu mensaje redactado a la izquierda...' }} />
                     </motion.div>
 
                     {/* Mockup rest of portal */}
@@ -2517,14 +2654,27 @@ const App: React.FC = () => {
                   </div>
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     {!isEditingStudent ? (
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                        style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', padding: '0.8rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: 'var(--panel-text)', fontWeight: 800, fontSize: '0.8rem' }}
-                        onClick={() => {
-                          setEditedStudent({ ...selectedStudent });
-                          setIsEditingStudent(true);
-                        }}>
-                        <Edit2 size={16} /> EDITAR
-                      </motion.button>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                          style={{ background: 'rgba(5,168,106,0.1)', border: '1px solid rgba(5,168,106,0.3)', borderRadius: '1rem', padding: '0.8rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: 'var(--logo-green)', fontWeight: 900, fontSize: '0.8rem' }}
+                          onClick={() => {
+                            setNewStudentData({ name: '', email: selectedStudent.email || '', phone: selectedStudent.phone || '', birthDate: '', documentId: '', belt: 'WHITE', plan: selectedStudent.plan ? selectedStudent.plan.toString() : '3', monthlyFee: selectedStudent.monthlyFee || 40000 });
+                            setSelectedStudent(null);
+                            setIsAddingStudent(true);
+                          }}
+                          title="Crear un alumno nuevo que comparte el mismo email y acceso a este panel"
+                        >
+                          <Users size={16} /> AÑADIR FAMILIAR
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                          style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', padding: '0.8rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: 'var(--panel-text)', fontWeight: 800, fontSize: '0.8rem' }}
+                          onClick={() => {
+                            setEditedStudent({ ...selectedStudent });
+                            setIsEditingStudent(true);
+                          }}>
+                          <Edit2 size={16} /> EDITAR
+                        </motion.button>
+                      </div>
                     ) : (
                       <div style={{ display: 'flex', gap: '0.8rem' }}>
                         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
