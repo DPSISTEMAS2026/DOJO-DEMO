@@ -262,7 +262,6 @@ const App: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalTarget, setPaymentModalTarget] = useState<Student | Student[] | null>(null);
   const [paymentTab, setPaymentTab] = useState<'transfer' | 'card'>('transfer');
-  const [transferRefId, setTransferRefId] = useState('');
   const [transferCopied, setTransferCopied] = useState<string | null>(null);
   const [transferSubmitted, setTransferSubmitted] = useState(false);
   
@@ -523,35 +522,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleTransferConfirm = async () => {
-    if (!transferRefId.trim()) {
-      alert('Por favor, ingresa tu nombre o una referencia para identificar la transferencia.');
-      return;
-    }
-    if (!paymentModalTarget) return;
-    
-    const studentsArr = Array.isArray(paymentModalTarget) ? paymentModalTarget : [paymentModalTarget];
-    const amount = studentsArr.reduce((acc, s) => acc + (s.monthlyFee || 40000), 0);
-    
-    try {
-      // Log the transfer intent on the server so the sync job can match it
-      await fetch(`${API_URL}/api/transfer-intent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentIds: studentsArr.map(s => s.id),
-          reference: transferRefId.trim(),
-          amount,
-          date: new Date().toISOString()
-        })
-      });
-      setTransferSubmitted(true);
-    } catch (e) {
-      console.error('Error registering transfer intent:', e);
-      setTransferSubmitted(true); // Still show confirmation
-    }
-  };
-
   const handleCopyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
       setTransferCopied(label);
@@ -562,7 +532,6 @@ const App: React.FC = () => {
   const openPaymentModal = (target: Student | Student[]) => {
     setPaymentModalTarget(target);
     setPaymentTab('transfer');
-    setTransferRefId('');
     setTransferCopied(null);
     setTransferSubmitted(false);
     setShowPaymentModal(true);
