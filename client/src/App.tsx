@@ -30,7 +30,11 @@ import {
   ImageIcon,
   Monitor,
   Trash2,
-  Phone
+  Phone,
+  Copy,
+  Banknote,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'react-qr-code';
@@ -255,6 +259,12 @@ const App: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [manualPaymentDates, setManualPaymentDates] = useState<Record<string, string>>({});
   const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentModalTarget, setPaymentModalTarget] = useState<Student | Student[] | null>(null);
+  const [paymentTab, setPaymentTab] = useState<'transfer' | 'card'>('transfer');
+  const [transferRefId, setTransferRefId] = useState('');
+  const [transferCopied, setTransferCopied] = useState<string | null>(null);
+  const [transferSubmitted, setTransferSubmitted] = useState(false);
   
   const handleManualPayment = async (studentId: string, customDate?: string) => {
     try {
@@ -482,9 +492,9 @@ const App: React.FC = () => {
         },
         body: JSON.stringify({
           student: !isGroup ? {
-            id: studentsOrStudent.id,
-            name: studentsOrStudent.name,
-            email: studentsOrStudent.email || "test_user_123@testuser.com"
+            id: (studentsOrStudent as Student).id,
+            name: (studentsOrStudent as Student).name,
+            email: (studentsOrStudent as Student).email || "test_user_123@testuser.com"
           } : undefined,
           students: isGroup ? studentsToPay.map(s => ({
             id: s.id,
@@ -492,15 +502,14 @@ const App: React.FC = () => {
             email: s.email || "test_user_123@testuser.com",
             monthlyFee: s.monthlyFee || 40000
           })) : undefined,
-          amount
+          amount,
+          withSurcharge: true
         })
       });
 
       const data = await response.json();
 
       if (data.init_point) {
-        // Essential for mobile: Use location.href instead of window.open
-        // as window.open is blocked in async callbacks by most mobile browsers.
         window.location.href = data.init_point;
       } else {
         console.error("Respuesta Error:", data);
@@ -512,6 +521,60 @@ const App: React.FC = () => {
     } finally {
       setIsGeneratingPayment(false);
     }
+  };
+
+  const handleTransferConfirm = async () => {
+    if (!transferRefId.trim()) {
+      alert('Por favor, ingresa tu nombre o una referencia para identificar la transferencia.');
+      return;
+    }
+    if (!paymentModalTarget) return;
+    
+    const studentsArr = Array.isArray(paymentModalTarget) ? paymentModalTarget : [paymentModalTarget];
+    const amount = studentsArr.reduce((acc, s) => acc + (s.monthlyFee || 40000), 0);
+    
+    try {
+      // Log the transfer intent on the server so the sync job can match it
+      await fetch(`${API_URL}/api/transfer-intent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentIds: studentsArr.map(s => s.id),
+          reference: transferRefId.trim(),
+          amount,
+          date: new Date().toISOString()
+        })
+      });
+      setTransferSubmitted(true);
+    } catch (e) {
+      console.error('Error registering transfer intent:', e);
+      setTransferSubmitted(true); // Still show confirmation
+    }
+  };
+
+  const handleCopyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setTransferCopied(label);
+      setTimeout(() => setTransferCopied(null), 2000);
+    });
+  };
+
+  const openPaymentModal = (target: Student | Student[]) => {
+    setPaymentModalTarget(target);
+    setPaymentTab('transfer');
+    setTransferRefId('');
+    setTransferCopied(null);
+    setTransferSubmitted(false);
+    setShowPaymentModal(true);
+  };
+
+  const MP_COMMISSION_RATE = 0.0319;
+  const MP_IVA = 0.19;
+  const getEffectiveRate = () => MP_COMMISSION_RATE * (1 + MP_IVA);
+  const getSurcharge = (baseAmount: number) => {
+    const rate = getEffectiveRate();
+    const charged = Math.ceil(baseAmount / (1 - rate));
+    return { charged, surcharge: charged - baseAmount, rate };
   };
   const [newStudentData, setNewStudentData] = useState({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000 });
 
@@ -1403,8 +1466,8 @@ const App: React.FC = () => {
                   </motion.div>
                 )}
                 {(() => {
-                  const userAge = typeof calculateAge(currentUser?.birthDate || null) === 'number' ? calculateAge(currentUser?.birthDate || null) : parseInt(calculateAge(currentUser?.birthDate || null) as string);
-                  const isAdult = (userAge as number) >= 18;
+                  const rawAge = calculateAge(currentUser?.birthDate || null);
+                  const isAdult = rawAge === 'N/A' ? true : (typeof rawAge === 'number' ? rawAge >= 18 : parseInt(rawAge as string) >= 18 || isNaN(parseInt(rawAge as string)));
                   const familyMembers = students.filter(s => s.email && currentUser?.email && s.email.trim().toLowerCase() === currentUser.email.trim().toLowerCase());
                   const familyUnpaid = familyMembers.filter(s => !s.isPaid);
 
@@ -1413,7 +1476,7 @@ const App: React.FC = () => {
                       {isAdult && familyUnpaid.length > 1 && (
                         <motion.div 
                           whileTap={{ scale: 0.98 }}
-                          onClick={() => handleCreatePaymentLink(familyUnpaid)}
+                          onClick={() => openPaymentModal(familyUnpaid)}
                           style={{ background: 'var(--panel-card)', border: '2px solid var(--logo-green)', borderRadius: '1.2rem', padding: '1.5rem', marginBottom: '1.2rem', textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.5rem', boxShadow: '0 10px 30px rgba(5,168,106,0.15)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', color: 'var(--logo-green)', fontWeight: 900, fontSize: '1.1rem' }}>
                             <Users size={24} /> PAGO FAMILIAR PENDIENTE
@@ -1457,7 +1520,7 @@ const App: React.FC = () => {
                                   <div style={{ fontSize: '0.65rem', fontWeight: 900, color: member.isPaid ? 'var(--logo-green)' : '#ef4444' }}>
                                     {member.isPaid ? 'PAGADO' : 'PENDIENTE'}
                                   </div>
-                                  <div style={{ fontSize: '0.55rem', color: 'var(--panel-muted)', fontWeight: 600 }}>Marzo 2026</div>
+                                  <div style={{ fontSize: '0.55rem', color: 'var(--panel-muted)', fontWeight: 600 }}>{new Date().toLocaleDateString('es-CL', { month: 'long', year: 'numeric', timeZone: 'America/Santiago' }).replace(/^./, c => c.toUpperCase())}</div>
                                 </div>
                               </div>
                             ))}
@@ -1471,7 +1534,7 @@ const App: React.FC = () => {
                         {isAdult && (
                           <motion.div 
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => !currentUser?.isPaid && handleCreatePaymentLink(currentUser)}
+                            onClick={() => !currentUser?.isPaid && openPaymentModal(currentUser!)}
                             style={{ 
                               background: currentUser?.isPaid ? 'var(--panel-green-bg)' : 'var(--panel-red-bg)', 
                               border: `1px solid ${currentUser?.isPaid ? 'var(--panel-green-border)' : 'var(--panel-red-border)'}`, 
@@ -1674,6 +1737,216 @@ const App: React.FC = () => {
             {activeTab === 'settings' && <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--logo-green)' }} />}
           </motion.button>
         </motion.nav>
+
+        {/* ====== DUAL PAYMENT MODAL (Student View) ====== */}
+        <AnimatePresence>
+        {showPaymentModal && paymentModalTarget && (() => {
+          const studentsArr = Array.isArray(paymentModalTarget) ? paymentModalTarget : [paymentModalTarget];
+          const baseAmount = studentsArr.reduce((acc, s) => acc + (s.monthlyFee || 40000), 0);
+          const { charged, surcharge } = getSurcharge(baseAmount);
+          const isGroup = studentsArr.length > 1;
+
+          const MP_TITULAR = 'Manuel Alejandro Plaza Arenas';
+          const MP_RUT = '18122714-1';
+          const MP_BANCO = 'Mercado Pago';
+          const MP_TIPO = 'Cuenta Vista';
+          const MP_CUENTA = '1064388798';
+          const MP_EMAIL = 'manuelplazaarenas@gmail.com';
+          const ALL_BANK_DATA = `Nombre: ${MP_TITULAR}\nRUT: ${MP_RUT}\nBanco / Medio: ${MP_BANCO}\nTipo de cuenta: ${MP_TIPO}\nNúmero de cuenta: ${MP_CUENTA}\nCorreo: ${MP_EMAIL}`;
+          return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+              onClick={() => setShowPaymentModal(false)}>
+              <motion.div initial={{ y: 40, opacity: 0, scale: 0.97 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: 'spring', damping: 25 }}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                style={{ width: '100%', maxWidth: '480px', background: '#fff', borderRadius: '2.5rem', overflow: 'hidden', boxShadow: '0 50px 120px rgba(0,0,0,0.4)', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+                
+                {/* Header */}
+                <div style={{ padding: '1.5rem 1.5rem 0', textAlign: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div style={{ width: 36 }} />
+                    <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111', letterSpacing: '-0.5px' }}>Pagar Mensualidad</h2>
+                    <button onClick={() => setShowPaymentModal(false)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}><X size={16} /></button>
+                  </div>
+                  
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '1rem', padding: '0.8rem 1rem', marginBottom: '1rem' }}>
+                    {studentsArr.map(s => (
+                      <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.3rem 0' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#166534' }}>{s.name}</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#166534' }}>{formatCLP(s.monthlyFee || 40000)}</span>
+                      </div>
+                    ))}
+                    {isGroup && (
+                      <div style={{ borderTop: '1px solid #bbf7d0', marginTop: '0.5rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#166534' }}>Total</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#166534' }}>{formatCLP(baseAmount)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '0.8rem', padding: '4px', gap: '4px', marginBottom: '1rem' }}>
+                    <button onClick={() => { setPaymentTab('transfer'); setTransferSubmitted(false); }}
+                      style={{ flex: 1, padding: '0.65rem', borderRadius: '0.65rem', border: 'none', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.25s',
+                        background: paymentTab === 'transfer' ? '#05a86a' : 'transparent',
+                        color: paymentTab === 'transfer' ? '#fff' : '#64748b' }}>
+                      <Banknote size={14} style={{ marginBottom: '-2px', marginRight: '4px' }} />
+                      Transferencia
+                    </button>
+                    <button onClick={() => setPaymentTab('card')}
+                      style={{ flex: 1, padding: '0.65rem', borderRadius: '0.65rem', border: 'none', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.25s',
+                        background: paymentTab === 'card' ? '#3b82f6' : 'transparent',
+                        color: paymentTab === 'card' ? '#fff' : '#64748b' }}>
+                      <CreditCard size={14} style={{ marginBottom: '-2px', marginRight: '4px' }} />
+                      Tarjeta
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ flex: 1, overflowY: 'auto', padding: '0 1.5rem 1.5rem' }}>
+                  
+                  {paymentTab === 'transfer' && !transferSubmitted && (
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      <div style={{ background: '#f0fdf4', borderRadius: '1rem', padding: '1rem', border: '1px solid #dcfce7' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <CheckCircle2 size={13} /> SIN COMISIÓN — PAGO DIRECTO
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: '#166534', lineHeight: 1.5, margin: 0 }}>
+                          Transfiere directamente a la cuenta del Dojo. Tu pago se detectará y registrará <strong>automáticamente</strong> en el sistema.
+                        </p>
+                      </div>
+
+                      <div style={{ background: '#f8fafc', borderRadius: '1rem', padding: '1rem', border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>DATOS PARA TRANSFERIR</div>
+                          <button onClick={() => handleCopyToClipboard(ALL_BANK_DATA, 'Todos')}
+                            style={{ background: transferCopied === 'Todos' ? '#05a86a' : 'linear-gradient(135deg, #05a86a, #10f49c)', border: 'none', color: '#fff', padding: '0.45rem 0.8rem', borderRadius: '0.6rem', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(5,168,106,0.3)' }}>
+                            {transferCopied === 'Todos' ? <><CheckCircle2 size={12} /> ¡Copiado!</> : <><Copy size={12} /> Copiar todo</>}
+                          </button>
+                        </div>
+                        
+                        {[
+                          { label: 'Nombre', value: MP_TITULAR },
+                          { label: 'RUT', value: MP_RUT },
+                          { label: 'Banco / Medio', value: MP_BANCO },
+                          { label: 'Tipo de cuenta', value: MP_TIPO },
+                          { label: 'N° de cuenta', value: MP_CUENTA },
+                          { label: 'Correo', value: MP_EMAIL },
+                          { label: 'Monto', value: formatCLP(baseAmount) }
+                        ].map(item => (
+                          <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                            <div>
+                              <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>{item.label}</div>
+                              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace' }}>{item.value}</div>
+                            </div>
+                            <button onClick={() => handleCopyToClipboard(item.value, item.label)}
+                              style={{ background: transferCopied === item.label ? '#05a86a' : '#f1f5f9', border: '1px solid ' + (transferCopied === item.label ? '#05a86a' : '#e2e8f0'), color: transferCopied === item.label ? '#fff' : '#64748b', padding: '0.4rem 0.6rem', borderRadius: '0.6rem', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+                              {transferCopied === item.label ? <><CheckCircle2 size={12} /> Copiado</> : <><Copy size={12} /> Copiar</>}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ background: '#fffbeb', borderRadius: '1rem', padding: '1rem', border: '1px solid #fde68a' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <AlertTriangle size={13} /> IMPORTANTE
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: '#78350f', lineHeight: 1.6, margin: '0 0 0.8rem' }}>
+                          No importa desde qué cuenta transfieras. Solo asegúrate de escribir <strong>tu correo registrado</strong> en el <strong>comentario o glosa</strong> de la transferencia para que el sistema identifique tu pago automáticamente.
+                        </p>
+                        <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#92400e', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Tu correo registrado:</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ flex: 1, padding: '0.7rem 1rem', borderRadius: '0.8rem', background: '#fff', border: '1px solid #fde68a', fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace', letterSpacing: '0.02em' }}>
+                            {currentUser?.email || studentsArr[0]?.email || ''}
+                          </div>
+                          <button onClick={() => handleCopyToClipboard(currentUser?.email || studentsArr[0]?.email || '', 'Email')}
+                            style={{ background: transferCopied === 'Email' ? '#05a86a' : '#f59e0b', border: 'none', color: '#fff', padding: '0.7rem 1rem', borderRadius: '0.8rem', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+                            {transferCopied === 'Email' ? <><CheckCircle2 size={14} /> Copiado</> : <><Copy size={14} /> Copiar</>}
+                          </button>
+                        </div>
+                      </div>
+
+                      <button onClick={() => { setTransferSubmitted(true); }}
+                        style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: 'none', background: '#05a86a', color: '#fff', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 10px 25px rgba(5,168,106,0.25)', transition: 'all 0.2s' }}>
+                        <CheckCircle2 size={18} /> YA REALICÉ LA TRANSFERENCIA
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {paymentTab === 'transfer' && transferSubmitted && (
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                      style={{ textAlign: 'center', padding: '2rem 0' }}>
+                      <div style={{ width: 70, height: 70, borderRadius: '50%', background: '#f0fdf4', border: '3px solid #05a86a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem' }}>
+                        <CheckCircle2 size={35} color="#05a86a" />
+                      </div>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#111', marginBottom: '0.5rem' }}>¡Gracias!</h3>
+                      <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                        El sistema verificará tu transferencia automáticamente y actualizará tu estado de pago en los próximos minutos.
+                      </p>
+                      <button onClick={() => setShowPaymentModal(false)}
+                        style={{ padding: '0.8rem 2rem', borderRadius: '1rem', border: 'none', background: '#05a86a', color: '#fff', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer' }}>
+                        CERRAR
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {paymentTab === 'card' && (
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      <div style={{ background: '#eff6ff', borderRadius: '1rem', padding: '1rem', border: '1px solid #bfdbfe' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <CreditCard size={13} /> PAGO INMEDIATO CON TARJETA
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: '#1e3a5f', lineHeight: 1.5, margin: 0 }}>
+                          Paga con tarjeta de débito o crédito vía Mercado Pago. El pago se acredita al instante y tu mensualidad queda registrada automáticamente.
+                        </p>
+                      </div>
+
+                      <div style={{ background: '#f8fafc', borderRadius: '1rem', padding: '1rem', border: '1px solid #e2e8f0' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.6rem' }}>DESGLOSE DEL PAGO</div>
+                        
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                          <span style={{ fontSize: '0.8rem', color: '#475569' }}>Mensualidad</span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>{formatCLP(baseAmount)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                          <span style={{ fontSize: '0.8rem', color: '#475569' }}>Cargo procesadora</span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ef4444' }}>+ {formatCLP(surcharge)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.7rem 0 0.3rem', marginTop: '0.3rem' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#0f172a' }}>Total a pagar</span>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#3b82f6' }}>{formatCLP(charged)}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ background: '#fefce8', borderRadius: '0.8rem', padding: '0.7rem 1rem', border: '1px solid #fde68a' }}>
+                        <p style={{ fontSize: '0.68rem', color: '#854d0e', margin: 0, lineHeight: 1.5 }}>
+                          <strong>¿Por qué hay un cargo adicional?</strong> Las plataformas de pago con tarjeta cobran una comisión (~4.75%). Este cargo asegura que el 100% de tu mensualidad llegue al Dojo. Si prefieres evitarlo, usa la opción de <strong>Transferencia</strong>.
+                        </p>
+                      </div>
+
+                      <button 
+                        onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
+                        disabled={isGeneratingPayment}
+                        style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#3b82f6', color: '#fff', fontWeight: 900, fontSize: '0.9rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 10px 25px rgba(59,130,246,0.25)', transition: 'all 0.2s' }}>
+                        {isGeneratingPayment ? (
+                          <>Generando link...</>
+                        ) : (
+                          <><CreditCard size={18} /> PAGAR {formatCLP(charged)} CON TARJETA</>
+                        )}
+                      </button>
+                    </motion.div>
+                  )}
+
+                  <p style={{ fontSize: '0.6rem', color: '#94a3b8', textAlign: 'center', marginTop: '1rem', lineHeight: 1.4 }}>
+                    Pagos procesados de forma segura. Ante cualquier duda,{' '}
+                    <a href="mailto:ranasjiujitsu@gmail.com" style={{ color: '#05a86a', fontWeight: 700 }}>contáctanos</a>.
+                  </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
+        </AnimatePresence>
+
       </div>
     );
   }
@@ -3042,6 +3315,222 @@ const App: React.FC = () => {
             </motion.div>
           )
         }
+
+        {/* ====== DUAL PAYMENT MODAL ====== */}
+        {showPaymentModal && paymentModalTarget && (() => {
+          const studentsArr = Array.isArray(paymentModalTarget) ? paymentModalTarget : [paymentModalTarget];
+          const baseAmount = studentsArr.reduce((acc, s) => acc + (s.monthlyFee || 40000), 0);
+          const { charged, surcharge } = getSurcharge(baseAmount);
+          const isGroup = studentsArr.length > 1;
+
+          // Datos de Mercado Pago para transferencia directa
+          const MP_TITULAR = 'Manuel Alejandro Plaza Arenas';
+          const MP_RUT = '18122714-1';
+          const MP_BANCO = 'Mercado Pago';
+          const MP_TIPO = 'Cuenta Vista';
+          const MP_CUENTA = '1064388798';
+          const MP_EMAIL = 'manuelplazaarenas@gmail.com';
+          const ALL_BANK_DATA = `Nombre: ${MP_TITULAR}\nRUT: ${MP_RUT}\nBanco / Medio: ${MP_BANCO}\nTipo de cuenta: ${MP_TIPO}\nNúmero de cuenta: ${MP_CUENTA}\nCorreo: ${MP_EMAIL}`;
+
+          return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+              onClick={() => setShowPaymentModal(false)}>
+              <motion.div initial={{ y: 40, opacity: 0, scale: 0.97 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: 'spring', damping: 25 }}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                style={{ width: '100%', maxWidth: '480px', background: '#fff', borderRadius: '2.5rem', overflow: 'hidden', boxShadow: '0 50px 120px rgba(0,0,0,0.4)', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+                
+                {/* Header */}
+                <div style={{ padding: '1.5rem 1.5rem 0', textAlign: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div style={{ width: 36 }} />
+                    <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111', letterSpacing: '-0.5px' }}>Pagar Mensualidad</h2>
+                    <button onClick={() => setShowPaymentModal(false)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}><X size={16} /></button>
+                  </div>
+                  
+                  {/* Student(s) summary */}
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '1rem', padding: '0.8rem 1rem', marginBottom: '1rem' }}>
+                    {studentsArr.map(s => (
+                      <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.3rem 0' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#166534' }}>{s.name}</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#166534' }}>{formatCLP(s.monthlyFee || 40000)}</span>
+                      </div>
+                    ))}
+                    {isGroup && (
+                      <div style={{ borderTop: '1px solid #bbf7d0', marginTop: '0.5rem', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#166534' }}>Total</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#166534' }}>{formatCLP(baseAmount)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tab selector */}
+                  <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '0.8rem', padding: '4px', gap: '4px', marginBottom: '1rem' }}>
+                    <button onClick={() => { setPaymentTab('transfer'); setTransferSubmitted(false); }}
+                      style={{ flex: 1, padding: '0.65rem', borderRadius: '0.65rem', border: 'none', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.25s',
+                        background: paymentTab === 'transfer' ? '#05a86a' : 'transparent',
+                        color: paymentTab === 'transfer' ? '#fff' : '#64748b' }}>
+                      <Banknote size={14} style={{ marginBottom: '-2px', marginRight: '4px' }} />
+                      Transferencia
+                    </button>
+                    <button onClick={() => setPaymentTab('card')}
+                      style={{ flex: 1, padding: '0.65rem', borderRadius: '0.65rem', border: 'none', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.25s',
+                        background: paymentTab === 'card' ? '#3b82f6' : 'transparent',
+                        color: paymentTab === 'card' ? '#fff' : '#64748b' }}>
+                      <CreditCard size={14} style={{ marginBottom: '-2px', marginRight: '4px' }} />
+                      Tarjeta
+                    </button>
+                  </div>
+                </div>
+
+                {/* Content area - scrollable */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '0 1.5rem 1.5rem' }}>
+                  
+                  {/* === TRANSFER TAB === */}
+                  {paymentTab === 'transfer' && !transferSubmitted && (
+                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      <div style={{ background: '#f0fdf4', borderRadius: '1rem', padding: '1rem', border: '1px solid #dcfce7' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <CheckCircle2 size={13} /> SIN COMISIÓN — PAGO DIRECTO
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: '#166534', lineHeight: 1.5, margin: 0 }}>
+                          Transfiere directamente a la cuenta del Dojo. Tu pago se detectará y registrará <strong>automáticamente</strong> en el sistema.
+                        </p>
+                      </div>
+
+                      <div style={{ background: '#f8fafc', borderRadius: '1rem', padding: '1rem', border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>DATOS PARA TRANSFERIR</div>
+                          <button onClick={() => handleCopyToClipboard(ALL_BANK_DATA, 'Todos')}
+                            style={{ background: transferCopied === 'Todos' ? '#05a86a' : 'linear-gradient(135deg, #05a86a, #10f49c)', border: 'none', color: '#fff', padding: '0.45rem 0.8rem', borderRadius: '0.6rem', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(5,168,106,0.3)' }}>
+                            {transferCopied === 'Todos' ? <><CheckCircle2 size={12} /> ¡Copiado!</> : <><Copy size={12} /> Copiar todo</>}
+                          </button>
+                        </div>
+                        
+                        {[
+                          { label: 'Nombre', value: MP_TITULAR },
+                          { label: 'RUT', value: MP_RUT },
+                          { label: 'Banco / Medio', value: MP_BANCO },
+                          { label: 'Tipo de cuenta', value: MP_TIPO },
+                          { label: 'N° de cuenta', value: MP_CUENTA },
+                          { label: 'Correo', value: MP_EMAIL },
+                          { label: 'Monto', value: formatCLP(baseAmount) }
+                        ].map(item => (
+                          <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                            <div>
+                              <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>{item.label}</div>
+                              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace' }}>{item.value}</div>
+                            </div>
+                            <button onClick={() => handleCopyToClipboard(item.value, item.label)}
+                              style={{ background: transferCopied === item.label ? '#05a86a' : '#f1f5f9', border: '1px solid ' + (transferCopied === item.label ? '#05a86a' : '#e2e8f0'), color: transferCopied === item.label ? '#fff' : '#64748b', padding: '0.4rem 0.6rem', borderRadius: '0.6rem', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+                              {transferCopied === item.label ? <><CheckCircle2 size={12} /> Copiado</> : <><Copy size={12} /> Copiar</>}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ background: '#fffbeb', borderRadius: '1rem', padding: '1rem', border: '1px solid #fde68a' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <AlertTriangle size={13} /> IMPORTANTE
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: '#78350f', lineHeight: 1.6, margin: '0 0 0.8rem' }}>
+                          No importa desde qué cuenta transfieras. Solo asegúrate de escribir <strong>tu correo registrado</strong> en el <strong>comentario o glosa</strong> de la transferencia para que el sistema identifique tu pago automáticamente.
+                        </p>
+                        <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#92400e', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Tu correo registrado:</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ flex: 1, padding: '0.7rem 1rem', borderRadius: '0.8rem', background: '#fff', border: '1px solid #fde68a', fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace', letterSpacing: '0.02em' }}>
+                            {currentUser?.email || studentsArr[0]?.email || ''}
+                          </div>
+                          <button onClick={() => handleCopyToClipboard(currentUser?.email || studentsArr[0]?.email || '', 'Email')}
+                            style={{ background: transferCopied === 'Email' ? '#05a86a' : '#f59e0b', border: 'none', color: '#fff', padding: '0.7rem 1rem', borderRadius: '0.8rem', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+                            {transferCopied === 'Email' ? <><CheckCircle2 size={14} /> Copiado</> : <><Copy size={14} /> Copiar</>}
+                          </button>
+                        </div>
+                      </div>
+
+                      <button onClick={() => { setTransferSubmitted(true); }}
+                        style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: 'none', background: '#05a86a', color: '#fff', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 10px 25px rgba(5,168,106,0.25)', transition: 'all 0.2s' }}>
+                        <CheckCircle2 size={18} /> YA REALICÉ LA TRANSFERENCIA
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {paymentTab === 'transfer' && transferSubmitted && (
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                      style={{ textAlign: 'center', padding: '2rem 0' }}>
+                      <div style={{ width: 70, height: 70, borderRadius: '50%', background: '#f0fdf4', border: '3px solid #05a86a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem' }}>
+                        <CheckCircle2 size={35} color="#05a86a" />
+                      </div>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#111', marginBottom: '0.5rem' }}>¡Gracias!</h3>
+                      <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                        El sistema verificará tu transferencia automáticamente y actualizará tu estado de pago en los próximos minutos.
+                      </p>
+                      <button onClick={() => setShowPaymentModal(false)}
+                        style={{ padding: '0.8rem 2rem', borderRadius: '1rem', border: 'none', background: '#05a86a', color: '#fff', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer' }}>
+                        CERRAR
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {/* === CARD TAB === */}
+                  {paymentTab === 'card' && (
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      <div style={{ background: '#eff6ff', borderRadius: '1rem', padding: '1rem', border: '1px solid #bfdbfe' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <CreditCard size={13} /> PAGO INMEDIATO CON TARJETA
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: '#1e3a5f', lineHeight: 1.5, margin: 0 }}>
+                          Paga con tarjeta de débito o crédito vía Mercado Pago. El pago se acredita al instante y tu mensualidad queda registrada automáticamente.
+                        </p>
+                      </div>
+
+                      {/* Breakdown */}
+                      <div style={{ background: '#f8fafc', borderRadius: '1rem', padding: '1rem', border: '1px solid #e2e8f0' }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.6rem' }}>DESGLOSE DEL PAGO</div>
+                        
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                          <span style={{ fontSize: '0.8rem', color: '#475569' }}>Mensualidad</span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>{formatCLP(baseAmount)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                          <span style={{ fontSize: '0.8rem', color: '#475569' }}>Cargo procesadora</span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ef4444' }}>+ {formatCLP(surcharge)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.7rem 0 0.3rem', marginTop: '0.3rem' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#0f172a' }}>Total a pagar</span>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#3b82f6' }}>{formatCLP(charged)}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ background: '#fefce8', borderRadius: '0.8rem', padding: '0.7rem 1rem', border: '1px solid #fde68a' }}>
+                        <p style={{ fontSize: '0.68rem', color: '#854d0e', margin: 0, lineHeight: 1.5 }}>
+                          <strong>¿Por qué hay un cargo adicional?</strong> Las plataformas de pago con tarjeta cobran una comisión (~4.75%). Este cargo asegura que el 100% de tu mensualidad llegue al Dojo. Si prefieres evitarlo, usa la opción de <strong>Transferencia</strong>.
+                        </p>
+                      </div>
+
+                      <button 
+                        onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
+                        disabled={isGeneratingPayment}
+                        style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#3b82f6', color: '#fff', fontWeight: 900, fontSize: '0.9rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 10px 25px rgba(59,130,246,0.25)', transition: 'all 0.2s' }}>
+                        {isGeneratingPayment ? (
+                          <>Generando link...</>
+                        ) : (
+                          <><CreditCard size={18} /> PAGAR {formatCLP(charged)} CON TARJETA</>
+                        )}
+                      </button>
+                    </motion.div>
+                  )}
+
+                  {/* Footer note */}
+                  <p style={{ fontSize: '0.6rem', color: '#94a3b8', textAlign: 'center', marginTop: '1rem', lineHeight: 1.4 }}>
+                    Pagos procesados de forma segura. Ante cualquier duda,{' '}
+                    <a href="mailto:ranasjiujitsu@gmail.com" style={{ color: '#05a86a', fontWeight: 700 }}>contáctanos</a>.
+                  </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          );
+        })()}
         
       </AnimatePresence>
     </div>

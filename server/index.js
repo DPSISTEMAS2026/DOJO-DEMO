@@ -305,9 +305,10 @@ app.get('/api/students', async (req, res) => {
             updatedData.push({ ...s, ispaid: currentStatus });
         }
 
-        // Logic: Birthdays auto-broadcast
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
+        // Logic: Birthdays auto-broadcast (using Chile timezone)
+        const chileDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+        const mm = String(chileDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(chileDate.getDate()).padStart(2, '0');
         const searchDate = `-${mm}-${dd}`;
         const birthdayStudents = updatedData.filter(s => s.birthdate && s.birthdate.includes(searchDate));
         
@@ -322,9 +323,15 @@ app.get('/api/students', async (req, res) => {
                 await supabase.from('news').upsert({
                     id: 999999,
                     title: subject,
-                    description: message,
+                    body: message,
                     date: now.toISOString()
                 });
+            }
+        } else {
+            // Eliminar si no hay cumpleaños (proceder con cautela si hay avisos manuales, pero ID 999999 es reservado para esto)
+            const { data: currentNotice } = await supabase.from('news').select('*').eq('id', 999999).maybeSingle();
+            if (currentNotice && currentNotice.title.includes('Cumpleaños')) {
+                await supabase.from('news').delete().eq('id', 999999);
             }
         }
 
@@ -643,26 +650,47 @@ app.post('/api/students/:id/accept-terms', async (req, res) => {
     }
 });
 
+// Commission rate for Mercado Pago Chile (approx 3.99% + IVA = ~4.74%)
+const MP_COMMISSION_RATE = 0.0399;
+const MP_IVA_ON_COMMISSION = 0.19; // 19% IVA on the commission
+
+function calculateSurcharge(baseAmount) {
+    // To ensure dojo receives exactly baseAmount after MP deducts commission:
+    // chargeAmount = baseAmount / (1 - commissionRate * (1 + IVA))
+    const effectiveRate = MP_COMMISSION_RATE * (1 + MP_IVA_ON_COMMISSION);
+    const chargeAmount = Math.ceil(baseAmount / (1 - effectiveRate));
+    const surcharge = chargeAmount - baseAmount;
+    return { chargeAmount, surcharge, effectiveRate };
+}
+
 app.post('/api/checkout', async (req, res) => {
     try {
-        const { student, students, amount } = req.body;
+        const { student, students, amount, withSurcharge } = req.body;
         const isGroup = Array.isArray(students) && students.length > 0;
 
-        const items = isGroup ? students.map(s => ({
-            id: s.id,
-            title: `Mensualidad Fam. Ranas - ${s.name}`,
-            quantity: 1,
-            currency_id: 'CLP',
-            unit_price: Number(s.monthlyFee || s.monthlyfee || (amount / students.length))
-        })) : [
+        // If withSurcharge, inflate each item's price to cover MP commission
+        const items = isGroup ? students.map(s => {
+            const base = Number(s.monthlyFee || s.monthlyfee || (amount / students.length));
+            const price = withSurcharge ? calculateSurcharge(base).chargeAmount : base;
+            return {
+                id: s.id,
+                title: `Mensualidad Fam. Ranas - ${s.name}`,
+                quantity: 1,
+                currency_id: 'CLP',
+                unit_price: price
+            };
+        }) : [
             {
                 id: student.id,
                 title: `Mensualidad Dojo Ranas - ${student.name}`,
                 quantity: 1,
                 currency_id: 'CLP',
-                unit_price: Number(amount)
+                unit_price: withSurcharge ? calculateSurcharge(Number(amount)).chargeAmount : Number(amount)
             }
         ];
+
+        const totalCharged = items.reduce((acc, i) => acc + i.unit_price, 0);
+        console.log(`[CHECKOUT] Amount: $${amount}, WithSurcharge: ${!!withSurcharge}, Total charged: $${totalCharged}`);
 
         const preference = new Preference(client);
         const result = await preference.create({
@@ -671,7 +699,7 @@ app.post('/api/checkout', async (req, res) => {
                 payer: {
                     email: isGroup ? students[0].email : student.email
                 },
-                external_reference: isGroup ? students.map(s => s.id).join(',') : student.id.toString(), // CRITICAL for webhook reliability
+                external_reference: isGroup ? students.map(s => s.id).join(',') : student.id.toString(),
                 back_urls: {
                     success: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=success',
                     failure: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=failure',
@@ -682,7 +710,7 @@ app.post('/api/checkout', async (req, res) => {
             }
         });
 
-        res.json({ init_point: result.init_point });
+        res.json({ init_point: result.init_point, totalCharged, surcharge: withSurcharge ? (totalCharged - amount) : 0 });
     } catch (error) {
         console.error('MP Preference Error:', error);
         res.status(500).json({ error: 'Failed to create payment link' });
@@ -978,7 +1006,7 @@ app.post('/api/admin/check-birthdays', async (req, res) => {
             await supabase.from('news').upsert({
                 id: 999999,
                 title: subject,
-                description: message,
+                body: message,
                 date: now.toISOString(),
                 stats: [],
                 link: '#',
@@ -1037,6 +1065,20 @@ app.get('/api/global-notice', async (req, res) => {
     try {
         const { data: supaNotice, error } = await supabase.from('news').select('*').eq('id', 999999).maybeSingle();
         if (supaNotice) {
+            // If it's a birthday notice, check if it's still today in Chile timezone
+            if (supaNotice.title && supaNotice.title.includes('Cumpleaños') && supaNotice.date) {
+                const noticeDate = new Date(supaNotice.date);
+                const nowChile = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+                const noticeDateChile = new Date(noticeDate.toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+                // Compare only the date part (year-month-day) in Chile time
+                if (nowChile.getFullYear() !== noticeDateChile.getFullYear() ||
+                    nowChile.getMonth() !== noticeDateChile.getMonth() ||
+                    nowChile.getDate() !== noticeDateChile.getDate()) {
+                    // Birthday notice expired — delete it and return null
+                    await supabase.from('news').delete().eq('id', 999999);
+                    return res.json(null);
+                }
+            }
             return res.json({ subject: supaNotice.title, message: supaNotice.body });
         }
 
@@ -1048,15 +1090,170 @@ app.get('/api/global-notice', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ============================
+// AUTO-SYNC: Transferencias MP
+// ============================
+async function syncTransferPayments() {
+    console.log('[SYNC] Iniciando sincronización de transferencias MP...');
+    try {
+        // Get all students
+        const { data: students, error: studErr } = await supabase.from('students').select('*');
+        if (studErr) throw studErr;
+
+        // Build email->students map
+        const emailToStudents = {};
+        students.forEach(s => {
+            if (s.email) {
+                const key = s.email.trim().toLowerCase();
+                if (!emailToStudents[key]) emailToStudents[key] = [];
+                emailToStudents[key].push(s);
+            }
+        });
+
+        // Get MP payments from last 45 days
+        const mpPayment = new Payment(client);
+        const since = new Date();
+        since.setDate(since.getDate() - 45);
+
+        const result = await mpPayment.search({
+            options: {
+                range: 'date_created',
+                begin_date: since.toISOString(),
+                end_date: new Date().toISOString(),
+                limit: 100
+            }
+        });
+
+        const payments = (result.results || []).filter(p =>
+            p.status === 'approved' &&
+            (p.operation_type === 'money_transfer' || p.operation_type === 'regular_payment')
+        );
+
+        let synced = 0;
+        let details = [];
+
+        for (const payment of payments) {
+            const payerEmail = payment.payer?.email?.toLowerCase();
+            const extRef = payment.external_reference;
+            const payDate = payment.date_created?.split('T')[0] || new Date().toISOString().split('T')[0];
+            const payMonth = payDate.substring(0, 7);
+            const amount = payment.transaction_amount;
+            const isTransfer = payment.operation_type === 'money_transfer';
+
+            // Try to match by external_reference first (checkout payments)
+            let matchedStudentIds = [];
+            if (extRef && !extRef.startsWith('money_transfer') && !extRef.includes('-')) {
+                matchedStudentIds = extRef.split(',').map(id => id.trim());
+            }
+
+            // Then try by email (transfers)
+            if (matchedStudentIds.length === 0 && payerEmail) {
+                const matched = emailToStudents[payerEmail] || [];
+                matchedStudentIds = matched.map(s => s.id.toString());
+            }
+
+            // Also check if description contains student ID pattern (e.g., "ID: 27")
+            if (matchedStudentIds.length === 0 && payment.description) {
+                const idMatch = payment.description.match(/\bID[:\s]*(\d+)\b/i);
+                if (idMatch) {
+                    const potentialId = idMatch[1];
+                    const found = students.find(s => s.id.toString() === potentialId);
+                    if (found) matchedStudentIds.push(potentialId);
+                }
+            }
+
+            if (matchedStudentIds.length === 0) continue;
+
+            const perStudentAmount = matchedStudentIds.length > 1 ? Math.round(amount / matchedStudentIds.length) : amount;
+
+            for (const sid of matchedStudentIds) {
+                const student = students.find(s => s.id.toString() === sid.toString());
+                if (!student) continue;
+
+                const history = Array.isArray(student.history) ? student.history : [];
+                const txId = payment.id.toString();
+
+                // Skip if already registered
+                if (history.some(h => h.transaction_id === txId)) continue;
+
+                history.push({
+                    date: payDate,
+                    status: 'Completado',
+                    amount: perStudentAmount,
+                    method: isTransfer ? 'Transferencia MP' : 'Mercado Pago',
+                    transaction_id: txId
+                });
+
+                const { error: upErr } = await supabase.from('students').update({
+                    history: history,
+                    ispaid: true,
+                    lastpaymentdate: payDate,
+                    lastpaymentmonth: payMonth
+                }).eq('id', student.id);
+
+                if (!upErr) {
+                    synced++;
+                    details.push({ name: student.name, amount: perStudentAmount, type: isTransfer ? 'transfer' : 'checkout', txId });
+                    console.log(`[SYNC] ✅ ${student.name} - $${perStudentAmount} (${isTransfer ? 'Transferencia' : 'Checkout'}) - TX: ${txId}`);
+                }
+            }
+        }
+
+        console.log(`[SYNC] Completado: ${synced} pagos sincronizados`);
+        return { synced, details };
+    } catch (e) {
+        console.error('[SYNC ERROR]', e.message);
+        return { synced: 0, error: e.message };
+    }
+}
+
+// Transfer intent: student declares they have made a transfer
+const transferIntentsFile = path.join(dbPath, 'transfer_intents.json');
+app.post('/api/transfer-intent', async (req, res) => {
+    try {
+        const { studentIds, reference, amount, date } = req.body;
+        const intents = readData(transferIntentsFile) || [];
+        intents.push({
+            studentIds,
+            reference,
+            amount,
+            date: date || new Date().toISOString(),
+            matched: false
+        });
+        writeData(transferIntentsFile, intents);
+        console.log(`[TRANSFER-INTENT] Registered: ${reference} for students ${studentIds.join(',')} - $${amount}`);
+        res.json({ success: true, message: 'Intent registrado correctamente' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// API endpoint for manual sync trigger
+app.post('/api/admin/sync-transfers', async (req, res) => {
+    try {
+        const result = await syncTransferPayments();
+        res.json({ success: true, ...result });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// CRON: Auto-sync transfers every 30 minutes
+cron.schedule('*/30 * * * *', async () => {
+    console.log('[CRON] Auto-sync de transferencias MP...');
+    await syncTransferPayments();
+}, {
+    scheduled: true,
+    timezone: "America/Santiago"
+});
+
 // Automatización diaria de cumpleaños (09:00 Hora de Chile)
-// Cron: 0 9 * * * (Minuto 0, Hora 9, Todos los días)
 cron.schedule('0 9 * * *', async () => {
     console.log('[CRON] Iniciando verificación diaria de cumpleaños (09:00 Chile)...');
     try {
         const { data: students, error } = await supabase.from('students').select('*');
         if (error) throw error;
 
-        // Hora actual en Chile
         const chileTime = DateTime.now().setZone('America/Santiago');
         const mm = String(chileTime.month).padStart(2, '0');
         const dd = String(chileTime.day).padStart(2, '0');
@@ -1072,13 +1269,12 @@ cron.schedule('0 9 * * *', async () => {
             await supabase.from('news').upsert({
                 id: 999999,
                 title: subject,
-                description: message,
+                body: message,
                 date: chileTime.toISO()
             });
-            console.log(`[CRON] Aviso de cumpleaños publicado village: ${names}`);
+            console.log(`[CRON] Aviso de cumpleaños publicado: ${names}`);
         } else {
             console.log('[CRON] No hay cumpleaños el día de hoy.');
-            // Eliminar el aviso del día anterior si no hay cumpleaños hoy
             await supabase.from('news').delete().eq('id', 999999);
         }
     } catch (e) {
