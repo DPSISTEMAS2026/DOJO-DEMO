@@ -650,8 +650,8 @@ app.post('/api/students/:id/accept-terms', async (req, res) => {
     }
 });
 
-// Commission rate for Mercado Pago Chile (approx 3.99% + IVA = ~4.74%)
-const MP_COMMISSION_RATE = 0.0399;
+// Commission rate for Mercado Pago Chile - Abono inmediato (3.19% + IVA = ~3.80%)
+const MP_COMMISSION_RATE = 0.0319;
 const MP_IVA_ON_COMMISSION = 0.19; // 19% IVA on the commission
 
 function calculateSurcharge(baseAmount) {
