@@ -537,7 +537,7 @@ const App: React.FC = () => {
     setShowPaymentModal(true);
   };
 
-  const MP_COMMISSION_RATE = 0.0319;
+  const MP_COMMISSION_RATE = 0.03212;
   const MP_IVA = 0.19;
   const getEffectiveRate = () => MP_COMMISSION_RATE * (1 + MP_IVA);
   const getSurcharge = (baseAmount: number) => {
