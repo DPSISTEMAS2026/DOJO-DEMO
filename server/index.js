@@ -1152,13 +1152,30 @@ async function syncTransferPayments() {
                 matchedStudentIds = matched.map(s => s.id.toString());
             }
 
-            // Also check if description contains student ID pattern (e.g., "ID: 27")
+            // Search in description (glosa) for ID pattern or any registered email
             if (matchedStudentIds.length === 0 && payment.description) {
+                // Check ID: pattern
                 const idMatch = payment.description.match(/\bID[:\s]*(\d+)\b/i);
                 if (idMatch) {
                     const potentialId = idMatch[1];
                     const found = students.find(s => s.id.toString() === potentialId);
                     if (found) matchedStudentIds.push(potentialId);
+                }
+
+                // If still no match, look for any email matching a student
+                if (matchedStudentIds.length === 0) {
+                    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+                    const emailsInDesc = payment.description.match(emailRegex);
+                    if (emailsInDesc) {
+                        for (const emailToken of emailsInDesc) {
+                            const normalized = emailToken.toLowerCase().trim();
+                            const matches = emailToStudents[normalized];
+                            if (matches && matches.length > 0) {
+                                matchedStudentIds = matches.map(s => s.id.toString());
+                                break; 
+                            }
+                        }
+                    }
                 }
             }
 
