@@ -104,6 +104,7 @@ app.get('/api/admin/payments', async (req, res) => {
                 range: 'date_created',
                 begin_date: beginDate,
                 end_date: endDate,
+                limit: 1000
             }
         });
 
@@ -578,7 +579,9 @@ app.post('/api/students/:id/sync-payments', async (req, res) => {
             range: 'date_created',
             begin_date: sixMonthsAgo.toISOString(),
             end_date: new Date().toISOString(),
-            limit: 100
+            limit: 500,
+            sort: 'date_created',
+            criteria: 'desc'
         };
 
         const result = await mpPayment.search({ options: searchFilters });
@@ -905,9 +908,17 @@ app.post('/api/admin/send-credentials', async (req, res) => {
     }
 });
 
+// Health check endpoint (for self-ping keep-alive)
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
 // Mercado Pago: Webhook
 app.post('/api/webhooks', async (req, res) => {
-    console.log('--- WEBHOOK RECEIVED ---');
+    console.log('--- WEBHOOK RECEIVED ---', JSON.stringify(req.body));
+
+    // Respond IMMEDIATELY so Mercado Pago doesn't timeout
+    res.sendStatus(200);
 
     // Mercado Pago manda el ID de diferentes formas dependiendo del evento
     const paymentId = req.body.data?.id || req.body.id;
@@ -915,7 +926,7 @@ app.post('/api/webhooks', async (req, res) => {
 
     if (!paymentId) {
         console.log('No payment ID found in webhook body');
-        return res.sendStatus(200);
+        return;
     }
 
     try {
@@ -980,8 +991,6 @@ app.post('/api/webhooks', async (req, res) => {
     } catch (error) {
         console.error('Webhook processing error:', error);
     }
-
-    res.sendStatus(200);
 });
 
 
@@ -1113,14 +1122,16 @@ async function syncTransferPayments() {
         // Get MP payments from last 45 days
         const mpPayment = new Payment(client);
         const since = new Date();
-        since.setDate(since.getDate() - 45);
+        since.setDate(since.getDate() - 15);
 
         const result = await mpPayment.search({
             options: {
                 range: 'date_created',
                 begin_date: since.toISOString(),
                 end_date: new Date().toISOString(),
-                limit: 100
+                limit: 500,
+                sort: 'date_created',
+                criteria: 'desc'
             }
         });
 
@@ -1255,8 +1266,8 @@ app.post('/api/admin/sync-transfers', async (req, res) => {
     }
 });
 
-// CRON: Auto-sync transfers every 30 minutes
-cron.schedule('*/30 * * * *', async () => {
+// CRON: Auto-sync transfers every 10 minutes
+cron.schedule('*/10 * * * *', async () => {
     console.log('[CRON] Auto-sync de transferencias MP...');
     await syncTransferPayments();
 }, {
@@ -1305,4 +1316,24 @@ cron.schedule('0 9 * * *', async () => {
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log("- MP Token exists:", !!process.env.VITE_MP_ACCESS_TOKEN);
+
+    // Run initial sync on startup to catch any missed payments while server was sleeping
+    setTimeout(async () => {
+        console.log('[STARTUP] Running initial payment sync...');
+        try {
+            const result = await syncTransferPayments();
+            console.log(`[STARTUP] Initial sync complete: ${result.synced} payments synced`);
+        } catch (e) {
+            console.error('[STARTUP] Initial sync failed:', e.message);
+        }
+    }, 5000);
+
+    // Self-ping every 14 minutes to prevent Render from sleeping
+    const BACKEND_URL = process.env.BACKEND_URL || 'https://dojoranas.onrender.com';
+    setInterval(() => {
+        fetch(`${BACKEND_URL}/health`)
+            .then(r => r.json())
+            .then(d => console.log(`[KEEP-ALIVE] Ping OK - uptime: ${Math.round(d.uptime)}s`))
+            .catch(e => console.error('[KEEP-ALIVE] Ping failed:', e.message));
+    }, 14 * 60 * 1000); // 14 minutes
 });
