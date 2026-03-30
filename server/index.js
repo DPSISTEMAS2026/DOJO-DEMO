@@ -709,7 +709,7 @@ app.post('/api/checkout', async (req, res) => {
                     pending: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=pending'
                 },
                 auto_return: "approved",
-                notification_url: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/webhooks` : 'https://dojoranas.onrender.com/api/webhooks'
+                notification_url: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/webhooks` : 'https://dojo-demo-server.onrender.com/api/webhooks'
             }
         });
 
@@ -750,7 +750,7 @@ app.post('/api/students/:id/send-payment-reminder', async (req, res) => {
                     pending: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=pending'
                 },
                 auto_return: "approved",
-                notification_url: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/webhooks` : 'https://dojoranas.onrender.com/api/webhooks'
+                notification_url: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/webhooks` : 'https://dojo-demo-server.onrender.com/api/webhooks'
             }
         });
 
@@ -1329,7 +1329,7 @@ app.listen(PORT, () => {
     }, 5000);
 
     // Self-ping every 14 minutes to prevent Render from sleeping
-    const BACKEND_URL = process.env.BACKEND_URL || 'https://dojoranas.onrender.com';
+    const BACKEND_URL = process.env.BACKEND_URL || 'https://dojo-demo-server.onrender.com';
     setInterval(() => {
         fetch(`${BACKEND_URL}/health`)
             .then(r => r.json())
