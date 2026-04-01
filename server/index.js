@@ -1092,8 +1092,27 @@ app.get('/api/global-notice', async (req, res) => {
         }
 
         if (fs.existsSync(noticeFile)) {
-            const data = fs.readFileSync(noticeFile, 'utf-8');
-            return res.json(JSON.parse(data));
+            try {
+                const raw = fs.readFileSync(noticeFile, 'utf-8');
+                const parsed = JSON.parse(raw);
+                if (parsed && Object.keys(parsed).length > 0) {
+                    if (parsed.subject && parsed.subject.includes('Cumpleaños') && parsed.date) {
+                        const noticeDate = new Date(parsed.date);
+                        const nowChile = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+                        const noticeDateChile = new Date(noticeDate.toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+                        if (nowChile.getFullYear() !== noticeDateChile.getFullYear() ||
+                            nowChile.getMonth() !== noticeDateChile.getMonth() ||
+                            nowChile.getDate() !== noticeDateChile.getDate()) {
+                            // Local fallback notice expired — clear it and return null
+                            fs.writeFileSync(noticeFile, '{}', 'utf-8');
+                            return res.json(null);
+                        }
+                    }
+                    return res.json(parsed);
+                }
+            } catch (e) {
+                // Ignore parse errors on empty local files
+            }
         }
         res.json(null);
     } catch (e) { res.status(500).json({ error: e.message }); }

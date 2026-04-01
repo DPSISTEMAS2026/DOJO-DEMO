@@ -8,7 +8,7 @@ export interface Video {
     description: string;
     url: string;
     thumbnail: string;
-    beltLevel: Belt;
+    targetAudience: 'ADULTS' | 'KIDS' | 'BOTH';
     category: string;
 }
 

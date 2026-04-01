@@ -11,6 +11,7 @@ import {
   LogOut,
   Award,
   Play,
+  Info,
   Instagram,
   Facebook,
   X, Menu,
@@ -156,6 +157,31 @@ const newsItems = [
   }
 ];
 
+const KIDS_SCHEDULE = [
+  { day: 'Martes', classes: [{ time: '18:00', name: 'Pequeños Campeones' }] },
+  { day: 'Miércoles', classes: [{ time: '16:45', name: 'Pequeños Campeones' }] },
+  { day: 'Jueves', classes: [{ time: '18:00', name: 'Pequeños Campeones' }] },
+  { day: 'Viernes', classes: [{ time: '16:45', name: 'Pequeños Campeones' }] },
+  { day: 'Sábado', classes: [{ time: '11:00', name: 'Pequeños Campeones' }] }
+];
+
+const ADULT_SCHEDULE = [
+  { day: 'Lunes', classes: [{ time: '19:30', name: 'Ranas On Fire' }] },
+  { day: 'Martes', classes: [{ time: '06:45', name: 'Valientes' }, { time: '19:00', name: 'Ranas On Fire' }] },
+  { day: 'Miércoles', classes: [{ time: '19:30', name: 'Ranas On Fire' }] },
+  { day: 'Jueves', classes: [{ time: '19:00', name: 'Ranas On Fire' }] },
+  { day: 'Viernes', classes: [{ time: '06:45', name: 'Valientes' }, { time: '20:00', name: 'Competidor' }] },
+  { day: 'Sábado', classes: [{ time: '12:00', name: 'Open Mat' }] }
+];
+
+const VIDEO_CATEGORIES = [
+  'Derribos',
+  '100 kilos',
+  'Espalda',
+  'Montada',
+  'Guardia cerrada'
+];
+
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(() => localStorage.getItem('viewMode') as ViewMode || 'landing');
   const [noticeData, setNoticeData] = useState({ 
@@ -178,6 +204,20 @@ const App: React.FC = () => {
     return d.getTime();
   };
 
+
+  const getYouTubeID = (url: string) => {
+    if (!url) return null;
+    const str = url.trim();
+    // Intento primario preciso (Añadido soporte para youtube.com/live/)
+    const match = str.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^\"&?\/\s]{11})/);
+    if (match && match[1]) return match[1];
+    
+    // Fallback Agresivo: Busca cualquier cadena de 11 caracteres típica de YouTube (alfanuméricos + - y _)
+    const looseMatch = str.match(/(?:\/|v=)([a-zA-Z0-9_-]{11})(?:[?&#]|$)/);
+    if (looseMatch && str.includes('youtu')) return looseMatch[1];
+    
+    return null;
+  };
 
   const handleBookClass = (day: string, time: string, name: string) => {
     if (!currentUser) return;
@@ -238,7 +278,8 @@ const App: React.FC = () => {
   }, []);
   const [activeHeroVideo, setActiveHeroVideo] = useState(0);
   const [activeNews, setActiveNews] = useState(0);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'students' | 'payments' | 'settings' | 'videos' | 'website' | 'communications'>(() => localStorage.getItem('activeTab') as any || 'dashboard');
+  const [playingVideo, setPlayingVideo] = useState<Video | null>(null);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'attendance' | 'students' | 'payments' | 'settings' | 'videos' | 'website' | 'communications'>(() => localStorage.getItem('activeTab') as any || 'dashboard');
 
   useEffect(() => {
     localStorage.setItem('viewMode', viewMode);
@@ -333,7 +374,7 @@ const App: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isAddingVideo, setIsAddingVideo] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [newVideoData, setNewVideoData] = useState<Omit<Video, 'id'>>({ title: '', description: '', url: '', thumbnail: '', beltLevel: 'WHITE', category: 'Tecnica' });
+  const [newVideoData, setNewVideoData] = useState<Omit<Video, 'id'>>({ title: '', description: '', url: '', thumbnail: '', targetAudience: 'BOTH', category: VIDEO_CATEGORIES[0] });
   const [isAddingStudent, setIsAddingStudent] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSendingNotice, setIsSendingNotice] = useState(false);
@@ -573,9 +614,9 @@ const App: React.FC = () => {
 
   const [automation, setAutomation] = useState<AutomationConfig>({ reminderDay: 5, whatsappTemplate: "Hola {nombre}...", emailTemplate: "Hola {nombre}..." });
   const calculateAge = (birthDateStr: string | null) => {
-    if (!birthDateStr) return 'N/A';
+    if (!birthDateStr) return 0;
     const parts = birthDateStr.split('-');
-    if (parts.length < 3) return 'N/A';
+    if (parts.length < 3) return 0;
     const birthDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -795,10 +836,9 @@ const App: React.FC = () => {
     try {
       let videoThumbnail = 'https://images.unsplash.com/photo-1599058917232-d750c185ca0d?w=800'; 
       
-      const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^\"&?\/\s]{11})/;
-      const match = newVideoData.url.match(ytRegex);
-      if (match && match[1]) {
-           videoThumbnail = `https://img.youtube.com/vi/${match[1]}/maxresdefault.jpg`;
+      const videoId = getYouTubeID(newVideoData.url);
+      if (videoId) {
+           videoThumbnail = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
       }
 
       const payload = { ...newVideoData, thumbnail: videoThumbnail };
@@ -812,7 +852,7 @@ const App: React.FC = () => {
         const savedVideo = await response.json();
         setVideos([...videos, savedVideo]);
         setIsAddingVideo(false);
-        setNewVideoData({ title: '', description: '', url: '', thumbnail: '', beltLevel: 'WHITE', category: 'General' });
+        setNewVideoData({ title: '', description: '', url: '', thumbnail: '', targetAudience: 'BOTH', category: VIDEO_CATEGORIES[0] });
       }
     } catch (error) {
       console.error("Error adding video:", error);
@@ -1455,7 +1495,7 @@ const App: React.FC = () => {
                 )}
                 {(() => {
                   const rawAge = calculateAge(currentUser?.birthDate || null);
-                  const isAdult = rawAge === 'N/A' ? true : (typeof rawAge === 'number' ? rawAge >= 18 : parseInt(rawAge as string) >= 18 || isNaN(parseInt(rawAge as string)));
+                  const isAdult = typeof rawAge === 'number' ? (rawAge === 0 ? true : rawAge >= 18) : true;
                   const familyMembers = students.filter(s => s.email && currentUser?.email && s.email.trim().toLowerCase() === currentUser.email.trim().toLowerCase());
                   const familyUnpaid = familyMembers.filter(s => !s.isPaid);
 
@@ -1560,7 +1600,6 @@ const App: React.FC = () => {
                     </>
                   );
                 })()}
-
                 {/* Weekly Schedule Subsystem */}
                  <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
                    style={{ marginBottom: '1.5rem' }}>
@@ -1570,26 +1609,13 @@ const App: React.FC = () => {
                    </div>
 
                    <div style={{ display: 'flex', overflowX: 'auto', gap: '0.8rem', paddingBottom: '1rem', margin: '0 -1.5rem', padding: '0 1.5rem', WebkitOverflowScrolling: 'touch' }} className="no-scrollbar">
-                     {((typeof calculateAge(currentUser?.birthDate || null) === 'number' ? (calculateAge(currentUser?.birthDate || null) as number) : parseInt(calculateAge(currentUser?.birthDate || null) as string)) < 18 ? [
-                       { day: 'Martes', classes: [{ time: '18:00', name: 'Pequeños Campeones' }] },
-                       { day: 'Miércoles', classes: [{ time: '16:45', name: 'Pequeños Campeones' }] },
-                       { day: 'Jueves', classes: [{ time: '18:00', name: 'Pequeños Campeones' }] },
-                       { day: 'Viernes', classes: [{ time: '16:45', name: 'Pequeños Campeones' }] },
-                       { day: 'Sábado', classes: [{ time: '11:00', name: 'Pequeños Campeones' }] }
-                     ] : [
-                       { day: 'Lunes', classes: [{ time: '19:30', name: 'Ranas On Fire' }] },
-                       { day: 'Martes', classes: [{ time: '06:45', name: 'Valientes' }, { time: '19:00', name: 'Ranas On Fire' }] },
-                       { day: 'Miércoles', classes: [{ time: '19:30', name: 'Ranas On Fire' }] },
-                       { day: 'Jueves', classes: [{ time: '19:00', name: 'Ranas On Fire' }] },
-                       { day: 'Viernes', classes: [{ time: '06:45', name: 'Valientes' }, { time: '20:00', name: 'Competidor' }] },
-                       { day: 'Sábado', classes: [{ time: '12:00', name: 'Open Mat' }] }
-                     ]).map((dayItem, idx) => (
+                     {(calculateAge(currentUser?.birthDate || null) < 18 ? KIDS_SCHEDULE : ADULT_SCHEDULE).map((dayItem: any, idx: number) => (
                        <div key={idx} style={{ flexShrink: 0, width: '140px', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                          <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{dayItem.day}</div>
                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                           {dayItem.classes.map((cls, cIdx) => {
+                           {dayItem.classes.map((cls: any, cIdx: number) => {
                              const cWeekStart = getWeekStart(new Date());
-                             const isBooked = (currentUser?.scheduledClasses || []).some(sc => sc.timestamp >= cWeekStart && sc.day === dayItem.day && sc.time === cls.time);
+                             const isBooked = (currentUser?.scheduledClasses || []).some((sc: any) => sc.timestamp >= cWeekStart && sc.day === dayItem.day && sc.time === cls.time);
 
                              return (
                                <motion.button key={cIdx} whileTap={{ scale: 0.95 }}
@@ -1618,19 +1644,33 @@ const App: React.FC = () => {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                    {videos.filter(v => v.beltLevel === currentUser?.belt).length > 0 ? (
-                      videos.filter(v => v.beltLevel === currentUser?.belt).slice(0, 3).map(video => (
-                        <motion.div key={video.id} whileTap={{ scale: 0.98 }} onClick={() => window.open(video.url)}
-                          style={{ background: 'var(--panel-card)', borderRadius: '1.2rem', padding: '0.8rem', display: 'flex', gap: '1rem', alignItems: 'center', border: '1px solid var(--panel-border)' }}>
-                          <div style={{ width: '70px', height: '50px', borderRadius: '8px', overflow: 'hidden', background: '#000', position: 'relative' }}>
-                            <img src={video.thumbnail} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }} />
-                            <Play size={12} fill="#fff" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#fff' }} />
+                    {videos.length > 0 ? (
+                      videos.slice(0, 5).map(video => (
+                        <motion.div key={video.id} whileTap={{ scale: 0.98 }} onClick={() => setPlayingVideo(video)}
+                          style={{ background: 'var(--panel-card)', borderRadius: '1.2rem', padding: '1rem', display: 'flex', gap: '1.2rem', alignItems: 'center', border: '1px solid var(--panel-border)', cursor: 'pointer' }}>
+                          <div style={{ width: '100px', height: '70px', borderRadius: '12px', overflow: 'hidden', background: '#000', position: 'relative', flexShrink: 0 }}>
+                            <img 
+                              src={video.thumbnail || 'https://images.unsplash.com/photo-1599058917232-d750c185ca0d?w=800'} 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.7 }} 
+                              onError={(e) => {
+                                const id = getYouTubeID(video.url);
+                                if (id && !e.currentTarget.src.includes('hqdefault.jpg')) {
+                                  e.currentTarget.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+                                } else {
+                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1599058917232-d750c185ca0d?w=800';
+                                }
+                              }}
+                            />
+                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Play size={18} fill="#fff" color="#fff" />
+                            </div>
                           </div>
-                          <div style={{ flex: 1 }}>
-                            <h5 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.2rem' }}>{video.title}</h5>
-                            <p style={{ margin: 0, fontSize: '0.65rem', color: 'var(--panel-muted)', fontWeight: 700 }}>{video.category}</p>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--logo-green)', textTransform: 'uppercase', marginBottom: '0.2rem', letterSpacing: '0.1em' }}>{video.category}</div>
+                            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: 'var(--panel-text)', marginBottom: '0.3rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{video.title}</h4>
+                            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--panel-muted)', fontWeight: 600, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3 }}>{video.description}</p>
                           </div>
-                          <ChevronRight size={14} style={{ opacity: 0.25 }} />
+                          <ChevronRight size={14} style={{ opacity: 0.25, flexShrink: 0 }} />
                         </motion.div>
                       ))
                     ) : (
@@ -1725,6 +1765,71 @@ const App: React.FC = () => {
             {activeTab === 'settings' && <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--logo-green)' }} />}
           </motion.button>
         </motion.nav>
+
+        {/* Video Player Modal (Protected) */}
+        <AnimatePresence>
+          {playingVideo && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(15px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+              onClick={() => setPlayingVideo(null)}>
+              
+              <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                style={{ width: '100%', maxWidth: '800px', background: '#111', borderRadius: '2.5rem', overflow: 'hidden', boxShadow: '0 50px 100px rgba(0,0,0,0.5)', position: 'relative' }}
+                onClick={e => e.stopPropagation()}>
+                
+                {/* Header with Title and Close */}
+                <div style={{ padding: '1.8rem 2rem', background: '#181818', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(5,168,106,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}>
+                      <Play size={18} fill="var(--logo-green)" />
+                    </div>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#fff' }}>{playingVideo.title}</h3>
+                      <p style={{ margin: 0, fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>{playingVideo.category || 'Biblioteca Técnica'}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setPlayingVideo(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Secure Player Container */}
+                <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', background: '#000' }}>
+                  {(() => {
+                    const id = getYouTubeID(playingVideo.url.trim());
+                    if (!id) return <div style={{ color: '#fff', position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: 700 }}>ID de video no válido</div>;
+                    
+                    return (
+                        <iframe 
+                          width="100%" 
+                          height="100%" 
+                          src={`https://www.youtube-nocookie.com/embed/${id}?modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&disablekb=1&controls=1&autoplay=0`}
+                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                          title="Reproductor Seguro Ranas" 
+                          allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" 
+                          sandbox="allow-scripts allow-same-origin allow-presentation"
+                          allowFullScreen
+                        ></iframe>
+                    );
+                  })()}
+                </div>
+
+                <div style={{ padding: '2rem', display: 'flex', gap: '1.2rem', alignItems: 'start', background: '#111' }}>
+                  <div style={{ background: 'rgba(5,168,106,0.1)', padding: '0.8rem', borderRadius: '15px', color: 'var(--logo-green)' }}>
+                    <Info size={20} />
+                  </div>
+                  <div>
+                    <h5 style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', fontWeight: 800, marginBottom: '0.5rem' }}>Sobre este contenido</h5>
+                    <p style={{ margin: 0, color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', lineHeight: 1.5 }}>
+                      Este video es parte del material exclusivo de **Dojo Ranas**. <br />
+                      Está prohibida su reproducción parcial o total fuera de este portal oficial.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ====== DUAL PAYMENT MODAL (Student View) ====== */}
         <AnimatePresence>
@@ -1979,6 +2084,7 @@ const App: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
           {[
             { id: 'dashboard', label: 'Resumen', icon: <TrendingUp size={17} /> },
+            { id: 'attendance', label: 'Agenda', icon: <Calendar size={17} /> },
             { id: 'students', label: 'Alumnos', icon: <Users size={17} /> },
 
             { id: 'payments', label: 'Finanzas', icon: <CreditCard size={17} /> },
@@ -2295,12 +2401,11 @@ const App: React.FC = () => {
                         })
                         .filter(s => {
                           if (studentFilterAge === 'ALL') return true;
-                           const ageStr = calculateAge(s.birthDate || null);
-                          if (ageStr === 'N/A') return false;
-                          const age = parseInt(ageStr.toString());
-                          if (studentFilterAge === 'KIDS') return age < 18;
-                          if (studentFilterAge === 'ADULTS') return age >= 18;
-                          return true;
+                            const age = calculateAge(s.birthDate || null);
+                            if (age === 0 && studentFilterAge === 'KIDS') return false; 
+                            if (studentFilterAge === 'KIDS') return age < 18;
+                            if (studentFilterAge === 'ADULTS') return age >= 18;
+                            return true;
                         })
                         .map((student) => (
                           <tr key={student.id} style={{ borderBottom: '1px solid var(--glass-border)', transition: 'all 0.3s' }} className="hover-light">
@@ -2401,14 +2506,26 @@ const App: React.FC = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.5rem' }}>
                       {videos.filter(v => (v.category || 'General') === selectedCategory).map(video => (
                         <div key={video.id} className="glass" style={{ borderRadius: '1.5rem', overflow: 'hidden', border: '1px solid var(--glass-border)', background: 'var(--panel-card)' }}>
-                          <div style={{ height: '140px', position: 'relative' }}>
-                            <img src={video.thumbnail} alt={video.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div style={{ height: '140px', position: 'relative', background: '#000' }}>
+                            <img 
+                              src={video.thumbnail || 'https://images.unsplash.com/photo-1599058917232-d750c185ca0d?w=800'} 
+                              alt={video.title} 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              onError={(e) => {
+                                const id = getYouTubeID(video.url);
+                                if (id && !e.currentTarget.src.includes('hqdefault.jpg')) {
+                                  e.currentTarget.src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+                                } else {
+                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1599058917232-d750c185ca0d?w=800';
+                                }
+                              }}
+                            />
                           </div>
                           <div style={{ padding: '1.2rem' }}>
                             <h4 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '0.4rem', color: 'var(--text-main)' }}>{video.title}</h4>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', height: '2rem', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: '1rem' }}>{video.description}</p>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <button className="btn-primary" style={{ flex: 1, padding: '0.6rem', fontSize: '0.75rem' }} onClick={() => window.open(video.url)}>VER</button>
+                              <button className="btn-primary" style={{ flex: 1, padding: '0.6rem', fontSize: '0.75rem' }} onClick={() => setPlayingVideo(video)}>VER</button>
                               <button style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', padding: '0.5rem', cursor: 'pointer' }} onClick={async () => {
                                 if(confirm('¿Eliminar video?')) {
                                                                     await fetch(`${API_URL}/api/videos/${video.id}`, { method: 'DELETE' });
@@ -2425,6 +2542,71 @@ const App: React.FC = () => {
               )}
             </motion.div>
           )}
+
+          {/* Admin Video Player Modal */}
+          <AnimatePresence>
+            {playingVideo && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(15px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+                onClick={() => setPlayingVideo(null)}>
+                
+                <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                  style={{ width: '100%', maxWidth: '800px', background: '#111', borderRadius: '2.5rem', overflow: 'hidden', boxShadow: '0 50px 100px rgba(0,0,0,0.5)', position: 'relative' }}
+                  onClick={e => e.stopPropagation()}>
+                  
+                  {/* Header */}
+                  <div style={{ padding: '1.8rem 2rem', background: '#181818', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(5,168,106,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}>
+                        <Play size={18} fill="var(--logo-green)" />
+                      </div>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: '#fff' }}>{playingVideo.title}</h3>
+                        <p style={{ margin: 0, fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>{playingVideo.category || 'Biblioteca Técnica'}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setPlayingVideo(null)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#fff', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  {/* Player Container */}
+                  <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', background: '#000' }}>
+                    {(() => {
+                      const id = getYouTubeID(playingVideo.url.trim());
+                      if (!id) return <div style={{ color: '#fff', position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: 700 }}>ID de video no válido</div>;
+                      
+                      return (
+                          <iframe 
+                            width="100%" 
+                            height="100%" 
+                            src={`https://www.youtube-nocookie.com/embed/${id}?modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&disablekb=1&controls=1&autoplay=0`}
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                            title="Reproductor Seguro Ranas" 
+                            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" 
+                            sandbox="allow-scripts allow-same-origin allow-presentation"
+                            allowFullScreen
+                          ></iframe>
+                      );
+                    })()}
+                  </div>
+
+                  <div style={{ padding: '2rem', display: 'flex', gap: '1.2rem', alignItems: 'start', background: '#111' }}>
+                    <div style={{ background: 'rgba(5,168,106,0.1)', padding: '0.8rem', borderRadius: '15px', color: 'var(--logo-green)' }}>
+                      <Info size={20} />
+                    </div>
+                    <div>
+                      <h5 style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', fontWeight: 800, marginBottom: '0.5rem' }}>Sobre este contenido</h5>
+                      <p style={{ margin: 0, color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', lineHeight: 1.5 }}>
+                        Este video es parte del material exclusivo de **Dojo Ranas**. <br />
+                        Está prohibida su reproducción parcial o total fuera de este portal oficial.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {activeTab === 'communications' && (
             <motion.div key="communications" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
@@ -2536,22 +2718,22 @@ const App: React.FC = () => {
                    </div>
 
                    {/* Global Broadcast Notice */}
-        {noticeData.subject && !isNoticeDismissed && (
-          <section style={{ margin: '0 1.5rem 2rem', padding: '1.5rem', background: 'linear-gradient(135deg, #1e1b4b, #312e81)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.1)', position: 'relative', overflow: 'hidden' }}>
-            <button 
-              onClick={() => setIsNoticeDismissed(true)}
-              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '5px', borderRadius: '50%', cursor: 'pointer', zIndex: 10 }}
-            >
-              <X size={16} />
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.8rem', color: '#a78bfa' }}>
-              <Bell size={18} fill="#a78bfa" />
-              <span style={{ fontSize: '0.7rem', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase' }}>AVISO IMPORTANTE</span>
-            </div>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#fff', marginBottom: '0.6rem', lineHeight: 1.3 }}>{noticeData.subject}</h4>
-            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: (noticeData.message || '').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#a78bfa; font-weight:900;">$1</strong>') }} />
-          </section>
-        )}
+                   {noticeData.subject && !isNoticeDismissed && (
+                     <section style={{ margin: '0 1.5rem 2rem', padding: '1.5rem', background: 'linear-gradient(135deg, #1e1b4b, #312e81)', borderRadius: '1.5rem', border: '1px solid rgba(255,255,255,0.1)', position: 'relative', overflow: 'hidden' }}>
+                       <button 
+                         onClick={() => setIsNoticeDismissed(true)}
+                         style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '5px', borderRadius: '50%', cursor: 'pointer', zIndex: 10 }}
+                       >
+                         <X size={16} />
+                       </button>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.8rem', color: '#a78bfa' }}>
+                         <Bell size={18} fill="#a78bfa" />
+                         <span style={{ fontSize: '0.7rem', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase' }}>AVISO IMPORTANTE</span>
+                       </div>
+                       <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#fff', marginBottom: '0.6rem', lineHeight: 1.3 }}>{noticeData.subject}</h4>
+                       <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: (noticeData.message || '').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong style="color:#a78bfa; font-weight:900;">$1</strong>') }} />
+                     </section>
+                   )}
                    {/* The Banner Preview */}
                    <motion.div style={{ padding: '1.2rem', borderRadius: '1.2rem', background: '#f5f3ff', border: '1px solid #a78bfa', display: 'flex', flexDirection: 'column', gap: '0.4rem', boxShadow: '0 10px 30px rgba(167,139,250,0.15)', position: 'relative', overflow: 'hidden' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#7c3aed', marginBottom: '0.2rem' }}>
@@ -2571,6 +2753,69 @@ const App: React.FC = () => {
               </div>
             </motion.div>
           )}
+
+          {activeTab === 'attendance' && (
+            <motion.div key="attendance" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <div>
+                   <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--logo-green)' }}>Agenda de Clases Semanal 🥋</h3>
+                   <p style={{ fontSize: '0.8rem', color: 'var(--panel-muted)' }}>Lista de alumnos inscritos para cada entrenamiento esta semana.</p>
+                </div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--logo-green)', background: 'var(--panel-green-bg)', padding: '0.5rem 1rem', borderRadius: '100px', border: '1px solid var(--panel-green-border)' }}>
+                   SEMANA ACTUAL: {new Date(getWeekStart(new Date())).toLocaleDateString('es-CL')} AL {new Date(getWeekStart(new Date()) + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('es-CL')}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '1.5rem' }}>
+                 {[...ADULT_SCHEDULE, ...KIDS_SCHEDULE].filter((v, i, a) => a.findIndex(t => t.day === v.day) === i).sort((a,b) => {
+                    const days = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+                    return days.indexOf(a.day) - days.indexOf(b.day);
+                 }).map((dayItem: any, dIdx: number) => (
+                    <div key={dIdx} style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1.5rem', padding: '1.5rem' }}>
+                       <div style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--logo-green)', marginBottom: '1.2rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{dayItem.day}</div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          {[...ADULT_SCHEDULE, ...KIDS_SCHEDULE].filter(s => s.day === dayItem.day).flatMap(s => s.classes).filter((v, i, a) => a.findIndex(t => t.time === v.time && t.name === v.name) === i).sort((a,b) => a.time.localeCompare(b.time)).map((cls: any, cIdx: number) => {
+                             const bookedStudents = students.filter(s => 
+                                (s.scheduledClasses || []).some((sc: any) => 
+                                   sc.timestamp >= getWeekStart(new Date()) && 
+                                   sc.day === dayItem.day && 
+                                   sc.time === cls.time
+                                )
+                             );
+
+                             return (
+                                <div key={cIdx} style={{ background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1rem' }}>
+                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                                      <div style={{ flex: 1 }}>
+                                         <div style={{ fontSize: '0.85rem', fontWeight: 900, color: 'var(--panel-text)' }}>{cls.time} - {cls.name}</div>
+                                         <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--panel-muted)' }}>{cls.name.toLowerCase().includes('campeones') ? 'INFANTIL (5-12)' : 'ADULTOS'}</div>
+                                      </div>
+                                      <div style={{ background: bookedStudents.length > 0 ? 'var(--logo-green)' : 'var(--panel-border-light)', color: bookedStudents.length > 0 ? '#fff' : 'var(--panel-muted)', padding: '0.3rem 0.7rem', borderRadius: '10px', fontSize: '0.7rem', fontWeight: 900, marginLeft: '1rem' }}>
+                                         {bookedStudents.length} ALUMNOS
+                                      </div>
+                                   </div>
+                                   
+                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                      {bookedStudents.map((s: any) => (
+                                         <div key={s.id} onClick={() => setSelectedStudent(s)} style={{ cursor: 'pointer', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', padding: '0.4rem 0.8rem', borderRadius: '100px', fontSize: '0.7rem', fontWeight: 700, color: 'var(--panel-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: `var(--belt-${s.belt.toLowerCase()})`, border: s.belt === 'WHITE' ? '1px solid #ddd' : 'none' }} />
+                                            {s.name.split(' ')[0]} {s.name.split(' ')[1] || ''}
+                                         </div>
+                                      ))}
+                                      {bookedStudents.length === 0 && (
+                                         <div style={{ fontSize: '0.7rem', color: 'var(--panel-muted)', fontStyle: 'italic', padding: '0.2rem 0' }}>Sin inscritos todavía</div>
+                                      )}
+                                   </div>
+                                </div>
+                             );
+                          })}
+                       </div>
+                    </div>
+                 ))}
+              </div>
+            </motion.div>
+          )}
+
 
           {activeTab === 'payments' && (
             <motion.div key="payments" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
@@ -3080,6 +3325,25 @@ const App: React.FC = () => {
                 </div>
 
                 <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+                  <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>CLASES SELECCIONADAS ESTA SEMANA</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
+                    {(selectedStudent.scheduledClasses || [])
+                      .filter(sc => sc.timestamp >= getWeekStart(new Date()))
+                      .map((sc, idx) => (
+                        <div key={idx} style={{ background: 'var(--panel-green-bg)', border: '1px solid var(--panel-green-border)', padding: '0.8rem 1rem', borderRadius: '1rem', flex: isMobile ? '1 1 100%' : 'none' }}>
+                           <div style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--logo-green)', textTransform: 'uppercase', marginBottom: '0.2rem' }}>{sc.day}</div>
+                           <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--panel-text)' }}>{sc.time} - {sc.name}</div>
+                        </div>
+                      ))}
+                    {!(selectedStudent.scheduledClasses || []).some(sc => sc.timestamp >= getWeekStart(new Date())) && (
+                      <div style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', padding: '1rem', borderRadius: '1rem', width: '100%', textAlign: 'center', fontSize: '0.8rem', color: 'var(--panel-muted)', fontWeight: 600 }}>
+                        No tiene clases seleccionadas para esta semana.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
                   <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>HISTORIAL DE PAGOS</p>
                   <div style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1.5rem', overflow: 'hidden' }}>
                     {selectedStudent.history && selectedStudent.history.length > 0 ? (
@@ -3177,22 +3441,70 @@ const App: React.FC = () => {
 
         {
           isAddingVideo && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.15)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(12px)' }}>
-              <motion.div style={{ width: '100%', maxWidth: '700px', padding: '4rem', borderRadius: '3rem', background: '#fff', border: '1px solid var(--panel-border)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.1)' }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(10px)' }}>
+              <motion.div style={{ width: '100%', maxWidth: '500px', padding: '3.5rem', borderRadius: '3.5rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                  <h2 style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--panel-text)' }}>Nuevo <span style={{ color: 'var(--logo-green)' }}>Contenido</span></h2>
-                  <button onClick={() => setIsAddingVideo(false)} style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', color: '#000', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
+                  <h2 style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-1px', color: '#111' }}>Nuevo <span style={{ color: 'var(--logo-green)' }}>Video</span></h2>
+                  <button onClick={() => setIsAddingVideo(false)} style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', color: '#111', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <input className="glass" style={{ width: '100%', padding: '1.2rem' }} placeholder="Título" value={newVideoData.title} onChange={e => setNewVideoData({ ...newVideoData, title: e.target.value })} />
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+                  {getYouTubeID(newVideoData.url) && (
+                    <div style={{ width: '100%', height: '180px', background: '#000', borderRadius: '2rem', overflow: 'hidden', border: '3px solid var(--logo-green)', position: 'relative' }}>
+                      <img src={`https://img.youtube.com/vi/${getYouTubeID(newVideoData.url)}/mqdefault.jpg`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(5,168,106,0.2)' }}>
+                         <Play size={40} fill="#fff" color="#fff" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 800, fontSize: '0.7rem', color: '#64748b' }}>TÍTULO DE LA TÉCNICA</label>
+                    <input style={{ width: '100%', padding: '1.2rem', borderRadius: '1.2rem', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#111', fontWeight: 700, fontSize: '1rem', outline: 'none' }} placeholder="Ej: Pasaje de Guardia X" value={newVideoData.title} onChange={e => setNewVideoData({ ...newVideoData, title: e.target.value })} />
                   </div>
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <input className="glass" style={{ width: '100%', padding: '1.2rem' }} placeholder="URL Video" value={newVideoData.url} onChange={e => setNewVideoData({ ...newVideoData, url: e.target.value })} />
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 800, fontSize: '0.7rem', color: '#64748b' }}>LINK DE YOUTUBE (OCULTO)</label>
+                    <input style={{ width: '100%', padding: '1.2rem', borderRadius: '1.2rem', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#111', fontWeight: 700, fontSize: '1rem', outline: 'none' }} placeholder="https://youtube.com/watch?v=..." value={newVideoData.url} onChange={e => {
+                      const url = e.target.value;
+                      const id = getYouTubeID(url);
+                      setNewVideoData({ 
+                        ...newVideoData, 
+                        url, 
+                        thumbnail: id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : newVideoData.thumbnail 
+                      });
+                    }} />
                   </div>
-                  
-                  <input className="glass" style={{ padding: '1.2rem' }} placeholder="Categoría (Ej: Agarre, Guardia)" value={newVideoData.category} onChange={e => setNewVideoData({ ...newVideoData, category: e.target.value })} />
-                  <button className="btn-primary" style={{ gridColumn: 'span 2', marginTop: '2rem' }} onClick={handleAddVideo}>PUBLICAR TÉCNICA</button>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 800, fontSize: '0.7rem', color: '#64748b' }}>DESCRIPCIÓN DE LA TÉCNICA</label>
+                    <textarea 
+                      style={{ width: '100%', padding: '1.2rem', borderRadius: '1.2rem', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#111', fontWeight: 600, fontSize: '0.9rem', outline: 'none', resize: 'none' }} 
+                      rows={3}
+                      placeholder="Breve descripción de lo que verá el alumno..." 
+                      value={newVideoData.description} 
+                      onChange={e => setNewVideoData({ ...newVideoData, description: e.target.value })} 
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 800, fontSize: '0.7rem', color: '#64748b' }}>CATEGORÍA TÉCNICA</label>
+                      <select style={{ width: '100%', padding: '1.2rem', borderRadius: '1.2rem', border: '1px solid #e2e8f0', background: '#fff', color: '#111', fontWeight: 900, fontSize: '0.9rem', outline: 'none' }} value={newVideoData.category} onChange={e => setNewVideoData({ ...newVideoData, category: e.target.value })}>
+                        {VIDEO_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 800, fontSize: '0.7rem', color: '#64748b' }}>DIRIGIDO A</label>
+                      <select style={{ width: '100%', padding: '1.2rem', borderRadius: '1.2rem', border: '1px solid #e2e8f0', background: '#fff', color: '#111', fontWeight: 900, fontSize: '0.9rem', outline: 'none' }} value={newVideoData.targetAudience} onChange={e => setNewVideoData({ ...newVideoData, targetAudience: e.target.value as any })}>
+                        <option value="ADULTS">Adultos</option>
+                        <option value="KIDS">Niños</option>
+                        <option value="BOTH">Ambos</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ marginTop: '1rem', width: '100%', padding: '1.4rem', background: 'var(--logo-green)', color: '#fff', fontSize: '0.9rem', letterSpacing: '0.05em', fontWeight: 900, borderRadius: '1.5rem', border: 'none', cursor: 'pointer', boxShadow: '0 15px 30px rgba(5,168,106,0.3)' }} onClick={handleAddVideo}>PUBLICAR TÉCNICA</motion.button>
                 </div>
               </motion.div>
             </motion.div>
