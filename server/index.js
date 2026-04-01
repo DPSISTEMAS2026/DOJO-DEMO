@@ -226,6 +226,17 @@ app.post('/api/videos', async (req, res) => {
     }
 });
 
+app.delete('/api/videos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { error } = await supabase.from('videos').delete().eq('id', id);
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // News
 app.get('/api/news', async (req, res) => {
     try {
