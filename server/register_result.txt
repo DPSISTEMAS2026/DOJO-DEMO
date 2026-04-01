@@ -1,0 +1,9 @@
+﻿Current student: Jos├® Antonio Mons├ílvez Garc├¡a
+Current history: []
+Current isPaid: false
+Current monthlyFee: 0
+\nÔ£à Payment registered successfully for Jos├® Antonio Mons├ílvez Garc├¡a!
+   Amount: ,000
+   Date: 2026-03-27
+   MP Transaction: 152220921268
+   Monthly Fee set to: ,000

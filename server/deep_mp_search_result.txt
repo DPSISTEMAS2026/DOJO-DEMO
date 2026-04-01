@@ -1,0 +1,11 @@
+﻿--- Deep Search for Nicolas Esparza (All Statuses) ---
+Analyzing 31 payments since March 25...
+NO MATCHES FOUND in Mercado Pago.
+Recent Payers in logs: [
+  undefined,
+  'manuelplazaarenas@gmail.com',
+  'samuel.urrearojas@gmail.com',
+  'jmonsalvez.garcia@gmail.com',
+  'tipograficos@gmail.com',
+  null
+]

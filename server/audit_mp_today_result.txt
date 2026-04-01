@@ -1,0 +1,41 @@
+﻿--- Comprehensive Audit of All Approved Payments Today ---
+
+ID: 151908718975 | Amount: 40000 | Type: account_fund
+Payer Name: null null
+Payer Email: manuelplazaarenas@gmail.com
+Payer Identification: 181227141
+Description: 43
+External Reference: null
+Additional Info: {
+  "tracking_id": "platform:v1-blacklabel,so:ALL,type:N/A,security:none"
+}
+
+ID: 151909464169 | Amount: 70000 | Type: account_fund
+Payer Name: null null
+Payer Email: manuelplazaarenas@gmail.com
+Payer Identification: 181227141
+Description: 43
+External Reference: null
+Additional Info: {
+  "tracking_id": "platform:v1-blacklabel,so:ALL,type:N/A,security:none"
+}
+
+ID: 151923079665 | Amount: 50000 | Type: account_fund
+Payer Name: null null
+Payer Email: manuelplazaarenas@gmail.com
+Payer Identification: 181227141
+Description: 43
+External Reference: null
+Additional Info: {
+  "tracking_id": "platform:v1-blacklabel,so:ALL,type:N/A,security:none"
+}
+
+ID: 152675501164 | Amount: 10000 | Type: account_fund
+Payer Name: null null
+Payer Email: manuelplazaarenas@gmail.com
+Payer Identification: 181227141
+Description: Renata
+External Reference: null
+Additional Info: {
+  "tracking_id": "platform:v1-blacklabel,so:ALL,type:N/A,security:none"
+}

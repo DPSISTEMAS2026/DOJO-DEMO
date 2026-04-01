@@ -179,28 +179,47 @@ const App: React.FC = () => {
   };
 
 
-  const handleBookClass = (timestamp: number) => {
-    const isBooked = (currentUser?.scheduledClasses || []).some(c => c.timestamp === timestamp);
+  const handleBookClass = (day: string, time: string, name: string) => {
+    if (!currentUser) return;
+    const currentWeekStart = getWeekStart(new Date());
+    const scheduled = currentUser.scheduledClasses || [];
+    
+    // Identificar si ya está marcado este horario específico
+    const isBooked = scheduled.some(c => c.day === day && c.time === time && c.timestamp >= currentWeekStart);
+    
     let newScheduled = [];
     if (isBooked) {
-      newScheduled = (currentUser?.scheduledClasses || []).filter(c => c.timestamp !== timestamp);
+      // Si ya estaba, lo quitamos (Toggle OFF)
+      newScheduled = scheduled.filter(c => !(c.day === day && c.time === time && c.timestamp >= currentWeekStart));
     } else {
+      // Lógica de límites del plan
       const planLimits: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4, 'Ilimitado': 99 };
       let planMax = 2;
-      const planVal = currentUser?.plan ? currentUser.plan[0] : '2';
-      if (currentUser?.plan?.toLowerCase().includes('ilimitado')) planMax = 99;
-      else planMax = planLimits[planVal] || 2;
-
-      const currentWeekStart = getWeekStart(new Date());
-      const thisWeekCount = (currentUser?.scheduledClasses || []).filter(c => c.timestamp >= currentWeekStart).length;
-
-      if (thisWeekCount >= planMax) {
-        alert(`Has alcanzado el límite de tu plan (${planMax} clases por semana).`);
-        return;
+      const planVal = currentUser.plan ? (currentUser.plan.includes(' ') ? currentUser.plan.split(' ')[0] : currentUser.plan[0]) : '2';
+      
+      if (currentUser.plan?.toLowerCase().includes('ilimitado')) {
+        planMax = 99;
+      } else {
+        planMax = planLimits[planVal] || 2;
       }
-      newScheduled = [...(currentUser?.scheduledClasses || []), { timestamp, day: '', time: '', name: 'Reserva' }];
+
+      const thisWeekClasses = scheduled.filter(c => c.timestamp >= currentWeekStart);
+
+      if (thisWeekClasses.length >= planMax) {
+        // En lugar de bloquear, si el límite es 1, lo reemplazamos automáticamente
+        // para evitar que el usuario se sienta "atrapado".
+        if (planMax === 1) {
+          const otherWeeks = scheduled.filter(c => c.timestamp < currentWeekStart);
+          newScheduled = [...otherWeeks, { timestamp: new Date().getTime(), day, time, name }];
+        } else {
+          alert(`Has alcanzado el límite de tu plan (${planMax} clases por semana). Desmarca una para seleccionar otra.`);
+          return;
+        }
+      } else {
+        newScheduled = [...scheduled, { timestamp: new Date().getTime(), day, time, name }];
+      }
     }
-    handleUpdateStudent({ ...currentUser!, scheduledClasses: newScheduled as any[] });
+    handleUpdateStudent({ ...currentUser, scheduledClasses: newScheduled as any[] });
   };
 
   const handleLogout = () => {
@@ -1560,9 +1579,9 @@ const App: React.FC = () => {
                      ] : [
                        { day: 'Lunes', classes: [{ time: '19:30', name: 'Ranas On Fire' }] },
                        { day: 'Martes', classes: [{ time: '06:45', name: 'Valientes' }, { time: '19:00', name: 'Ranas On Fire' }] },
-                       { day: 'Miércoles', classes: [{ time: '19:30', name: 'Ranas No-Gi' }] },
-                       { day: 'Jueves', classes: [{ time: '06:45', name: 'Valientes' }, { time: '19:00', name: 'Ranas On Fire' }] },
-                       { day: 'Viernes', classes: [{ time: '20:00', name: 'Competidor' }] },
+                       { day: 'Miércoles', classes: [{ time: '19:30', name: 'Ranas On Fire' }] },
+                       { day: 'Jueves', classes: [{ time: '19:00', name: 'Ranas On Fire' }] },
+                       { day: 'Viernes', classes: [{ time: '06:45', name: 'Valientes' }, { time: '20:00', name: 'Competidor' }] },
                        { day: 'Sábado', classes: [{ time: '12:00', name: 'Open Mat' }] }
                      ]).map((dayItem, idx) => (
                        <div key={idx} style={{ flexShrink: 0, width: '140px', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
@@ -1574,7 +1593,7 @@ const App: React.FC = () => {
 
                              return (
                                <motion.button key={cIdx} whileTap={{ scale: 0.95 }}
-                                 onClick={() => handleBookClass(new Date().getTime())} // Simulating booking logic
+                                 onClick={() => handleBookClass(dayItem.day, cls.time, cls.name)}
                                  style={{
                                    background: isBooked ? 'var(--logo-green)' : 'var(--panel-surface)',
                                    borderRadius: '0.8rem', padding: '0.8rem', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%'
@@ -3023,19 +3042,25 @@ const App: React.FC = () => {
                     <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>PLAN ACTUAL</p>
                     {isEditingStudent ? (
                       <select style={{ width: '100%', background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 900, fontSize: '1rem', textAlign: 'center' }}
-                        value={editedStudent?.plan || '3'}
+                        value={editedStudent?.plan || 'Clase Individual'}
                         onChange={e => {
                           const val = e.target.value;
-                           const age = calculateAge(editedStudent?.birthDate || null) as any;
-                          const category = (age !== 'N/A' && age < 18) ? 'kids' : 'adults';
-                          const autoFee = fees[category][val] || 0;
-                          setEditedStudent(prev => prev ? { ...prev, plan: val, monthlyFee: autoFee } : null);
+                          const feeMap: Record<string, number> = {
+                            "1x SEMANA": 20000,
+                            "Clase Individual": 5000,
+                            "2x Semana": 35000,
+                            "3x Semana": 35000,
+                            "4x Semana": 40000,
+                            "Full Rana": 40000
+                          };
+                          setEditedStudent(prev => prev ? { ...prev, plan: val, monthlyFee: feeMap[val] || prev.monthlyFee } : null);
                         }}>
-                        <option value="1">{planLabels['1']}</option>
-                        <option value="2">{planLabels['2']}</option>
-                        <option value="3">{planLabels['3']}</option>
-                        <option value="4">{planLabels['4']}</option>
-                        <option value="Ilimitado">{planLabels['Ilimitado']}</option>
+                        <option value="1x SEMANA">1x SEMANA ($20.000)</option>
+                        <option value="Clase Individual">Clase Individual ($5.000)</option>
+                        <option value="2x Semana">2x Semana ($35.000)</option>
+                        <option value="3x Semana">3x Semana ($35.000)</option>
+                        <option value="4x Semana">4x Semana ($40.000)</option>
+                        <option value="Full Rana">Full Rana ($40.000)</option>
                       </select>
                     ) : (
                       <p style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--panel-text)' }}>{selectedStudent.plan ? (planLabels[selectedStudent.plan.toString()] || selectedStudent.plan) : 'No asignado'}</p>

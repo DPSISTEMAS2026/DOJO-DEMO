@@ -1,0 +1,13 @@
+--- UPDATED STUDENTS (MARCH 31 - APRIL 1) ---
+ID: 1774990487994 | Name: Joaquín Gaspar Martínez Avendaño  | Last Payment: 2026-03-31 | IsPaid: True
+  -> 2026-03-31 | $35000 | Completado | Manual/Transferencia | TX: None
+ID: 58 | Name: Amparo Celeste Aguilera Fuenzalida | Last Payment: 2026-03-31 | IsPaid: True
+  -> 2026-03-31 | $35000 | Completado | Manual/Transferencia | TX: None
+ID: 49 | Name: Amaro Agustín Martínez Avendaño | Last Payment: 2026-03-31 | IsPaid: True
+  -> 2026-03-31 | $35000 | Completado | Manual/Transferencia | TX: None
+ID: 1774976559325 | Name: Francisca Diaz Urra | Last Payment: 2026-03-31 | IsPaid: True
+  -> 2026-03-31 | $50000 | Completado | Manual/Transferencia | TX: None
+ID: 1774608694398 | Name: Nicolás Hernan Aguilera Correa  | Last Payment: 2026-03-31 | IsPaid: True
+  -> 2026-03-31 | $35000 | Completado | Manual/Transferencia | TX: None
+ID: 1774916068740 | Name: Renata Paz Ríos Salgado  | Last Payment: 2026-03-31 | IsPaid: True
+  -> 2026-03-31 | $40000 | Completado | Manual/Transferencia | TX: None

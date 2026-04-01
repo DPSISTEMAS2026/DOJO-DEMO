@@ -1,0 +1,31 @@
+﻿--- Detailed Inspection of Today's Payments ---
+
+--- ID: 152622294108 ---
+Status: rejected | Operation Type: regular_payment | Payment Type: credit_card
+Amount: 104 | Payer: null
+Description: Mensualidad Dojo Ranas - Diego Diaz Araya
+External Reference: 1774458617299
+
+--- ID: 151908718975 ---
+Status: approved | Operation Type: account_fund | Payment Type: bank_transfer
+Amount: 40000 | Payer: manuelplazaarenas@gmail.com
+Description: 43
+External Reference: null
+
+--- ID: 151909464169 ---
+Status: approved | Operation Type: account_fund | Payment Type: bank_transfer
+Amount: 70000 | Payer: manuelplazaarenas@gmail.com
+Description: 43
+External Reference: null
+
+--- ID: 151914231053 ---
+Status: authorized | Operation Type: regular_payment | Payment Type: account_money
+Amount: 1500 | Payer: undefined
+Description: Mercadopago *violeta1
+External Reference: 368e32b1-8d2f-484d-a136-3c931858acf3-1774959210266
+
+--- ID: 151923079665 ---
+Status: approved | Operation Type: account_fund | Payment Type: bank_transfer
+Amount: 50000 | Payer: manuelplazaarenas@gmail.com
+Description: 43
+External Reference: null

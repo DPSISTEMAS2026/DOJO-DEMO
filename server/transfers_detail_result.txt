@@ -1,0 +1,29 @@
+﻿--- Detail of All Transfers to Manuel (Today 31) ---
+
+--- Payment ID: 151908718975 ---
+Amount: $40000 | Status: approved
+Description (Glosa): 43
+Payer Email in MP: manuelplazaarenas@gmail.com
+Transaction Data: {}
+Additional Info (Items): []
+
+--- Payment ID: 151909464169 ---
+Amount: $70000 | Status: approved
+Description (Glosa): 43
+Payer Email in MP: manuelplazaarenas@gmail.com
+Transaction Data: {}
+Additional Info (Items): []
+
+--- Payment ID: 151923079665 ---
+Amount: $50000 | Status: approved
+Description (Glosa): 43
+Payer Email in MP: manuelplazaarenas@gmail.com
+Transaction Data: {}
+Additional Info (Items): []
+
+--- Payment ID: 152675501164 ---
+Amount: $10000 | Status: approved
+Description (Glosa): Renata
+Payer Email in MP: manuelplazaarenas@gmail.com
+Transaction Data: {}
+Additional Info (Items): []

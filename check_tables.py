@@ -1,14 +1,22 @@
 import requests
 
-url = ""
-key = ""
+url = "https://qbimxygcjjmosifsqbko.supabase.co"
+key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFiaW14eWdjamptb3NpZnNxYmtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3ODU4NDUsImV4cCI6MjA4OTM2MTg0NX0.ZHR9SdIl0MW2jsl6toB3MnhOL7NVdDhXxVyvkid50cY"
 
-with open(r'd:\DOJO DEMO\.env', 'r') as f:
-    for line in f:
-        if "=" in line:
-            k, v = line.strip().split('=', 1)
-            if k == "SUPABASE_URL": url = v
-            elif k == "SUPABASE_ANON_KEY": key = v
+headers = { "apikey": key, "Authorization": f"Bearer {key}" }
 
-r = requests.get(f"{url}/rest/v1/", headers={"apikey": key, "Authorization": f"Bearer {key}"})
-print(r.json().keys() if hasattr(r.json(), 'keys') else r.json())
+# List students' names to see if Paula is there with a partial name
+r = requests.get(f"{url}/rest/v1/students?select=name,email", headers=headers)
+students = r.json()
+print("Students:")
+for s in students:
+    if "paula" in s.get("name", "").lower():
+        print(f" - {s['name']} ({s['email']})")
+
+# Try searching other potential tables by hitting the spec
+r = requests.get(f"{url}/rest/v1/", headers=headers)
+print("\nTables in the API:")
+try:
+    print(r.json())
+except:
+    print("Could not list tables")

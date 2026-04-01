@@ -1,0 +1,38 @@
+﻿--- Inspecting Last 24 hours' Payments ---
+Found 9 payments in the last 24 hours.
+
+--- ID: 151803585899 | Status: approved | Time: 2026-03-30T13:16:00.000-04:00 ---
+Amount: 36391 | Payer:   (tipograficos@gmail.com) | Desc: Mensualidad Dojo Ranas - Pedro andres barria Sep├║lveda
+External Reference: 12
+
+--- ID: 151811351181 | Status: approved | Time: 2026-03-30T14:14:07.000-04:00 ---
+Amount: 20000 | Payer:   (manuelplazaarenas@gmail.com) | Desc: 43
+External Reference: null
+
+--- ID: 151814491861 | Status: authorized | Time: 2026-03-30T14:37:46.000-04:00 ---
+Amount: 12600 | Payer:   (N/A) | Desc: Hualpen
+External Reference: 4d3fc936-ec7b-441c-a835-2db09ff171e1-1774895866283
+
+--- ID: 152577022366 | Status: approved | Time: 2026-03-30T17:32:28.000-04:00 ---
+Amount: 17000 | Payer:   (manuelplazaarenas@gmail.com) | Desc: concept cca
+External Reference: null
+
+--- ID: 152622294108 | Status: rejected | Time: 2026-03-31T00:49:44.000-04:00 ---
+Amount: 104 | Payer:   (N/A) | Desc: Mensualidad Dojo Ranas - Diego Diaz Araya
+External Reference: 1774458617299
+
+--- ID: 151908718975 | Status: approved | Time: 2026-03-31T07:19:38.000-04:00 ---
+Amount: 40000 | Payer:   (manuelplazaarenas@gmail.com) | Desc: 43
+External Reference: null
+
+--- ID: 151909464169 | Status: approved | Time: 2026-03-31T07:26:15.000-04:00 ---
+Amount: 70000 | Payer:   (manuelplazaarenas@gmail.com) | Desc: 43
+External Reference: null
+
+--- ID: 151914231053 | Status: authorized | Time: 2026-03-31T08:13:30.000-04:00 ---
+Amount: 1500 | Payer:   (N/A) | Desc: Mercadopago *violeta1
+External Reference: 368e32b1-8d2f-484d-a136-3c931858acf3-1774959210266
+
+--- ID: 151923079665 | Status: approved | Time: 2026-03-31T09:21:52.000-04:00 ---
+Amount: 50000 | Payer:   (manuelplazaarenas@gmail.com) | Desc: 43
+External Reference: null

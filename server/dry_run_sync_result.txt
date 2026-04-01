@@ -1,0 +1,224 @@
+﻿[DRY-RUN] Manual Sync Simulation...
+Found 68 total payments in MP in the last 15 days.
+
+--- Inspecting Payment 151923079665 | Type: account_fund | Amount: 50000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151909464169 | Type: account_fund | Amount: 70000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151908718975 | Type: account_fund | Amount: 40000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 152577022366 | Type: account_fund | Amount: 17000 | Desc: concept cca | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151811351181 | Type: account_fund | Amount: 20000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151803585899 | Type: regular_payment | Amount: 36391 | Desc: Mensualidad Dojo Ranas - Pedro andres barria Sep├║lveda | Payer: tipograficos@gmail.com ---
+Match by extRef: 12
+Ô£à FINAL MATCH: 12
+
+--- Inspecting Payment 152295393386 | Type: regular_payment | Amount: 35590 | Desc: Distribuidora deconce | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151558138189 | Type: regular_payment | Amount: 72000 | Desc: Comercial conce outlet | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151542928269 | Type: account_fund | Amount: 22000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 152267352952 | Type: account_fund | Amount: 40000 | Desc: Mensualidad Felipe Campos | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 152220921268 | Type: regular_payment | Amount: 40000 | Desc: Mensualidad Dojo Ranas - Jos├® Antonio Mons├ílvez Garc├¡a | Payer: jmonsalvez.garcia@gmail.com ---
+Match by extRef: 27
+Ô£à FINAL MATCH: 27
+
+--- Inspecting Payment 151463590289 | Type: regular_payment | Amount: 19250 | Desc: Unimarc tucapel | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 152189768824 | Type: regular_payment | Amount: 40000 | Desc: Mensualidad Dojo Ranas - Samuel Jes├║s Urrea Rojas | Payer: samuel.urrearojas@gmail.com ---
+Match by extRef: 46
+Ô£à FINAL MATCH: 46
+
+--- Inspecting Payment 151440932863 | Type: regular_payment | Amount: 70000 | Desc: Decathlon concepcion | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151387655435 | Type: regular_payment | Amount: 6750 | Desc: Spotify | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151382634011 | Type: regular_payment | Amount: 3000 | Desc: Mercadopago *violeta1 | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151345280943 | Type: account_fund | Amount: 35000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 152065287038 | Type: regular_payment | Amount: 30506 | Desc: Hip lider bio - bio | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151269453833 | Type: regular_payment | Amount: 2150 | Desc: Mercadopago *mmpanade | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151173850003 | Type: account_fund | Amount: 40000 | Desc: concept cca | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151880830844 | Type: regular_payment | Amount: 9890 | Desc: Zucchero | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151146941917 | Type: account_fund | Amount: 35000 | Desc: concept cca | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151109298135 | Type: regular_payment | Amount: 25000 | Desc: Veterinaria las cancha | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151054547891 | Type: account_fund | Amount: 70000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151044875669 | Type: regular_payment | Amount: 3420 | Desc: Las delicias de san ma | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151019774485 | Type: account_fund | Amount: 20000 | Desc: Taller san Vicente | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151749474496 | Type: regular_payment | Amount: 2280 | Desc: Inversiones villalon | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151698248812 | Type: account_fund | Amount: 35000 | Desc: concept cca | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 150960261845 | Type: account_fund | Amount: 35000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151687808552 | Type: regular_payment | Amount: 1800 | Desc: Sumup * violeta | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150923673999 | Type: account_fund | Amount: 25000 | Desc: 00000000 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 150884888737 | Type: regular_payment | Amount: 4080 | Desc: Sba hualpen | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150756854465 | Type: regular_payment | Amount: 5750 | Desc: Ciclo market | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150754477283 | Type: regular_payment | Amount: 1370 | Desc: Orella 1 | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150753693387 | Type: regular_payment | Amount: 12300 | Desc: Comida china express | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150752046199 | Type: regular_payment | Amount: 14500 | Desc: Mercadopago *edispet | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151480232314 | Type: regular_payment | Amount: 29000 | Desc: Comercial diego spa | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150687805795 | Type: regular_payment | Amount: 12000 | Desc: Mercadopago *vikingos | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150684537567 | Type: regular_payment | Amount: 70139 | Desc: Lid 952 talcahuano | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150649685255 | Type: regular_payment | Amount: 26000 | Desc: Redgloba*jose luis | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150636803129 | Type: account_fund | Amount: 5000 | Desc: Open mat 21 marzo | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 150608801435 | Type: account_fund | Amount: 10000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151328316354 | Type: account_fund | Amount: 35000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151270688346 | Type: account_fund | Amount: 15000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151261400498 | Type: regular_payment | Amount: 2490 | Desc: Mercadopago *inversio | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151249375016 | Type: account_fund | Amount: 5000 | Desc: 00000000 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151240792904 | Type: account_fund | Amount: 50000 | Desc: concept cca | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151204568302 | Type: account_fund | Amount: 25000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 150437571291 | Type: regular_payment | Amount: 3000 | Desc: Mercadopago *violeta1 | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 151158121226 | Type: account_fund | Amount: 52000 | Desc: concept cca | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 150386085227 | Type: account_fund | Amount: 20000 | Desc: 4 dias gracias | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 151033726748 | Type: money_transfer | Amount: 35000 | Desc:  | Payer: esteban.urzualangueman@gmail.com ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150221159603 | Type: account_fund | Amount: 45000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 150173906643 | Type: regular_payment | Amount: 2000 | Desc: Estacionamientos e inv | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150898655010 | Type: regular_payment | Amount: 66990 | Desc: Mercadopago *sportika | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150168718395 | Type: regular_payment | Amount: 2500 | Desc: Mercadopago *dulceste | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150854650856 | Type: account_fund | Amount: 15000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 150805023850 | Type: account_fund | Amount: 45000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 150064498637 | Type: account_fund | Amount: 35000 | Desc: concept cca | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 150779658868 | Type: regular_payment | Amount: 1000 | Desc: Central parking system | Payer: undefined ---
+ÔØî NO MATCH FOUND
+
+--- Inspecting Payment 150777295696 | Type: regular_payment | Amount: 65582 | Desc: Bravery salm├│n adult alimento para perro | Payer: undefined ---
+Match by extRef: SZ01372881
+Ô£à FINAL MATCH: SZ01372881
+
+--- Inspecting Payment 150015958575 | Type: account_fund | Amount: 35000 | Desc: 43 | Payer: manuelplazaarenas@gmail.com ---
+Match by email: 1774471437231
+Ô£à FINAL MATCH: 1774471437231
+
+--- Inspecting Payment 150712699482 | Type: regular_payment | Amount: 1500 | Desc: Mercadopago *violeta1 | Payer: undefined ---
+ÔØî NO MATCH FOUND

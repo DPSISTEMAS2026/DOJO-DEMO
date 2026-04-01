@@ -1,0 +1,6 @@
+﻿--- Listing ALL payments from the last 12 hours ---
+09:21:52.000-04:00 | $50000 | approved |   (manuelplazaarenas@gmail.com) | Desc: 43
+08:13:30.000-04:00 | $1500 | authorized |   (N/A) | Desc: Mercadopago *violeta1
+07:26:15.000-04:00 | $70000 | approved |   (manuelplazaarenas@gmail.com) | Desc: 43
+07:19:38.000-04:00 | $40000 | approved |   (manuelplazaarenas@gmail.com) | Desc: 43
+00:49:44.000-04:00 | $104 | rejected |   (N/A) | Desc: Mensualidad Dojo Ranas - Diego Diaz Araya

@@ -1,0 +1,591 @@
+﻿--- RAW INSPECTION of last 5 approved payments today ---
+{
+  "accounts_info": null,
+  "additional_info": {
+    "tracking_id": "platform:v1-blacklabel,so:ALL,type:N/A,security:none"
+  },
+  "authorization_code": null,
+  "binary_mode": false,
+  "brand_id": null,
+  "build_version": "3.150.0-rc-6",
+  "call_for_authorize_id": null,
+  "callback_url": null,
+  "captured": true,
+  "card": {},
+  "charges_details": [],
+  "charges_execution_info": {
+    "internal_execution": {
+      "date": "2026-03-31T11:02:58.594-04:00",
+      "execution_id": "01KN26PNR9K64Q5HJMQ7HFJ8JD"
+    }
+  },
+  "collector_id": 69142029,
+  "corporation_id": null,
+  "counter_currency": null,
+  "coupon_amount": 0,
+  "currency_id": "CLP",
+  "date_approved": "2026-03-31T11:02:58.000-04:00",
+  "date_created": "2026-03-31T11:02:58.000-04:00",
+  "date_last_updated": "2026-03-31T11:03:04.000-04:00",
+  "date_of_expiration": null,
+  "deduction_schema": null,
+  "description": "Renata",
+  "differential_pricing_id": null,
+  "external_reference": null,
+  "fee_details": [],
+  "financing_group": null,
+  "id": 152675501164,
+  "installments": 1,
+  "integrator_id": null,
+  "issuer_id": "12546",
+  "live_mode": true,
+  "marketplace_owner": null,
+  "merchant_account_id": null,
+  "merchant_number": null,
+  "metadata": {},
+  "money_release_date": "2026-03-31T11:02:58.000-04:00",
+  "money_release_schema": null,
+  "money_release_status": "released",
+  "notification_url": null,
+  "operation_type": "account_fund",
+  "order": {},
+  "payer": {
+    "email": "manuelplazaarenas@gmail.com",
+    "entity_type": null,
+    "first_name": null,
+    "id": "69142029",
+    "identification": {
+      "number": "181227141",
+      "type": "RUT"
+    },
+    "last_name": null,
+    "operator_id": null,
+    "phone": {
+      "number": null,
+      "extension": null,
+      "area_code": null
+    },
+    "type": null
+  },
+  "payment_method": {
+    "id": "tef",
+    "issuer_id": "12546",
+    "type": "bank_transfer"
+  },
+  "payment_method_id": "tef",
+  "payment_type_id": "bank_transfer",
+  "platform_id": null,
+  "point_of_interaction": {
+    "business_info": {
+      "branch": null,
+      "sub_unit": "money_inflows",
+      "unit": "digital_accounts_cards"
+    },
+    "location": {
+      "source": "collector",
+      "state_id": "CL-BI"
+    },
+    "transaction_data": {},
+    "type": "UNSPECIFIED"
+  },
+  "pos_id": null,
+  "processing_mode": "aggregator",
+  "refunds": [],
+  "release_info": null,
+  "shipping_amount": 0,
+  "sponsor_id": null,
+  "statement_descriptor": null,
+  "status": "approved",
+  "status_detail": "accredited",
+  "store_id": null,
+  "tags": null,
+  "taxes_amount": 0,
+  "transaction_amount": 10000,
+  "transaction_amount_refunded": 0,
+  "transaction_details": {
+    "acquirer_reference": null,
+    "bank_transfer_id": 123283733905,
+    "external_resource_url": null,
+    "financial_institution": "1",
+    "installment_amount": 0,
+    "net_received_amount": 10000,
+    "overpaid_amount": 0,
+    "payable_deferral_period": null,
+    "payment_method_reference_id": null,
+    "total_paid_amount": 10000,
+    "transaction_id": "CCA2603310001124130599860"
+  },
+  "shipping_cost": 0
+}
+{
+  "accounts_info": null,
+  "additional_info": {
+    "tracking_id": "platform:v1-blacklabel,so:ALL,type:N/A,security:none"
+  },
+  "authorization_code": null,
+  "binary_mode": false,
+  "brand_id": null,
+  "build_version": "3.150.0-rc-6",
+  "call_for_authorize_id": null,
+  "callback_url": null,
+  "captured": true,
+  "card": {},
+  "charges_details": [],
+  "charges_execution_info": {
+    "internal_execution": {
+      "date": "2026-03-31T09:21:52.020-04:00",
+      "execution_id": "01KN20XHBTRD10GEKB91MFHTSK"
+    }
+  },
+  "collector_id": 69142029,
+  "corporation_id": null,
+  "counter_currency": null,
+  "coupon_amount": 0,
+  "currency_id": "CLP",
+  "date_approved": "2026-03-31T09:21:52.000-04:00",
+  "date_created": "2026-03-31T09:21:52.000-04:00",
+  "date_last_updated": "2026-03-31T09:21:59.000-04:00",
+  "date_of_expiration": null,
+  "deduction_schema": null,
+  "description": "43",
+  "differential_pricing_id": null,
+  "external_reference": null,
+  "fee_details": [],
+  "financing_group": null,
+  "id": 151923079665,
+  "installments": 1,
+  "integrator_id": null,
+  "issuer_id": "12546",
+  "live_mode": true,
+  "marketplace_owner": null,
+  "merchant_account_id": null,
+  "merchant_number": null,
+  "metadata": {},
+  "money_release_date": "2026-03-31T09:21:52.000-04:00",
+  "money_release_schema": null,
+  "money_release_status": "released",
+  "notification_url": null,
+  "operation_type": "account_fund",
+  "order": {},
+  "payer": {
+    "email": "manuelplazaarenas@gmail.com",
+    "entity_type": null,
+    "first_name": null,
+    "id": "69142029",
+    "identification": {
+      "number": "181227141",
+      "type": "RUT"
+    },
+    "last_name": null,
+    "operator_id": null,
+    "phone": {
+      "number": null,
+      "extension": null,
+      "area_code": null
+    },
+    "type": null
+  },
+  "payment_method": {
+    "id": "tef",
+    "issuer_id": "12546",
+    "type": "bank_transfer"
+  },
+  "payment_method_id": "tef",
+  "payment_type_id": "bank_transfer",
+  "platform_id": null,
+  "point_of_interaction": {
+    "business_info": {
+      "branch": null,
+      "sub_unit": "money_inflows",
+      "unit": "digital_accounts_cards"
+    },
+    "location": {
+      "source": "collector",
+      "state_id": "CL-BI"
+    },
+    "transaction_data": {},
+    "type": "UNSPECIFIED"
+  },
+  "pos_id": null,
+  "processing_mode": "aggregator",
+  "refunds": [],
+  "release_info": null,
+  "shipping_amount": 0,
+  "sponsor_id": null,
+  "statement_descriptor": null,
+  "status": "approved",
+  "status_detail": "accredited",
+  "store_id": null,
+  "tags": null,
+  "taxes_amount": 0,
+  "transaction_amount": 50000,
+  "transaction_amount_refunded": 0,
+  "transaction_details": {
+    "acquirer_reference": null,
+    "bank_transfer_id": 123280784859,
+    "external_resource_url": null,
+    "financial_institution": "1",
+    "installment_amount": 0,
+    "net_received_amount": 50000,
+    "overpaid_amount": 0,
+    "payable_deferral_period": null,
+    "payment_method_reference_id": null,
+    "total_paid_amount": 50000,
+    "transaction_id": "CCA2603310012316021098264"
+  },
+  "shipping_cost": 0
+}
+{
+  "accounts_info": null,
+  "additional_info": {
+    "tracking_id": "platform:v1-blacklabel,so:ALL,type:N/A,security:none"
+  },
+  "authorization_code": null,
+  "binary_mode": false,
+  "brand_id": null,
+  "build_version": "3.150.0-rc-6",
+  "call_for_authorize_id": null,
+  "callback_url": null,
+  "captured": true,
+  "card": {},
+  "charges_details": [],
+  "charges_execution_info": {
+    "internal_execution": {
+      "date": "2026-03-31T07:26:15.947-04:00",
+      "execution_id": "01KN1T9VVJQMV76SWDCV05X1DV"
+    }
+  },
+  "collector_id": 69142029,
+  "corporation_id": null,
+  "counter_currency": null,
+  "coupon_amount": 0,
+  "currency_id": "CLP",
+  "date_approved": "2026-03-31T07:26:16.000-04:00",
+  "date_created": "2026-03-31T07:26:15.000-04:00",
+  "date_last_updated": "2026-03-31T07:26:20.000-04:00",
+  "date_of_expiration": null,
+  "deduction_schema": null,
+  "description": "43",
+  "differential_pricing_id": null,
+  "external_reference": null,
+  "fee_details": [],
+  "financing_group": null,
+  "id": 151909464169,
+  "installments": 1,
+  "integrator_id": null,
+  "issuer_id": "12546",
+  "live_mode": true,
+  "marketplace_owner": null,
+  "merchant_account_id": null,
+  "merchant_number": null,
+  "metadata": {},
+  "money_release_date": "2026-03-31T07:26:16.000-04:00",
+  "money_release_schema": null,
+  "money_release_status": "released",
+  "notification_url": null,
+  "operation_type": "account_fund",
+  "order": {},
+  "payer": {
+    "email": "manuelplazaarenas@gmail.com",
+    "entity_type": null,
+    "first_name": null,
+    "id": "69142029",
+    "identification": {
+      "number": "181227141",
+      "type": "RUT"
+    },
+    "last_name": null,
+    "operator_id": null,
+    "phone": {
+      "number": null,
+      "extension": null,
+      "area_code": null
+    },
+    "type": null
+  },
+  "payment_method": {
+    "id": "tef",
+    "issuer_id": "12546",
+    "type": "bank_transfer"
+  },
+  "payment_method_id": "tef",
+  "payment_type_id": "bank_transfer",
+  "platform_id": null,
+  "point_of_interaction": {
+    "business_info": {
+      "branch": null,
+      "sub_unit": "money_inflows",
+      "unit": "digital_accounts_cards"
+    },
+    "location": {
+      "source": "collector",
+      "state_id": "CL-BI"
+    },
+    "transaction_data": {},
+    "type": "UNSPECIFIED"
+  },
+  "pos_id": null,
+  "processing_mode": "aggregator",
+  "refunds": [],
+  "release_info": null,
+  "shipping_amount": 0,
+  "sponsor_id": null,
+  "statement_descriptor": null,
+  "status": "approved",
+  "status_detail": "accredited",
+  "store_id": null,
+  "tags": null,
+  "taxes_amount": 0,
+  "transaction_amount": 70000,
+  "transaction_amount_refunded": 0,
+  "transaction_details": {
+    "acquirer_reference": null,
+    "bank_transfer_id": 123345884224,
+    "external_resource_url": null,
+    "financial_institution": "1",
+    "installment_amount": 0,
+    "net_received_amount": 70000,
+    "overpaid_amount": 0,
+    "payable_deferral_period": null,
+    "payment_method_reference_id": null,
+    "total_paid_amount": 70000,
+    "transaction_id": "CCA2603310012310826080474"
+  },
+  "shipping_cost": 0
+}
+{
+  "accounts_info": null,
+  "additional_info": {
+    "tracking_id": "platform:v1-blacklabel,so:ALL,type:N/A,security:none"
+  },
+  "authorization_code": null,
+  "binary_mode": false,
+  "brand_id": null,
+  "build_version": "3.150.0-rc-6",
+  "call_for_authorize_id": null,
+  "callback_url": null,
+  "captured": true,
+  "card": {},
+  "charges_details": [],
+  "charges_execution_info": {
+    "internal_execution": {
+      "date": "2026-03-31T07:19:38.576-04:00",
+      "execution_id": "01KN1SXQSP5H4TKXZ4BPMMK533"
+    }
+  },
+  "collector_id": 69142029,
+  "corporation_id": null,
+  "counter_currency": null,
+  "coupon_amount": 0,
+  "currency_id": "CLP",
+  "date_approved": "2026-03-31T07:19:38.000-04:00",
+  "date_created": "2026-03-31T07:19:38.000-04:00",
+  "date_last_updated": "2026-03-31T07:19:46.000-04:00",
+  "date_of_expiration": null,
+  "deduction_schema": null,
+  "description": "43",
+  "differential_pricing_id": null,
+  "external_reference": null,
+  "fee_details": [],
+  "financing_group": null,
+  "id": 151908718975,
+  "installments": 1,
+  "integrator_id": null,
+  "issuer_id": "12546",
+  "live_mode": true,
+  "marketplace_owner": null,
+  "merchant_account_id": null,
+  "merchant_number": null,
+  "metadata": {},
+  "money_release_date": "2026-03-31T07:19:38.000-04:00",
+  "money_release_schema": null,
+  "money_release_status": "released",
+  "notification_url": null,
+  "operation_type": "account_fund",
+  "order": {},
+  "payer": {
+    "email": "manuelplazaarenas@gmail.com",
+    "entity_type": null,
+    "first_name": null,
+    "id": "69142029",
+    "identification": {
+      "number": "181227141",
+      "type": "RUT"
+    },
+    "last_name": null,
+    "operator_id": null,
+    "phone": {
+      "number": null,
+      "extension": null,
+      "area_code": null
+    },
+    "type": null
+  },
+  "payment_method": {
+    "id": "tef",
+    "issuer_id": "12546",
+    "type": "bank_transfer"
+  },
+  "payment_method_id": "tef",
+  "payment_type_id": "bank_transfer",
+  "platform_id": null,
+  "point_of_interaction": {
+    "business_info": {
+      "branch": null,
+      "sub_unit": "money_inflows",
+      "unit": "digital_accounts_cards"
+    },
+    "location": {
+      "source": "collector",
+      "state_id": "CL-BI"
+    },
+    "transaction_data": {},
+    "type": "UNSPECIFIED"
+  },
+  "pos_id": null,
+  "processing_mode": "aggregator",
+  "refunds": [],
+  "release_info": null,
+  "shipping_amount": 0,
+  "sponsor_id": null,
+  "statement_descriptor": null,
+  "status": "approved",
+  "status_detail": "accredited",
+  "store_id": null,
+  "tags": null,
+  "taxes_amount": 0,
+  "transaction_amount": 40000,
+  "transaction_amount_refunded": 0,
+  "transaction_details": {
+    "acquirer_reference": null,
+    "bank_transfer_id": 123345695112,
+    "external_resource_url": null,
+    "financial_institution": "1",
+    "installment_amount": 0,
+    "net_received_amount": 40000,
+    "overpaid_amount": 0,
+    "payable_deferral_period": null,
+    "payment_method_reference_id": null,
+    "total_paid_amount": 40000,
+    "transaction_id": "CCA2603310012315819059906"
+  },
+  "shipping_cost": 0
+}
+{
+  "accounts_info": null,
+  "additional_info": {
+    "tracking_id": "platform:v1-blacklabel,so:ALL,type:N/A,security:none"
+  },
+  "authorization_code": null,
+  "binary_mode": false,
+  "brand_id": null,
+  "build_version": "3.149.0-rc-1",
+  "call_for_authorize_id": null,
+  "callback_url": null,
+  "captured": true,
+  "card": {},
+  "charges_details": [],
+  "charges_execution_info": {
+    "internal_execution": {
+      "date": "2026-03-30T17:32:28.446-04:00",
+      "execution_id": "01KN0AK4VZYC1C4W40G0G79H0W"
+    }
+  },
+  "collector_id": 69142029,
+  "corporation_id": null,
+  "counter_currency": null,
+  "coupon_amount": 0,
+  "currency_id": "CLP",
+  "date_approved": "2026-03-30T17:32:28.000-04:00",
+  "date_created": "2026-03-30T17:32:28.000-04:00",
+  "date_last_updated": "2026-03-30T17:32:35.000-04:00",
+  "date_of_expiration": null,
+  "deduction_schema": null,
+  "description": "concept cca",
+  "differential_pricing_id": null,
+  "external_reference": null,
+  "fee_details": [],
+  "financing_group": null,
+  "id": 152577022366,
+  "installments": 1,
+  "integrator_id": null,
+  "issuer_id": "12546",
+  "live_mode": true,
+  "marketplace_owner": null,
+  "merchant_account_id": null,
+  "merchant_number": null,
+  "metadata": {},
+  "money_release_date": "2026-03-30T17:32:28.000-04:00",
+  "money_release_schema": null,
+  "money_release_status": "released",
+  "notification_url": null,
+  "operation_type": "account_fund",
+  "order": {},
+  "payer": {
+    "email": "manuelplazaarenas@gmail.com",
+    "entity_type": null,
+    "first_name": null,
+    "id": "69142029",
+    "identification": {
+      "number": "181227141",
+      "type": "RUT"
+    },
+    "last_name": null,
+    "operator_id": null,
+    "phone": {
+      "number": null,
+      "extension": null,
+      "area_code": null
+    },
+    "type": null
+  },
+  "payment_method": {
+    "id": "tef",
+    "issuer_id": "12546",
+    "type": "bank_transfer"
+  },
+  "payment_method_id": "tef",
+  "payment_type_id": "bank_transfer",
+  "platform_id": null,
+  "point_of_interaction": {
+    "business_info": {
+      "branch": null,
+      "sub_unit": "money_inflows",
+      "unit": "digital_accounts_cards"
+    },
+    "location": {
+      "source": "collector",
+      "state_id": "CL-BI"
+    },
+    "transaction_data": {},
+    "type": "UNSPECIFIED"
+  },
+  "pos_id": null,
+  "processing_mode": "aggregator",
+  "refunds": [],
+  "release_info": null,
+  "shipping_amount": 0,
+  "sponsor_id": null,
+  "statement_descriptor": null,
+  "status": "approved",
+  "status_detail": "accredited",
+  "store_id": null,
+  "tags": null,
+  "taxes_amount": 0,
+  "transaction_amount": 17000,
+  "transaction_amount_refunded": 0,
+  "transaction_details": {
+    "acquirer_reference": null,
+    "bank_transfer_id": 123334700694,
+    "external_resource_url": null,
+    "financial_institution": "1",
+    "installment_amount": 0,
+    "net_received_amount": 17000,
+    "overpaid_amount": 0,
+    "payable_deferral_period": null,
+    "payment_method_reference_id": null,
+    "total_paid_amount": 17000,
+    "transaction_id": "CCA2603300051476242219031"
+  },
+  "shipping_cost": 0
+}

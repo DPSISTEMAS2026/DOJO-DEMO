@@ -1,0 +1,22 @@
+﻿{
+  "id": 152220921268,
+  "status": "approved",
+  "amount": 40000,
+  "fee": [
+    {
+      "amount": 1520,
+      "fee_payer": "collector",
+      "type": "mercadopago_fee"
+    }
+  ],
+  "date": "2026-03-27T20:30:04.000-04:00",
+  "approved": "2026-03-27T20:30:06.000-04:00",
+  "desc": "Mensualidad Dojo Ranas - Jos├® Antonio Mons├ílvez Garc├¡a",
+  "ext_ref": "27",
+  "op_type": "regular_payment",
+  "payment_type": "credit_card",
+  "method": "master",
+  "payer_email": "jmonsalvez.garcia@gmail.com",
+  "payer_id": "112458566",
+  "payer_name": " "
+}

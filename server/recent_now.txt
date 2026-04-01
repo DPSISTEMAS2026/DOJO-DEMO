@@ -1,0 +1,21 @@
+﻿--- Listing VERY RECENT payments (last hour) ---
+2026-03-31T11:02:58.000-04:00 | $10000 | approved |   (manuelplazaarenas@gmail.com) | Desc: Renata
+2026-03-31T09:21:52.000-04:00 | $50000 | approved |   (manuelplazaarenas@gmail.com) | Desc: 43
+2026-03-31T08:13:30.000-04:00 | $1500 | authorized |   (N/A) | Desc: Mercadopago *violeta1
+2026-03-31T07:26:15.000-04:00 | $70000 | approved |   (manuelplazaarenas@gmail.com) | Desc: 43
+2026-03-31T07:19:38.000-04:00 | $40000 | approved |   (manuelplazaarenas@gmail.com) | Desc: 43
+2026-03-31T00:49:44.000-04:00 | $104 | rejected |   (N/A) | Desc: Mensualidad Dojo Ranas - Diego Diaz Araya
+2026-03-30T17:32:28.000-04:00 | $17000 | approved |   (manuelplazaarenas@gmail.com) | Desc: concept cca
+2026-03-30T14:37:46.000-04:00 | $12600 | authorized |   (N/A) | Desc: Hualpen
+2026-03-30T14:14:07.000-04:00 | $20000 | approved |   (manuelplazaarenas@gmail.com) | Desc: 43
+2026-03-30T13:16:00.000-04:00 | $36391 | approved |   (tipograficos@gmail.com) | Desc: Mensualidad Dojo Ranas - Pedro andres barria Sep├║lveda
+2026-03-30T10:02:21.000-04:00 | $28000 | authorized |   (N/A) | Desc: Distribuidora deconce
+2026-03-30T09:52:57.000-04:00 | $1155 | authorized |   (N/A) | Desc: Mercadopago *ecmingen
+2026-03-28T13:13:12.000-04:00 | $35590 | approved |   (N/A) | Desc: Distribuidora deconce
+2026-03-28T12:50:04.000-04:00 | $72000 | approved |   (N/A) | Desc: Comercial conce outlet
+2026-03-28T11:09:43.000-04:00 | $22000 | approved |   (manuelplazaarenas@gmail.com) | Desc: 43
+2026-03-28T10:02:30.000-04:00 | $40000 | approved |   (manuelplazaarenas@gmail.com) | Desc: Mensualidad Felipe Campos
+2026-03-27T20:30:04.000-04:00 | $40000 | approved |   (jmonsalvez.garcia@gmail.com) | Desc: Mensualidad Dojo Ranas - Jos├® Antonio Mons├ílvez Garc├¡a
+2026-03-27T17:57:29.000-04:00 | $19250 | approved |   (N/A) | Desc: Unimarc tucapel
+2026-03-27T17:10:44.000-04:00 | $40000 | approved |   (samuel.urrearojas@gmail.com) | Desc: Mensualidad Dojo Ranas - Samuel Jes├║s Urrea Rojas
+2026-03-27T15:27:37.000-04:00 | $70000 | approved |   (N/A) | Desc: Decathlon concepcion

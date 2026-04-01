@@ -1,0 +1,2574 @@
+[
+  {
+    "id": "30",
+    "name": "Sofía Elizabeth Aravalé Chávez",
+    "email": "sofia.aravalech@gmail.com",
+    "password": null,
+    "phone": "987876243",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-03",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "1999-03-27",
+    "history": [
+      {
+        "date": "2026-03-03",
+        "amount": 35000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "21",
+    "name": "Matías Ignacio Riffo Padilla",
+    "email": "riffo.prevencion@gmail.com",
+    "password": null,
+    "phone": "977890289",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-02",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "1995-05-04",
+    "history": [
+      {
+        "date": "2026-03-02",
+        "amount": 35000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "17",
+    "name": "Rudy Alonso Muñoz Moreno",
+    "email": "cmorensa@gmail.com",
+    "password": null,
+    "phone": "+56966876446",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-17",
+    "ispaid": false,
+    "plan": null,
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2017-01-19",
+    "history": [
+      {
+        "date": "2026-02-17",
+        "amount": 35000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "32",
+    "name": "Rodrigo Leandro de Jesus Fuentes Diaz",
+    "email": "andrybustamante00@gmail.com",
+    "password": null,
+    "phone": "9 6675 9051",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-12",
+    "ispaid": false,
+    "plan": null,
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "2016-10-09",
+    "history": [
+      {
+        "date": "2026-02-12",
+        "amount": 40000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "1774382624926",
+    "name": "Diego Alonso Rojas Gutiérrez ",
+    "email": "dellypaola@gmail.com",
+    "password": "HJWO1B",
+    "phone": "+56990423662",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-19",
+    "ispaid": true,
+    "plan": "4",
+    "monthlyfee": 20000,
+    "avatar": null,
+    "birthdate": "",
+    "history": [
+      {
+        "date": "2026-03-26",
+        "amount": 20000,
+        "method": "Manual/Transferencia",
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-19",
+        "amount": 20000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260319_20000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "19",
+    "name": "Renzo Morales",
+    "email": "abgrenzomorales@gmail.com",
+    "password": null,
+    "phone": "+56 923870577",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": null,
+    "lastpaymentdate": null,
+    "ispaid": false,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "1990-09-01",
+    "history": [],
+    "terms_accepted": true
+  },
+  {
+    "id": "46",
+    "name": "Samuel Jesús Urrea Rojas",
+    "email": "samuel.urrearojas@gmail.com",
+    "password": null,
+    "phone": "952344149",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-23",
+    "ispaid": false,
+    "plan": "3 X SEMANA",
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "2005-04-22",
+    "history": [
+      {
+        "date": "2026-02-23",
+        "amount": 40000,
+        "status": "Completado"
+      },
+      {
+        "date": "2025-10-08",
+        "amount": 50000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128555902023"
+      },
+      {
+        "date": "2025-11-20",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134632728938"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "1774491393982",
+    "name": "Yearutza stephanie judith saez valdebenito",
+    "email": "Ysaez@educfisica.ucsc.cl",
+    "password": "76VDYR",
+    "phone": "+56 9 7321 2051",
+    "belt": "BLUE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": null,
+    "lastpaymentdate": null,
+    "ispaid": true,
+    "plan": "3",
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": null,
+    "history": [],
+    "terms_accepted": false
+  },
+  {
+    "id": "25",
+    "name": "Karlyng Fernanda Silva Leal",
+    "email": "karlyng.silva@gmail.com",
+    "password": null,
+    "phone": "973749981",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-06",
+    "ispaid": true,
+    "plan": "4",
+    "monthlyfee": 20000,
+    "avatar": null,
+    "birthdate": "1997-04-10",
+    "history": [
+      {
+        "date": "2025-11-20",
+        "amount": 30000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134630966536"
+      },
+      {
+        "date": "2026-03-06",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260306_35000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "60",
+    "name": "Balder Arturo Betancourt Rangel",
+    "email": "wrangelh@gmail.com",
+    "password": null,
+    "phone": "979830874",
+    "belt": "GRAY",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-24",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2014-05-17",
+    "history": [
+      {
+        "date": "2026-02-24",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-24",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260324_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "2",
+    "name": "Alejandro nova ortiz",
+    "email": "lorenaandrea.ortizvega@gmail.com",
+    "password": null,
+    "phone": "9 82228639",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": null,
+    "lastpaymentdate": null,
+    "ispaid": false,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "2007-05-18",
+    "history": [],
+    "terms_accepted": false
+  },
+  {
+    "id": "5",
+    "name": "Sebastian Andres Plaza Mellado",
+    "email": "sebaplaza25@gmail.com",
+    "password": null,
+    "phone": "957064489",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-05",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": 50000,
+    "avatar": null,
+    "birthdate": "2003-04-25",
+    "history": [
+      {
+        "date": "2026-02-03",
+        "amount": 50000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-05",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260305_35000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "3",
+    "name": "Gaspar Landsberger Catalán",
+    "email": "andycatalan@gmail.com",
+    "password": null,
+    "phone": "+56942101618",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-06",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "2015-03-17",
+    "history": [
+      {
+        "date": "2026-03-06",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260306_35000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "7",
+    "name": "Christian Absalón Moya Provoste",
+    "email": "moya.provoste@gmail.com",
+    "password": null,
+    "phone": "+56941641356",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-02",
+    "ispaid": false,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "1997-12-28",
+    "history": [
+      {
+        "date": "2026-02-02",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260202_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "1774458617299",
+    "name": "Diego Diaz Araya",
+    "email": "d.diazaraya19@gmail.com",
+    "password": "TEST",
+    "phone": "+5690000000",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-01",
+    "ispaid": false,
+    "plan": "3",
+    "monthlyfee": 20000,
+    "avatar": null,
+    "birthdate": null,
+    "history": [
+      {
+        "date": "2026-03-26",
+        "amount": 40000,
+        "method": "Manual/Transferencia",
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "1774382150076",
+    "name": "Andrés Becerra ",
+    "email": "c.cabazarate@gmail.com",
+    "password": "gallagher10",
+    "phone": "+56988126553",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-24",
+    "ispaid": true,
+    "plan": "2",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": null,
+    "history": [
+      {
+        "date": "2026-03-24",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260324_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "4",
+    "name": "Agustín Alexis Hausheer Cisterna",
+    "email": "agustinh633@gmail.com",
+    "password": null,
+    "phone": "+56971047036",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-02",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": 0,
+    "avatar": null,
+    "birthdate": "2005-03-17",
+    "history": [
+      {
+        "date": "2025-11-17",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "133623918573"
+      },
+      {
+        "date": "2026-03-02",
+        "amount": 40000,
+        "method": "Manual",
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "1",
+    "name": "Lucas Andrés Bascuñán Bustos",
+    "email": "andrea.bustos.rivero@gmail.com",
+    "password": null,
+    "phone": "+56978788584",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-01",
+    "ispaid": true,
+    "plan": "3 X SEMANA",
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "2013-02-26",
+    "history": [
+      {
+        "date": "2026-03-01",
+        "amount": 40000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "20",
+    "name": "RENZZO IGNACIO BADILLA SASSARINI",
+    "email": "pazsassarini@gmail.com",
+    "password": null,
+    "phone": "989023476",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-17",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "2019-03-14",
+    "history": [
+      {
+        "date": "2026-03-17",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260317_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "64",
+    "name": "Pablo Sebastian Araneda Monroy",
+    "email": "pablo.sebastianaraneda@gmail.com",
+    "password": null,
+    "phone": "+56984078718",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-20",
+    "ispaid": true,
+    "plan": "1 X SEMANA",
+    "monthlyfee": 25000,
+    "avatar": null,
+    "birthdate": "2004-02-22",
+    "history": [
+      {
+        "date": "2026-02-21",
+        "amount": 25000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-20",
+        "amount": 25000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260320_25000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "26",
+    "name": "Leonardo Pereira",
+    "email": "l.pereiracampodonico@gmail.com",
+    "password": null,
+    "phone": "90997120",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-05",
+    "ispaid": true,
+    "plan": "3 X SEMANA",
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "1988-11-15",
+    "history": [
+      {
+        "date": "2026-01-29",
+        "amount": 40000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-05",
+        "amount": 40000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260305_40000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "39",
+    "name": "Cristóbal Gamaliel Hernández Lagos",
+    "email": "c.hernandezlagos14@gmail.com",
+    "password": null,
+    "phone": "+56 9 4443 8408",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-08",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2007-06-08",
+    "history": [
+      {
+        "date": "2026-02-09",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-08",
+        "amount": 40000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260308_40000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "18",
+    "name": "Martin Luciano Hernández Aldana",
+    "email": "martin.luciano12006@gmail.com",
+    "password": null,
+    "phone": "+56940233205",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-16",
+    "ispaid": true,
+    "plan": "3 X SEMANA",
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "1981-07-06",
+    "history": [
+      {
+        "date": "2026-02-23",
+        "amount": 40000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-16",
+        "amount": 20000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260316_20000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "56",
+    "name": "Josefa Beatriz  Montecinos Aliaga",
+    "email": "jmontecinoscerna@gmail.com",
+    "password": null,
+    "phone": "994692147",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-02",
+    "ispaid": false,
+    "plan": null,
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2014-11-17",
+    "history": [
+      {
+        "date": "2026-02-02",
+        "amount": 35000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "44",
+    "name": "Fernanda Valentina Villalobos Castillo",
+    "email": "alex.villalobos.vargas95@gmail.com",
+    "password": null,
+    "phone": "935281676",
+    "belt": "GRAY",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-10",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2013-01-26",
+    "history": [
+      {
+        "date": "2026-01-27",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-10",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260310_35000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "35",
+    "name": "Nicolás Felipe Mellado Novoa",
+    "email": "nicolasmelladonv22@gmail.com",
+    "password": null,
+    "phone": "+56953207538",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-06",
+    "ispaid": true,
+    "plan": "3 X SEMANA",
+    "monthlyfee": 45000,
+    "avatar": null,
+    "birthdate": "1997-10-20",
+    "history": [
+      {
+        "date": "2026-01-31",
+        "amount": 45000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-06",
+        "amount": 45000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260306_45000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "57",
+    "name": "Luis Javier Riquelme Lizama",
+    "email": "javier.rl160394@gmail.com",
+    "password": null,
+    "phone": "+56983662798",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-11",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "1994-03-16",
+    "history": [
+      {
+        "date": "2026-03-11",
+        "amount": 20000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260311_20000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "42",
+    "name": "Kevin Leonardo soto garrido",
+    "email": "kevinsotogarrido@gmail.com",
+    "password": null,
+    "phone": "934874779",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-10",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2000-12-23",
+    "history": [
+      {
+        "date": "2026-01-05",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-10",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260310_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "45",
+    "name": "Lucas Araneda",
+    "email": "lucas.araneda@icloud.com",
+    "password": null,
+    "phone": "+56 9 5262 4053",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-17",
+    "ispaid": true,
+    "plan": "3 X SEMANA",
+    "monthlyfee": 45000,
+    "avatar": null,
+    "birthdate": "2010-05-29",
+    "history": [
+      {
+        "date": "2026-02-06",
+        "amount": 45000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-17",
+        "amount": 45000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260317_45000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "1774382381453",
+    "name": "Yoshua Ubaldo Andrés Burgos Henríquez ",
+    "email": "yoshuab410@gmail.com",
+    "password": "LY38QJ",
+    "phone": "+56981597389",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-23",
+    "ispaid": true,
+    "plan": "Ilimitado",
+    "monthlyfee": 50000,
+    "avatar": null,
+    "birthdate": null,
+    "history": [
+      {
+        "date": "2026-03-26",
+        "amount": 50000,
+        "method": "Manual/Transferencia",
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-23",
+        "amount": 50000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260323_50000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "54",
+    "name": "Bernel Ignacio Ortega Contreras",
+    "email": "bernelces@gmail.com",
+    "password": null,
+    "phone": "972430464",
+    "belt": "BLUE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-04",
+    "ispaid": true,
+    "plan": "3 X SEMANA",
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "1995-09-22",
+    "history": [
+      {
+        "date": "2026-03-04",
+        "amount": 40000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "62",
+    "name": "Vicente Agustin Salgado Fuentes",
+    "email": "vicentesalgado07@hotmail.com",
+    "password": null,
+    "phone": "992353403",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-01",
+    "lastpaymentdate": "2026-01-24",
+    "ispaid": false,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2000-02-03",
+    "history": [
+      {
+        "date": "2026-01-24",
+        "amount": 35000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "53",
+    "name": "Constanza Sepúlveda Muñoz",
+    "email": null,
+    "password": null,
+    "phone": "+569 97302897",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-05",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "1989-12-05",
+    "history": [
+      {
+        "date": "2026-02-05",
+        "amount": 40000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-05",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260305_35000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "52",
+    "name": "Santino Nahuel Garrido Sepúlveda",
+    "email": "constanza.sepulveda7@yahoo.cl",
+    "password": null,
+    "phone": "+569 97302897",
+    "belt": "GRAY",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-01",
+    "lastpaymentdate": "2026-01-05",
+    "ispaid": false,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 20000,
+    "avatar": null,
+    "birthdate": "2019-01-19",
+    "history": [
+      {
+        "date": "2026-01-05",
+        "amount": 20000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "34",
+    "name": "Rafaela Paz Aguilef Díaz",
+    "email": "taniia.diazc@gmail.com",
+    "password": null,
+    "phone": "945814605",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-25",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2017-12-05",
+    "history": [
+      {
+        "date": "2026-02-02",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2025-09-30",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "127474314459"
+      },
+      {
+        "date": "2026-03-25",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260325_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "1774471437231",
+    "name": "Manuel Plaza Arenas",
+    "email": "manuelplazaarenas@gmail.com",
+    "password": "RANAS",
+    "phone": "+56 9 3960 1560",
+    "belt": "BLACK",
+    "classesattended": 100,
+    "classestonextbelt": 1,
+    "lastpaymentmonth": "2025-11",
+    "lastpaymentdate": "2025-11-21",
+    "ispaid": false,
+    "plan": "Ilimitado",
+    "monthlyfee": 0,
+    "avatar": null,
+    "birthdate": null,
+    "history": [
+      {
+        "date": "2025-09-29",
+        "amount": 45000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "127964938716"
+      },
+      {
+        "date": "2025-09-30",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128054481358"
+      },
+      {
+        "date": "2025-09-30",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128116519414"
+      },
+      {
+        "date": "2025-10-01",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128206075654"
+      },
+      {
+        "date": "2025-10-02",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "127789809489"
+      },
+      {
+        "date": "2025-10-02",
+        "amount": 2000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128370126300"
+      },
+      {
+        "date": "2025-10-02",
+        "amount": 10000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128415877330"
+      },
+      {
+        "date": "2025-10-03",
+        "amount": 62000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128452902458"
+      },
+      {
+        "date": "2025-10-03",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128486597350"
+      },
+      {
+        "date": "2025-10-04",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128044047807"
+      },
+      {
+        "date": "2025-10-04",
+        "amount": 75000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128051295349"
+      },
+      {
+        "date": "2025-10-04",
+        "amount": 25000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128053223745"
+      },
+      {
+        "date": "2025-10-05",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128155049955"
+      },
+      {
+        "date": "2025-10-05",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128777533886"
+      },
+      {
+        "date": "2025-10-06",
+        "amount": 50000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128858927478"
+      },
+      {
+        "date": "2025-10-06",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128873152424"
+      },
+      {
+        "date": "2025-10-06",
+        "amount": 20000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128876353146"
+      },
+      {
+        "date": "2025-10-07",
+        "amount": 20000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128423717231"
+      },
+      {
+        "date": "2025-10-07",
+        "amount": 45000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "129011463768"
+      },
+      {
+        "date": "2025-10-09",
+        "amount": 55000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128710543547"
+      },
+      {
+        "date": "2025-10-09",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "129302278786"
+      },
+      {
+        "date": "2025-10-10",
+        "amount": 10000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "128826350875"
+      },
+      {
+        "date": "2025-10-12",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "129119645407"
+      },
+      {
+        "date": "2025-10-13",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "129738559242"
+      },
+      {
+        "date": "2025-10-13",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "129216314097"
+      },
+      {
+        "date": "2025-10-13",
+        "amount": 10000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "129834565350"
+      },
+      {
+        "date": "2025-10-14",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "129310878925"
+      },
+      {
+        "date": "2025-10-15",
+        "amount": 70000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "129414752793"
+      },
+      {
+        "date": "2025-10-15",
+        "amount": 45000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "130068340182"
+      },
+      {
+        "date": "2025-10-16",
+        "amount": 10000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "129573641699"
+      },
+      {
+        "date": "2025-10-16",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "130189443100"
+      },
+      {
+        "date": "2025-10-18",
+        "amount": 5000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "129901138989"
+      },
+      {
+        "date": "2025-10-21",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "130729986048"
+      },
+      {
+        "date": "2025-10-22",
+        "amount": 10000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "130873178674"
+      },
+      {
+        "date": "2025-10-23",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "130472674455"
+      },
+      {
+        "date": "2025-10-23",
+        "amount": 45000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131061844124"
+      },
+      {
+        "date": "2025-10-27",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131484753044"
+      },
+      {
+        "date": "2025-10-27",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131518577522"
+      },
+      {
+        "date": "2025-10-28",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131651839090"
+      },
+      {
+        "date": "2025-10-30",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131806802164"
+      },
+      {
+        "date": "2025-10-30",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131226018153"
+      },
+      {
+        "date": "2025-10-30",
+        "amount": 15000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131892928310"
+      },
+      {
+        "date": "2025-10-31",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131937832148"
+      },
+      {
+        "date": "2025-11-02",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131647729293"
+      },
+      {
+        "date": "2025-11-03",
+        "amount": 45000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "132350013640"
+      },
+      {
+        "date": "2025-11-03",
+        "amount": 10000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131776987085"
+      },
+      {
+        "date": "2025-11-03",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "132391173892"
+      },
+      {
+        "date": "2025-11-04",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131926925987"
+      },
+      {
+        "date": "2025-11-05",
+        "amount": 45000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "131982987967"
+      },
+      {
+        "date": "2025-11-05",
+        "amount": 20000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "132633061140"
+      },
+      {
+        "date": "2025-11-05",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "132052305299"
+      },
+      {
+        "date": "2025-11-06",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "132105270493"
+      },
+      {
+        "date": "2025-11-06",
+        "amount": 20000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "132152157071"
+      },
+      {
+        "date": "2025-11-07",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "132246570555"
+      },
+      {
+        "date": "2025-11-08",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "132441706539"
+      },
+      {
+        "date": "2025-11-10",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "133245110080"
+      },
+      {
+        "date": "2025-11-11",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "133472698778"
+      },
+      {
+        "date": "2025-11-12",
+        "amount": 10000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "132917472171"
+      },
+      {
+        "date": "2025-11-13",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "133651153728"
+      },
+      {
+        "date": "2025-11-14",
+        "amount": 15000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "133270070253"
+      },
+      {
+        "date": "2025-11-16",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "133463595445"
+      },
+      {
+        "date": "2025-11-17",
+        "amount": 70000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134165516844"
+      },
+      {
+        "date": "2025-11-17",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "133569133631"
+      },
+      {
+        "date": "2025-11-17",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134215643034"
+      },
+      {
+        "date": "2025-11-17",
+        "amount": 45000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "133613268041"
+      },
+      {
+        "date": "2025-11-18",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "133736252097"
+      },
+      {
+        "date": "2025-11-18",
+        "amount": 40000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134348679492"
+      },
+      {
+        "date": "2025-11-20",
+        "amount": 120000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134614622592"
+      },
+      {
+        "date": "2025-11-20",
+        "amount": 45000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134004258671"
+      },
+      {
+        "date": "2025-11-20",
+        "amount": 30000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134636306726"
+      },
+      {
+        "date": "2025-11-20",
+        "amount": 5000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134051705917"
+      },
+      {
+        "date": "2025-11-20",
+        "amount": 15000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134673253314"
+      },
+      {
+        "date": "2025-11-21",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134085114761"
+      },
+      {
+        "date": "2025-11-21",
+        "amount": 15000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134142789243"
+      },
+      {
+        "date": "2025-11-21",
+        "amount": 30000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134174471687"
+      },
+      {
+        "date": "2025-11-21",
+        "amount": 100000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134813147032"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "13",
+    "name": "Agustina francely Sáez silva",
+    "email": "alejandra.silva.larrain@gmail.com",
+    "password": null,
+    "phone": "974138012",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-25",
+    "ispaid": false,
+    "plan": "3 X SEMANA",
+    "monthlyfee": 20000,
+    "avatar": null,
+    "birthdate": "2015-05-16",
+    "history": [
+      {
+        "date": "2026-02-25",
+        "amount": 20000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "10",
+    "name": "Fernando Alonso Wall Larrain",
+    "email": "fernandowalllarrain@gmail.com",
+    "password": null,
+    "phone": "+56953498310",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-13",
+    "ispaid": true,
+    "plan": "1 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2008-07-17",
+    "history": [
+      {
+        "date": "2025-12-30",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-13",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260313_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "14",
+    "name": "Ignacio Vásquez Moya",
+    "email": "ignacio.vasquez.moya@gmail.com",
+    "password": null,
+    "phone": "979035090",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-26",
+    "ispaid": false,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "1987-06-13",
+    "history": [
+      {
+        "date": "2026-02-26",
+        "amount": 35000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "55",
+    "name": "Maximiliano Alonso Canessa Portilla",
+    "email": "geronimo.canessa@gmail.com",
+    "password": null,
+    "phone": "948786713",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-20",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2017-06-11",
+    "history": [
+      {
+        "date": "2025-12-01",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-20",
+        "amount": 50000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260320_50000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "16",
+    "name": "Eliseo Lema Berroeta",
+    "email": "kattalina.berroeta@gmail.com",
+    "password": "PRKLW4",
+    "phone": "948596414",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-18",
+    "ispaid": true,
+    "plan": "4 X SEMANA ",
+    "monthlyfee": 45000,
+    "avatar": null,
+    "birthdate": "2019-07-23",
+    "history": [
+      {
+        "date": "2026-02-22",
+        "amount": 45000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-18",
+        "amount": 45000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260318_45000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "8",
+    "name": "Roberto Novoa Osses",
+    "email": "roberto.novoa.o@gmail.com",
+    "password": null,
+    "phone": "+56987192315",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-10",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 20000,
+    "avatar": null,
+    "birthdate": "1982-06-03",
+    "history": [
+      {
+        "date": "2026-02-10",
+        "amount": 25000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-10",
+        "amount": 25000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260310_25000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "33",
+    "name": "Luan Agustín Villalobos Morales",
+    "email": "sofyrp0304@gmail.com",
+    "password": null,
+    "phone": "932918070",
+    "belt": "GRAY",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-12",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2017-04-03",
+    "history": [
+      {
+        "date": "2025-02-10",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2025-10-16",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "130200726430"
+      },
+      {
+        "date": "2025-11-20",
+        "amount": 35000,
+        "method": "Mercado Pago",
+        "status": "Completado",
+        "transaction_id": "134065087055"
+      },
+      {
+        "date": "2026-03-12",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260312_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "11",
+    "name": "Cristobal Antonio Maximiliano Alarcón Alvear",
+    "email": "crissfitns04@gmail.com",
+    "password": null,
+    "phone": "+569 76540489",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-03",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "2004-11-18",
+    "history": [
+      {
+        "date": "2026-03-03",
+        "amount": 40000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "9",
+    "name": "Jorge Andrés Ormeño Guzmán",
+    "email": "jorgeamama@gmail.com",
+    "password": null,
+    "phone": "973534866",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-12",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "2006-12-07",
+    "history": [
+      {
+        "date": "2026-02-26",
+        "amount": 40000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-12",
+        "amount": 40000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260312_40000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "15",
+    "name": "Milenko Monsalves",
+    "email": "milenkomonsalves@gmail.com",
+    "password": null,
+    "phone": "(WhatsApp: +1 210 687 6910) (Llamadas: +56 9 7919 8382)",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-13",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "2005-04-27",
+    "history": [
+      {
+        "date": "2026-03-13",
+        "amount": 50000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260313_50000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "12",
+    "name": "Pedro andres barria Sepúlveda",
+    "email": "pedrosobarria@yahoo.es",
+    "password": null,
+    "phone": "987755173",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-27",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "1980-07-02",
+    "history": [
+      {
+        "date": "2026-02-27",
+        "amount": 35000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "6",
+    "name": "Valentino Sáez Silva",
+    "email": "valentinosaez75@gmail.com",
+    "password": null,
+    "phone": "+56958570729",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-25",
+    "ispaid": false,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2008-12-22",
+    "history": [
+      {
+        "date": "2026-02-25",
+        "amount": 35000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "27",
+    "name": "José Antonio Monsálvez García",
+    "email": "jmonsalvez.garcia@gmail.com",
+    "password": null,
+    "phone": "930530243",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": null,
+    "lastpaymentdate": null,
+    "ispaid": false,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "1992-02-08",
+    "history": [],
+    "terms_accepted": true
+  },
+  {
+    "id": "40",
+    "name": "Rodrigo Andres Salgado Contreras",
+    "email": "rsalgadoc2@gmail.com",
+    "password": null,
+    "phone": "933579419",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-27",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": 50000,
+    "avatar": null,
+    "birthdate": "1998-12-03",
+    "history": [
+      {
+        "date": "2026-02-27",
+        "amount": 50000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "43",
+    "name": "Benjamin Andres Parra Poblete",
+    "email": "benjaminpa2002@gmail.com",
+    "password": null,
+    "phone": "+56999022351",
+    "belt": "BLUE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": null,
+    "lastpaymentdate": null,
+    "ispaid": false,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "2002-07-06",
+    "history": [],
+    "terms_accepted": false
+  },
+  {
+    "id": "51",
+    "name": "Sara Victoria Sierra Mendoza",
+    "email": "mijaquedoza@gmail.com",
+    "password": "HXHD19",
+    "phone": "937059744",
+    "belt": "GRAY",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-19",
+    "ispaid": true,
+    "plan": "2",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2013-04-17",
+    "history": [
+      {
+        "date": "2026-02-18",
+        "amount": 40000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-19",
+        "amount": 40000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260319_40000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "36",
+    "name": "Antonella Ignacia Lofiego Cabeza",
+    "email": "claudiolofiegoespinoza@hotmail.com",
+    "password": null,
+    "phone": "942422726",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2025-12",
+    "lastpaymentdate": "2025-12-17",
+    "ispaid": false,
+    "plan": "3 X SEMANA",
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "2014-12-16",
+    "history": [
+      {
+        "date": "2025-12-17",
+        "amount": 40000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "29",
+    "name": "Maite Novoa Vargas",
+    "email": null,
+    "password": null,
+    "phone": "+56987192315",
+    "belt": "GRAY",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-10",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2013-03-04",
+    "history": [
+      {
+        "date": "2026-02-10",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-10",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260310_35000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "31",
+    "name": "Bruno Novoa Vargas",
+    "email": null,
+    "password": null,
+    "phone": "+56987192315",
+    "belt": "GRAY",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-10",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2019-06-12",
+    "history": [
+      {
+        "date": "2026-02-10",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-10",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260310_35000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "47",
+    "name": "FACUNDO NAHUEL MUÑOZ PALMA",
+    "email": "maximo.munozcontreras@gmail.com",
+    "password": null,
+    "phone": "+56997597368",
+    "belt": "GRAY",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-10",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2018-12-29",
+    "history": [
+      {
+        "date": "2026-02-04",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-10",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260310_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "61",
+    "name": "Julieta Sánchez",
+    "email": "jensanchez.17@gmail.com",
+    "password": null,
+    "phone": "940620836",
+    "belt": "GRAY",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2025-12",
+    "lastpaymentdate": "2025-12-30",
+    "ispaid": false,
+    "plan": "1 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2015-11-05",
+    "history": [
+      {
+        "date": "2025-12-30",
+        "amount": 35000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "24",
+    "name": "Ricardo Andrés Morales Osorio",
+    "email": "rkardo.115@gmail.com",
+    "password": null,
+    "phone": "‪+56 9 5673 3797‬",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-02",
+    "ispaid": true,
+    "plan": "3 X SEMANA",
+    "monthlyfee": 20000,
+    "avatar": null,
+    "birthdate": "2001-04-07",
+    "history": [
+      {
+        "date": "2026-03-02",
+        "amount": 20000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "50",
+    "name": "Jael Angelina Gricel Varas Romero",
+    "email": "jaelvaras.r@gmail.com",
+    "password": null,
+    "phone": "+56 9 8449 3775",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-02",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": 40000,
+    "avatar": null,
+    "birthdate": "2006-11-21",
+    "history": [
+      {
+        "date": "2026-03-02",
+        "amount": 40000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "49",
+    "name": "Amaro Agustín Martínez Avendaño",
+    "email": "soleaven80@gmail.com",
+    "password": null,
+    "phone": "933222910",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-08",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2015-10-12",
+    "history": [
+      {
+        "date": "2026-01-02",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-08",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260308_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "59",
+    "name": "Tomás Santiago Riquelme Rojas",
+    "email": "rodrigoa.riquelmes@gmail.com",
+    "password": null,
+    "phone": "+569 77944238",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-17",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "2018-11-07",
+    "history": [
+      {
+        "date": "2026-03-17",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260317_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "58",
+    "name": "Amparo Celeste Aguilera Fuenzalida",
+    "email": "nhaguilerac@gmail.com",
+    "password": null,
+    "phone": "958817569",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-04",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "2021-03-02",
+    "history": [
+      {
+        "date": "2026-03-04",
+        "amount": 35000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260304_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "37",
+    "name": "camile espinosa escobar",
+    "email": "camilaespinosa.e@gmail.com",
+    "password": null,
+    "phone": "+569 52282974",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-03",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "1994-11-20",
+    "history": [
+      {
+        "date": "2026-03-03",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260303_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "22",
+    "name": "Joaquín Ignacio parra San Martín",
+    "email": "parragxts@gmail.com",
+    "password": null,
+    "phone": "+56986092559",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-11",
+    "ispaid": true,
+    "plan": "4 X SEMANA",
+    "monthlyfee": 45000,
+    "avatar": null,
+    "birthdate": "2008-08-20",
+    "history": [
+      {
+        "date": "2026-02-11",
+        "amount": 45000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-11",
+        "amount": 45000,
+        "method": "Manual (Excel)",
+        "status": "Completado",
+        "transaction_id": "EXCEL_20260311_45000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "63",
+    "name": "Florencia Antonia Almonacid Guzmán",
+    "email": "kmguzmanr@gmail.com",
+    "password": null,
+    "phone": "977795843",
+    "belt": "GRAY",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-02",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2012-04-11",
+    "history": [
+      {
+        "date": "2026-03-02",
+        "amount": 35000,
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "48",
+    "name": "Máximo Antonio jarpa carrasco",
+    "email": "maximojarpa23@gmail.com",
+    "password": null,
+    "phone": "+56 9 8434 5409",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-26",
+    "ispaid": false,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "2010-12-20",
+    "history": [
+      {
+        "date": "2026-02-26",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260226_35000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "66",
+    "name": "Diego Hernán Echeverría Mix",
+    "email": "decheverriam10@gmail.com",
+    "password": null,
+    "phone": "+56984678492",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-25",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "1995-08-05",
+    "history": [
+      {
+        "date": "2026-02-18",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-25",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260325_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "65",
+    "name": "Jose Esteban Rivas Villarroel",
+    "email": "joseestebanrivas@gmail.com",
+    "password": null,
+    "phone": "+56974642697",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": null,
+    "lastpaymentdate": "2025-07-21",
+    "ispaid": false,
+    "plan": "4 X SEMANA",
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "1995-10-03",
+    "history": [],
+    "terms_accepted": false
+  },
+  {
+    "id": "38",
+    "name": "Felipe Eduardo Muñoz Valderrama",
+    "email": "felipe.emu@gmail.com",
+    "password": null,
+    "phone": "990710545",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-02",
+    "lastpaymentdate": "2026-02-28",
+    "ispaid": true,
+    "plan": "2 X SEMANA",
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "1994-10-23",
+    "history": [
+      {
+        "date": "2025-10-02",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-02-28",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260228_35000"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "41",
+    "name": "Edgard Benjamín quijada salvó",
+    "email": "edgardbenjaminquijadasalvo@gmail.com",
+    "password": null,
+    "phone": "+56928511478",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-04",
+    "lastpaymentdate": "2026-04-07",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "2007-02-28",
+    "history": [
+      {
+        "date": "2026-04-07",
+        "amount": 35000,
+        "method": "Manual (Adelantado)",
+        "status": "Completado"
+      }
+    ],
+    "terms_accepted": true
+  },
+  {
+    "id": "28",
+    "name": "Lizbeth Daniela Mendez Pozo",
+    "email": "adictaacristo19@gmail.com",
+    "password": null,
+    "phone": "967232638",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-18",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": null,
+    "avatar": null,
+    "birthdate": "2010-08-31",
+    "history": [
+      {
+        "date": "2026-03-18",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260318_35000"
+      }
+    ],
+    "terms_accepted": false
+  },
+  {
+    "id": "23",
+    "name": "Nicolas Fernando Sanchez Mansilla",
+    "email": "nicofernandosanchez2004@gmail.com",
+    "password": null,
+    "phone": "+56944841596",
+    "belt": "WHITE",
+    "classesattended": 0,
+    "classestonextbelt": 40,
+    "lastpaymentmonth": "2026-03",
+    "lastpaymentdate": "2026-03-04",
+    "ispaid": true,
+    "plan": null,
+    "monthlyfee": 35000,
+    "avatar": null,
+    "birthdate": "2004-11-28",
+    "history": [
+      {
+        "date": "2026-02-02",
+        "amount": 35000,
+        "status": "Completado"
+      },
+      {
+        "date": "2026-03-04",
+        "amount": 35000,
+        "method": "Manual",
+        "status": "Completado",
+        "transaction_id": "MANUAL_20260304_35000"
+      }
+    ],
+    "terms_accepted": true
+  }
+]
