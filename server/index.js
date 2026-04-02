@@ -961,9 +961,23 @@ app.post('/api/webhooks', async (req, res) => {
                 studentIds = externalRef.split(',');
             }
 
-            if (studentIds.length === 0 && payerEmail) {
-                const { data } = await supabase.from('students').select('*').eq('email', payerEmail.toLowerCase()).maybeSingle();
-                if (data) studentIds.push(data.id);
+            if (studentIds.length === 0) {
+                const desc = (payDetails.description || '').toLowerCase();
+                const pEmail = (payerEmail || '').toLowerCase();
+                const { data: allStudents } = await supabase.from('students').select('id, email, name');
+                if (allStudents) {
+                    const matchedStudent = allStudents.find(s => {
+                        if (!s.email) return false;
+                        const sEmail = s.email.toLowerCase();
+                        return sEmail === pEmail || desc.includes(sEmail);
+                    });
+                    if (matchedStudent) {
+                        studentIds.push(matchedStudent.id);
+                    } else {
+                        const matchedByName = allStudents.find(s => s.name && desc.includes(s.name.toLowerCase()));
+                        if (matchedByName) studentIds.push(matchedByName.id);
+                    }
+                }
             }
 
             if (studentIds.length > 0) {
