@@ -478,6 +478,7 @@ const App: React.FC = () => {
       if (updatedStudent.history !== undefined) payload.history = updatedStudent.history;
       if (updatedStudent.lastPaymentDate !== undefined) payload.lastPaymentDate = updatedStudent.lastPaymentDate;
       if (updatedStudent.lastPaymentMonth !== undefined) payload.lastPaymentMonth = updatedStudent.lastPaymentMonth;
+      if (updatedStudent.scheduledClasses !== undefined) payload.scheduledClasses = updatedStudent.scheduledClasses;
 
       const response = await fetch(`${API_URL}/api/students/${updatedStudent.id}`, {
         method: 'PUT',
@@ -1794,22 +1795,25 @@ const App: React.FC = () => {
                 </div>
 
                 {/* Secure Player Container */}
-                <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', background: '#000' }}>
+                <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', background: '#000', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}>
                   {(() => {
                     const id = getYouTubeID(playingVideo.url.trim());
                     if (!id) return <div style={{ color: '#fff', position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: 700 }}>ID de video no válido</div>;
                     
                     return (
-                        <iframe 
-                          width="100%" 
-                          height="100%" 
-                          src={`https://www.youtube-nocookie.com/embed/${id}?modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&disablekb=1&controls=1&autoplay=0`}
-                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                          title="Reproductor Seguro Ranas" 
-                          allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" 
-                          sandbox="allow-scripts allow-same-origin allow-presentation"
-                          allowFullScreen
-                        ></iframe>
+                        <>
+                          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '75px', zIndex: 10, background: 'transparent' }} />
+                          <iframe 
+                            width="100%" 
+                            height="100%" 
+                            src={`https://www.youtube-nocookie.com/embed/${id}?modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&disablekb=1&controls=1&autoplay=0`}
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                            title="Reproductor Seguro Ranas" 
+                            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" 
+                            sandbox="allow-scripts allow-same-origin allow-presentation"
+                            allowFullScreen
+                          ></iframe>
+                        </>
                     );
                   })()}
                 </div>
@@ -2571,22 +2575,25 @@ const App: React.FC = () => {
                   </div>
 
                   {/* Player Container */}
-                  <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', background: '#000' }}>
+                  <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', background: '#000', WebkitTouchCallout: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}>
                     {(() => {
                       const id = getYouTubeID(playingVideo.url.trim());
                       if (!id) return <div style={{ color: '#fff', position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: 700 }}>ID de video no válido</div>;
                       
                       return (
-                          <iframe 
-                            width="100%" 
-                            height="100%" 
-                            src={`https://www.youtube-nocookie.com/embed/${id}?modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&disablekb=1&controls=1&autoplay=0`}
-                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                            title="Reproductor Seguro Ranas" 
-                            allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" 
-                            sandbox="allow-scripts allow-same-origin allow-presentation"
-                            allowFullScreen
-                          ></iframe>
+                          <>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '75px', zIndex: 10, background: 'transparent' }} />
+                            <iframe 
+                              width="100%" 
+                              height="100%" 
+                              src={`https://www.youtube-nocookie.com/embed/${id}?modestbranding=1&rel=0&iv_load_policy=3&showinfo=0&disablekb=1&controls=1&autoplay=0`}
+                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                              title="Reproductor Seguro Ranas" 
+                              allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" 
+                              sandbox="allow-scripts allow-same-origin allow-presentation"
+                              allowFullScreen
+                            ></iframe>
+                          </>
                       );
                     })()}
                   </div>
