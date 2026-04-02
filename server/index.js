@@ -542,6 +542,7 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.history !== undefined) updateData.history = req.body.history;
         if (req.body.lastPaymentDate !== undefined) updateData.lastpaymentdate = req.body.lastPaymentDate;
         if (req.body.lastPaymentMonth !== undefined) updateData.lastpaymentmonth = req.body.lastPaymentMonth;
+        if (req.body.scheduledClasses !== undefined) updateData.scheduledclasses = req.body.scheduledClasses;
 
         console.log(`PUT /api/students/${req.params.id}`, JSON.stringify(updateData));
         const { error } = await supabase.from('students').update(updateData).eq('id', req.params.id);
