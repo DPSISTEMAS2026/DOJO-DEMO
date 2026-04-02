@@ -2064,7 +2064,14 @@ const App: React.FC = () => {
       {/* Sidebar */}
       <motion.nav initial={{ x: -350, opacity: 0 }} animate={{ x: isMobile ? (isMobileMenuOpen ? 0 : -500) : 0, opacity: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className={`sidebar ${isMobileMenuOpen ? 'sidebar-open' : ''}`}
-        style={{ position: 'fixed', left: 0, top: isMobile ? '70px' : 0, bottom: 0, padding: '2rem 1.5rem', display: 'flex', flexDirection: 'column', zIndex: 995, background: 'rgba(6,6,6,0.98)', backdropFilter: 'blur(40px)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+        style={{ position: 'fixed', left: 0, top: 0, bottom: 0, padding: '2.5rem 1.5rem', display: 'flex', flexDirection: 'column', zIndex: 9999, background: 'rgba(6,6,6,0.98)', backdropFilter: 'blur(40px)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+        
+        {isMobile && (
+          <button onClick={() => setIsMobileMenuOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', zIndex: 10 }}>
+            <X size={28} />
+          </button>
+        )}
+
         {/* Header Branding */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '3.5rem', padding: '1rem 0' }}>
           <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
@@ -2098,7 +2105,7 @@ const App: React.FC = () => {
             { id: 'settings', label: 'Ajustes', icon: <Settings size={17} /> },
           ].filter(item => {
               if (isMobile) {
-                  return ['dashboard', 'students', 'payments', 'communications'].includes(item.id);
+                  return ['dashboard', 'attendance', 'students', 'payments', 'videos', 'communications'].includes(item.id);
               }
               return true;
           }).map(item => (
@@ -2157,7 +2164,14 @@ const App: React.FC = () => {
               <Plus size={16} /> {activeTab === 'videos' ? 'Nuevo Video' : 'Nuevo Alumno'}
             </motion.button>
           </div>
-        </motion.header >
+          {isMobile && ['students', 'videos'].includes(activeTab) && (
+            <motion.button whileTap={{ scale: 0.95 }}
+              onClick={() => activeTab === 'videos' ? setIsAddingVideo(true) : setIsAddingStudent(true)}
+              style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '12px', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 10px rgba(5,168,106,0.3)', flexShrink: 0 }}>
+              <Plus size={20} />
+            </motion.button>
+          )}
+        </motion.header>
 
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
@@ -3085,10 +3099,10 @@ const App: React.FC = () => {
         {
           isAddingStudent && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(10px)' }}>
-              <motion.div style={{ width: '100%', maxWidth: '450px', padding: '3.5rem', borderRadius: '3rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                  <h2 style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-1px', color: '#111' }}>Nuevo <span style={{ color: 'var(--logo-green)' }}>Alumno</span></h2>
-                  <button onClick={() => setIsAddingStudent(false)} style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', color: '#111', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
+              <motion.div style={{ width: '100%', maxWidth: '450px', padding: window.innerWidth < 768 ? '2rem' : '3.5rem', borderRadius: window.innerWidth < 768 ? '2rem' : '3rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+                  <h2 style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-1px', color: '#111', lineHeight: 1 }}>Nuevo <br /><span style={{ color: 'var(--logo-green)' }}>Alumno</span></h2>
+                  <button onClick={() => setIsAddingStudent(false)} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#111', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <input style={{ padding: '1.2rem', borderRadius: '1rem', border: '1px solid var(--panel-border)', background: '#f8fafc', color: '#111', fontWeight: 700, fontSize: '1rem', outline: 'none' }} placeholder="Nombre completo" value={newStudentData.name} onChange={e => setNewStudentData({ ...newStudentData, name: e.target.value })} />
@@ -3449,10 +3463,10 @@ const App: React.FC = () => {
         {
           isAddingVideo && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(10px)' }}>
-              <motion.div style={{ width: '100%', maxWidth: '500px', padding: '3.5rem', borderRadius: '3.5rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                  <h2 style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-1px', color: '#111' }}>Nuevo <span style={{ color: 'var(--logo-green)' }}>Video</span></h2>
-                  <button onClick={() => setIsAddingVideo(false)} style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', color: '#111', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
+              <motion.div style={{ width: '100%', maxWidth: '500px', padding: window.innerWidth < 768 ? '2rem' : '3.5rem', borderRadius: window.innerWidth < 768 ? '2rem' : '3.5rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
+                  <h2 style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-1px', color: '#111', lineHeight: 1 }}>Nuevo <br /><span style={{ color: 'var(--logo-green)' }}>Video</span></h2>
+                  <button onClick={() => setIsAddingVideo(false)} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#111', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
@@ -3494,16 +3508,16 @@ const App: React.FC = () => {
                     />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth < 768 ? '1fr' : '1fr 1fr', gap: '1rem' }}>
                     <div>
                       <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 800, fontSize: '0.7rem', color: '#64748b' }}>CATEGORÍA TÉCNICA</label>
-                      <select style={{ width: '100%', padding: '1.2rem', borderRadius: '1.2rem', border: '1px solid #e2e8f0', background: '#fff', color: '#111', fontWeight: 900, fontSize: '0.9rem', outline: 'none' }} value={newVideoData.category} onChange={e => setNewVideoData({ ...newVideoData, category: e.target.value })}>
+                      <select style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: '1px solid #e2e8f0', background: '#fff', color: '#111', fontWeight: 900, fontSize: '0.9rem', outline: 'none' }} value={newVideoData.category} onChange={e => setNewVideoData({ ...newVideoData, category: e.target.value })}>
                         {VIDEO_CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                       </select>
                     </div>
                     <div>
                       <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: 800, fontSize: '0.7rem', color: '#64748b' }}>DIRIGIDO A</label>
-                      <select style={{ width: '100%', padding: '1.2rem', borderRadius: '1.2rem', border: '1px solid #e2e8f0', background: '#fff', color: '#111', fontWeight: 900, fontSize: '0.9rem', outline: 'none' }} value={newVideoData.targetAudience} onChange={e => setNewVideoData({ ...newVideoData, targetAudience: e.target.value as any })}>
+                      <select style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: '1px solid #e2e8f0', background: '#fff', color: '#111', fontWeight: 900, fontSize: '0.9rem', outline: 'none' }} value={newVideoData.targetAudience} onChange={e => setNewVideoData({ ...newVideoData, targetAudience: e.target.value as any })}>
                         <option value="ADULTS">Adultos</option>
                         <option value="KIDS">Niños</option>
                         <option value="BOTH">Ambos</option>
@@ -3511,7 +3525,7 @@ const App: React.FC = () => {
                     </div>
                   </div>
 
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ marginTop: '1rem', width: '100%', padding: '1.4rem', background: 'var(--logo-green)', color: '#fff', fontSize: '0.9rem', letterSpacing: '0.05em', fontWeight: 900, borderRadius: '1.5rem', border: 'none', cursor: 'pointer', boxShadow: '0 15px 30px rgba(5,168,106,0.3)' }} onClick={handleAddVideo}>PUBLICAR TÉCNICA</motion.button>
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ marginTop: '0.5rem', width: '100%', padding: '1.2rem', background: 'var(--logo-green)', color: '#fff', fontSize: '0.9rem', letterSpacing: '0.05em', fontWeight: 900, borderRadius: '1.2rem', border: 'none', cursor: 'pointer', boxShadow: '0 15px 30px rgba(5,168,106,0.3)' }} onClick={handleAddVideo}>PUBLICAR TÉCNICA</motion.button>
                 </div>
               </motion.div>
             </motion.div>
