@@ -1499,6 +1499,7 @@ const App: React.FC = () => {
                   const isAdult = typeof rawAge === 'number' ? (rawAge === 0 ? true : rawAge >= 18) : true;
                   const familyMembers = students.filter(s => s.email && currentUser?.email && s.email.trim().toLowerCase() === currentUser.email.trim().toLowerCase());
                   const familyUnpaid = familyMembers.filter(s => !s.isPaid);
+                  const shouldShowIndividualPayment = isAdult || familyMembers.length <= 1;
 
                   return (
                     <>
@@ -1558,9 +1559,9 @@ const App: React.FC = () => {
                       )}
 
                       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                        style={{ display: 'grid', gridTemplateColumns: isAdult ? '1fr 1fr' : '1fr', gap: '0.9rem', marginBottom: '1.2rem' }}>
+                        style={{ display: 'grid', gridTemplateColumns: shouldShowIndividualPayment ? '1fr 1fr' : '1fr', gap: '0.9rem', marginBottom: '1.2rem' }}>
                         
-                        {isAdult && (
+                        {shouldShowIndividualPayment && (
                           <motion.div 
                             whileTap={{ scale: 0.95 }}
                             onClick={() => !currentUser?.isPaid && openPaymentModal(currentUser!)}
