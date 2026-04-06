@@ -1,0 +1,26 @@
+--- UPDATED STUDENTS (APRIL 2026) ---
+ID: 46 | Name: Samuel Jesús Urrea Rojas | Last Payment: 2026-04-02 | IsPaid: True
+  -> 2026-04-02 | $40000 | Completado | Manual/Transferencia | TX: None
+ID: 1774955689518 | Name: Nicolás Ignacio Esparza Inostroza  | Last Payment: 2026-03-31 | IsPaid: True
+  -> 2026-04-01 | $40000 | Completado | Manual/Transferencia | TX: None
+ID: 17 | Name: Rudy Alonso Muñoz Moreno | Last Payment: 2026-04-02 | IsPaid: True
+  -> 2026-04-02 | $35000 | Completado | Manual/Transferencia | TX: None
+ID: 1 | Name: Lucas Andrés Bascuñán Bustos | Last Payment: 2026-04-02 | IsPaid: True
+  -> 2026-04-02 | $40000 | Completado | Manual/Transferencia | TX: None
+ID: 7 | Name: Christian Absalón Moya Provoste | Last Payment: 2026-04-03 | IsPaid: True
+  -> 2026-04-03 | $36391 | Completado | Mercado Pago | TX: 152416194815
+ID: 26 | Name: Leonardo Pereira | Last Payment: 2026-04-05 | IsPaid: True
+  -> 2026-04-05 | $40000 | Completado | Manual/Transferencia | TX: None
+ID: 1775306177322 | Name: Johan Eduardo Arriagada Aravena | Last Payment: 2026-04-04 | IsPaid: True
+  -> 2026-04-04 | $35000 | Completado | Manual/Transferencia | TX: None
+  -> 2026-04-04 | $35000 | Completado | Transferencia MP | TX: 152475387425
+ID: 1775435701829 | Name: Maximiliamo Andres Carrasco Ramírez | Last Payment: 2026-04-06 | IsPaid: True
+  -> 2026-04-06 | $5000 | Completado | Manual/Transferencia | TX: None
+ID: 14 | Name: Ignacio Vásquez Moya | Last Payment: 2026-04-03 | IsPaid: True
+  -> 2026-04-03 | $35000 | Completado | Manual/Transferencia | TX: None
+ID: 36 | Name: Antonella Ignacia Lofiego Cabeza | Last Payment: 2026-04-01 | IsPaid: True
+  -> 2026-04-01 | $40000 | Completado | Manual/Transferencia | TX: None
+ID: 1774572408506 | Name: Alonso Antonio Cabeza Cabezas | Last Payment: 2026-03-05 | IsPaid: False
+  -> 2026-04-01 | $35000 | Completado | Manual/Transferencia | TX: None
+ID: 41 | Name: Edgard Benjamín quijada salvó | Last Payment: 2026-04-07 | IsPaid: True
+  -> 2026-04-07 | $35000 | Completado | Manual (Adelantado) | TX: None

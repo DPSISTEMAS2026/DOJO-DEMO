@@ -408,13 +408,15 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [studentsRes, videosRes, newsRes, galleryRes, heroVideosRes, noticeRes] = await Promise.all([
+        const [studentsRes, videosRes, newsRes, galleryRes, heroVideosRes, noticeRes, feesRes, automationRes] = await Promise.all([
           fetch(`${API_URL}/api/students`),
           fetch(`${API_URL}/api/videos`),
           fetch(`${API_URL}/api/news`),
           fetch(`${API_URL}/api/gallery`),
           fetch(`${API_URL}/api/hero-videos`),
-          fetch(`${API_URL}/api/global-notice`)
+          fetch(`${API_URL}/api/global-notice`),
+          fetch(`${API_URL}/api/fees`),
+          fetch(`${API_URL}/api/automation`)
         ]);
         const studentsData = await studentsRes.json();
         const videosData = await videosRes.json();
@@ -422,6 +424,8 @@ const App: React.FC = () => {
         const galleryData = await galleryRes.json();
         const heroVideosData = await heroVideosRes.json();
         const noticeDataResult = await noticeRes.json();
+        const feesData = await feesRes.json();
+        const automationData = await automationRes.json();
 
         setStudents(studentsData || []);
         setVideos(videosData || []);
@@ -429,6 +433,8 @@ const App: React.FC = () => {
         if (galleryData !== null) setLiveGallery(galleryData);
         if (heroVideosData !== null) setLiveHeroVideos(heroVideosData);
         if (noticeDataResult !== null) setNoticeData(noticeDataResult);
+        if (feesData !== null) setFees(feesData);
+        if (automationData !== null) setAutomation(automationData);
 
         // Sync currentUser with fresh data from server (e.g. admin changed payment status)
         const cachedUser = localStorage.getItem('currentUser');
@@ -613,7 +619,31 @@ const App: React.FC = () => {
     kids: { '1': 5000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 }
   });
 
+  const handleSaveFees = async (updatedFees: PlanFees) => {
+    try {
+      await fetch(`${API_URL}/api/fees`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedFees)
+      });
+    } catch (e) {
+      console.error("Error saving fees:", e);
+    }
+  };
+
   const [automation, setAutomation] = useState<AutomationConfig>({ reminderDay: 5, whatsappTemplate: "Hola {nombre}...", emailTemplate: "Hola {nombre}..." });
+
+  const handleSaveAutomation = async (updatedAutomation: AutomationConfig) => {
+    try {
+      await fetch(`${API_URL}/api/automation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedAutomation)
+      });
+    } catch (e) {
+      console.error("Error saving automation:", e);
+    }
+  };
   const calculateAge = (birthDateStr: string | null) => {
     if (!birthDateStr) return 0;
     const parts = birthDateStr.split('-');
@@ -3032,7 +3062,11 @@ const App: React.FC = () => {
                             <input
                               type="number" step="1000"
                               value={fees.kids[planKey]}
-                              onChange={e => setFees({ ...fees, kids: { ...fees.kids, [planKey]: parseInt(e.target.value) || 0 } })}
+                              onChange={e => {
+                                const newFees = { ...fees, kids: { ...fees.kids, [planKey]: parseInt(e.target.value) || 0 } };
+                                setFees(newFees);
+                                handleSaveFees(newFees);
+                              }}
                               style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text-main)', fontWeight: 900, width: '80px', fontSize: '1rem' }}
                             />
                           </div>
@@ -3051,7 +3085,11 @@ const App: React.FC = () => {
                             <input
                               type="number" step="1000"
                               value={fees.adults[planKey]}
-                              onChange={e => setFees({ ...fees, adults: { ...fees.adults, [planKey]: parseInt(e.target.value) || 0 } })}
+                              onChange={e => {
+                                const newFees = { ...fees, adults: { ...fees.adults, [planKey]: parseInt(e.target.value) || 0 } };
+                                setFees(newFees);
+                                handleSaveFees(newFees);
+                              }}
                               style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text-main)', fontWeight: 900, width: '80px', fontSize: '1rem' }}
                             />
                           </div>
@@ -3070,7 +3108,11 @@ const App: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: '1rem', fontWeight: 800, fontSize: '0.8rem', color: 'var(--text-muted)' }}>DÍA DE COBRO (MENSUAL)</label>
-                    <input type="range" min="1" max="28" value={automation.reminderDay} onChange={e => setAutomation({ ...automation, reminderDay: parseInt(e.target.value) })} style={{ width: '100%', accentColor: 'var(--logo-green)' }} />
+                    <input type="range" min="1" max="28" value={automation.reminderDay} onChange={e => {
+                      const newAuto = { ...automation, reminderDay: parseInt(e.target.value) };
+                      setAutomation(newAuto);
+                      handleSaveAutomation(newAuto);
+                    }} style={{ width: '100%', accentColor: 'var(--logo-green)' }} />
                     <p style={{ marginTop: '1rem', fontSize: '1.2rem', fontWeight: 900 }}>Hoy es el día {automation.reminderDay}</p>
                   </div>
                   <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '1.5rem', borderRadius: '2rem' }} onClick={() => setIsSendingNotice(true)}>ENVIAR COMUNICADO MASIVO</button>
@@ -3313,21 +3355,19 @@ const App: React.FC = () => {
                         onChange={e => {
                           const val = e.target.value;
                           const feeMap: Record<string, number> = {
-                            "1x SEMANA": 20000,
                             "Clase Individual": 5000,
                             "2x Semana": 35000,
-                            "3x Semana": 35000,
-                            "4x Semana": 40000,
-                            "Full Rana": 40000
+                            "3x Semana": 40000,
+                            "4x Semana": 45000,
+                            "Full Rana": 50000
                           };
                           setEditedStudent(prev => prev ? { ...prev, plan: val, monthlyFee: feeMap[val] || prev.monthlyFee } : null);
                         }}>
-                        <option value="1x SEMANA">1x SEMANA ($20.000)</option>
                         <option value="Clase Individual">Clase Individual ($5.000)</option>
                         <option value="2x Semana">2x Semana ($35.000)</option>
-                        <option value="3x Semana">3x Semana ($35.000)</option>
-                        <option value="4x Semana">4x Semana ($40.000)</option>
-                        <option value="Full Rana">Full Rana ($40.000)</option>
+                        <option value="3x Semana">3x Semana ($40.000)</option>
+                        <option value="4x Semana">4x Semana ($45.000)</option>
+                        <option value="Full Rana">Full Rana ($50.000)</option>
                       </select>
                     ) : (
                       <p style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--panel-text)' }}>{selectedStudent.plan ? (planLabels[selectedStudent.plan.toString()] || selectedStudent.plan) : 'No asignado'}</p>

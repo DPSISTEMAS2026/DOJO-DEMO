@@ -1302,6 +1302,67 @@ app.post('/api/transfer-intent', async (req, res) => {
     }
 });
 
+// ======================================
+// REPAIR: Inconsistent Student Profiles
+// ======================================
+async function repairInconsistentProfiles() {
+    console.log('[REPAIR] Iniciando escaneo de perfiles inconsistentes...');
+    try {
+        const { data: students, error } = await supabase.from('students').select('*');
+        if (error) throw error;
+
+        const now = DateTime.now().setZone('America/Santiago');
+        const currentMonth = now.toFormat('yyyy-MM');
+        let repairedCount = 0;
+
+        for (const student of students) {
+            const history = Array.isArray(student.history) ? student.history : [];
+            // Check if there is a completed payment in the current month
+            const hasRecentPayment = history.some(h => 
+                h.status === 'Completado' && 
+                h.date && h.date.startsWith(currentMonth)
+            );
+
+            // If they paid this month but are marked as unpaid, FIX THEM
+            if (hasRecentPayment && student.ispaid === false) {
+                console.log(`[REPAIR] 🔧 Reparando perfil de ${student.name} (ID: ${student.id}) - Tenía pago en ${currentMonth} pero estaba como No Pagado.`);
+                
+                // Find the latest payment date in history to use as lastpaymentdate
+                const sortedHistory = [...history].sort((a, b) => b.date.localeCompare(a.date));
+                const lastPay = sortedHistory.find(h => h.status === 'Completado');
+                
+                if (lastPay) {
+                    const { error: updErr } = await supabase.from('students').update({
+                        ispaid: true,
+                        lastpaymentdate: lastPay.date,
+                        lastpaymentmonth: lastPay.date.substring(0, 7)
+                    }).eq('id', student.id);
+                    
+                    if (!updErr) repairedCount++;
+                }
+            }
+        }
+
+        if (repairedCount > 0) {
+            console.log(`[REPAIR] Sincronización finalizada. Se repararon ${repairedCount} perfiles.`);
+        }
+        return repairedCount;
+    } catch (e) {
+        console.error('[REPAIR ERROR]', e.message);
+        return 0;
+    }
+}
+
+// API endpoint for manual repair trigger
+app.post('/api/admin/repair-profiles', async (req, res) => {
+    try {
+        const repaired = await repairInconsistentProfiles();
+        res.json({ success: true, repaired });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // API endpoint for manual sync trigger
 app.post('/api/admin/sync-transfers', async (req, res) => {
     try {
@@ -1312,18 +1373,24 @@ app.post('/api/admin/sync-transfers', async (req, res) => {
     }
 });
 
-// CRON: Auto-sync transfers every 10 minutes
+// CRON: Auto-sync transfers every 10 minutes + Repair
 cron.schedule('*/10 * * * *', async () => {
-    console.log('[CRON] Auto-sync de transferencias MP...');
+    console.log('[CRON] Auto-sync y Repair (10 min)...');
     await syncTransferPayments();
+    await repairInconsistentProfiles();
 }, {
     scheduled: true,
     timezone: "America/Santiago"
 });
 
-// Automatización diaria de cumpleaños (09:00 Hora de Chile)
+// Automatización diaria de cumpleaños y escaneo profundo (09:00 Hora de Chile)
 cron.schedule('0 9 * * *', async () => {
-    console.log('[CRON] Iniciando verificación diaria de cumpleaños (09:00 Chile)...');
+    console.log('[CRON] Iniciando verificación diaria (09:00 Chile)...');
+    
+    // 1. Repair Inconsistent Profiles
+    await repairInconsistentProfiles();
+
+    // 2. Birthdays
     try {
         const { data: students, error } = await supabase.from('students').select('*');
         if (error) throw error;
@@ -1354,9 +1421,63 @@ cron.schedule('0 9 * * *', async () => {
     } catch (e) {
         console.error('[CRON ERROR] Error en la tarea programada:', e.message);
     }
-}, {
-    scheduled: true,
-    timezone: "America/Santiago"
+// --- FEES & AUTOMATION PERSISTENCE (Using reserved news IDs) ---
+app.get('/api/fees', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('news').select('*').eq('id', 999998).maybeSingle();
+        if (data && data.body) {
+            return res.json(JSON.parse(data.body));
+        }
+        // Default fallback if not found
+        res.json({
+            adults: { '1': 5000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 },
+            kids: { '1': 5000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 }
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/fees', async (req, res) => {
+    try {
+        const { error } = await supabase.from('news').upsert({
+            id: 999998,
+            title: 'SYSTEM_FEES',
+            body: JSON.stringify(req.body),
+            date: new Date().toISOString()
+        });
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/automation', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('news').select('*').eq('id', 999997).maybeSingle();
+        if (data && data.body) {
+            return res.json(JSON.parse(data.body));
+        }
+        res.json({ reminderDay: 5, whatsappTemplate: "Hola {nombre}...", emailTemplate: "Hola {nombre}..." });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/automation', async (req, res) => {
+    try {
+        const { error } = await supabase.from('news').upsert({
+            id: 999997,
+            title: 'SYSTEM_AUTOMATION',
+            body: JSON.stringify(req.body),
+            date: new Date().toISOString()
+        });
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.listen(PORT, () => {

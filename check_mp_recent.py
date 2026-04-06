@@ -21,8 +21,8 @@ def check_mp():
         relevant_movements = []
         for p in results:
             date = p.get("date_created")
-            # We are interested in 2026-03-31 and 2026-04-01
-            if not ("2026-03-31" in date or "2026-04-01" in date):
+            # We are interested in any date in April 2026
+            if not ("2026-04" in date):
                 continue
                 
             status = p.get("status")
@@ -32,8 +32,10 @@ def check_mp():
             desc = p.get("description", "")
             op_type = p.get("operation_type")
             ext_ref = p.get("external_reference")
+            payment_id = p.get("id")
             
             relevant_movements.append({
+                "id": payment_id,
                 "date": date,
                 "amount": amount,
                 "status": status,
@@ -44,10 +46,10 @@ def check_mp():
             })
             
         if not relevant_movements:
-            print("No movements found for Mar 31 or Apr 1 in the last 100 results.")
+            print("No movements found for April 2026 in the last 100 results.")
         else:
             for m in relevant_movements:
-                print(f"{m['date']} | ${m['amount']} | {m['status']} | {m['type']} | {m['email']} | Desc: {m['description']} | Ref: {m['ref']}")
+                print(f"ID: {m['id']} | {m['date']} | ${m['amount']} | {m['status']} | {m['type']} | {m['email']} | Desc: {m['description']} | Ref: {m['ref']}")
     else:
         print(f"Error: {response.status_code}")
         print(response.text)

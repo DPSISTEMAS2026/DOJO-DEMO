@@ -8,11 +8,10 @@ key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFi
 headers = { "apikey": key, "Authorization": f"Bearer {key}" }
 
 def check_supabase():
-    # Only get students whose lastpaymentdate is 2026-03-31 or 2026-04-01
-    dates = ["2026-03-31", "2026-04-01"]
+    # Only get students whose lastpaymentdate or history contains April 2026
+    date_prefix = "2026-04"
     
     # We want to see if students became 'ispaid' or have history entries for those dates.
-    # It might be more reliable to check all students and filter by history since lastpaymentdate might not be the most reliable for historical queries.
     r = requests.get(f"{url}/rest/v1/students?select=id,name,lastpaymentdate,ispaid,history", headers=headers)
     if r.status_code == 200:
         students = r.json()
@@ -22,9 +21,9 @@ def check_supabase():
             lp_date = s.get("lastpaymentdate")
             history = s.get("history") or []
             
-            recent_history = [h for h in history if any(d in h.get("date", "") for d in dates)]
+            recent_history = [h for h in history if date_prefix in h.get("date", "")]
             
-            if (lp_date and any(d in lp_date for d in dates)) or recent_history:
+            if (lp_date and date_prefix in lp_date) or recent_history:
                 updated_students.append({
                     "id": s["id"],
                     "name": s["name"],
@@ -33,11 +32,11 @@ def check_supabase():
                     "recent_history": recent_history
                 })
         
-        with open("payment_report.txt", "w", encoding="utf-8") as f:
+        with open("payment_report_april.txt", "w", encoding="utf-8") as f:
             if not updated_students:
-                f.write("No students found with payment updates for Mar 31 or Apr 1 in Supabase.\n")
+                f.write("No students found with payment updates for April 2026 in Supabase.\n")
             else:
-                f.write(f"--- UPDATED STUDENTS (MARCH 31 - APRIL 1) ---\n")
+                f.write(f"--- UPDATED STUDENTS (APRIL 2026) ---\n")
                 for s in updated_students:
                     f.write(f"ID: {s['id']} | Name: {s['name']} | Last Payment: {s['last_pay']} | IsPaid: {s['isPaid']}\n")
                     for h in s["recent_history"]:
