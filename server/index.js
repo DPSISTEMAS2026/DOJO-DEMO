@@ -1421,6 +1421,11 @@ cron.schedule('0 9 * * *', async () => {
     } catch (e) {
         console.error('[CRON ERROR] Error en la tarea programada:', e.message);
     }
+}, {
+    scheduled: true,
+    timezone: "America/Santiago"
+});
+
 // --- FEES & AUTOMATION PERSISTENCE (Using reserved news IDs) ---
 app.get('/api/fees', async (req, res) => {
     try {
