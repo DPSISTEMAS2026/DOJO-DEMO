@@ -1934,21 +1934,50 @@ const App: React.FC = () => {
                   
                   {paymentTab === 'transfer' && !transferSubmitted && (
                     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                      <div style={{ background: '#f0fdf4', borderRadius: '1rem', padding: '1rem', border: '1px solid #dcfce7' }}>
-                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <CheckCircle2 size={13} /> SIN COMISIÓN — PAGO DIRECTO
+                      <div style={{ background: '#fffbeb', borderRadius: '1.2rem', padding: '1.2rem', border: '1px solid #fde68a', boxShadow: '0 4px 12px rgba(251,191,36,0.08)' }}>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <AlertTriangle size={14} /> INSTRUCCIÓN DE GLOSA
                         </div>
-                        <p style={{ fontSize: '0.75rem', color: '#166534', lineHeight: 1.5, margin: 0 }}>
-                          Transfiere directamente a la cuenta del Dojo. Tu pago se detectará y registrará <strong>automáticamente</strong> en el sistema.
+                        <p style={{ fontSize: '0.8rem', color: '#78350f', lineHeight: 1.5, margin: '0 0 1rem', fontWeight: 600 }}>
+                          {studentsArr.length > 1 
+                            ? 'Debes incluir los IDs de todos los alumnos en la glosa/comentario para que el pago se divida automáticamente:' 
+                            : 'Copia y pega este ID en la glosa/comentario de tu transferencia para identificar tu pago:'}
                         </p>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          {studentsArr.map(s => (
+                            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                              <div style={{ flex: 1, padding: '0.8rem 1rem', borderRadius: '0.8rem', background: '#fff', border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#92400e', textTransform: 'uppercase' }}>{s.name.split(' ')[0]}</span>
+                                <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a', fontFamily: 'monospace' }}>ID {s.id}</span>
+                              </div>
+                              <button onClick={() => handleCopyToClipboard(`ID ${s.id}`, `ID ${s.name}`)}
+                                style={{ background: transferCopied === `ID ${s.name}` ? '#05a86a' : '#f59e0b', border: 'none', color: '#fff', padding: '0.8rem 1rem', borderRadius: '0.8rem', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+                                {transferCopied === `ID ${s.name}` ? <CheckCircle2 size={16} /> : <Copy size={16} />}
+                              </button>
+                            </div>
+                          ))}
+
+                          {studentsArr.length > 1 && (
+                            <button onClick={() => {
+                              const combined = studentsArr.map(s => `ID ${s.id}`).join(' ');
+                              handleCopyToClipboard(combined, 'CombinedID');
+                            }}
+                              style={{ width: '100%', padding: '1rem', marginTop: '0.4rem', border: '2px dashed #f59e0b', background: transferCopied === 'CombinedID' ? '#05a86a' : 'rgba(245,158,11,0.05)', color: transferCopied === 'CombinedID' ? '#fff' : '#92400e', borderRadius: '1rem', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', transition: 'all 0.2s' }}>
+                              {transferCopied === 'CombinedID' 
+                                ? <><CheckCircle2 size={18} /> ¡TODOS LOS IDS COPIADOS!</> 
+                                : <><Copy size={18} /> COPIAR TODOS LOS IDS JUNTOS</>}
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       <div style={{ background: '#f8fafc', borderRadius: '1rem', padding: '1rem', border: '1px solid #e2e8f0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-                          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>DATOS PARA TRANSFERIR</div>
+                          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>DATOS BANCARIOS</div>
                           <button onClick={() => handleCopyToClipboard(ALL_BANK_DATA, 'Todos')}
-                            style={{ background: transferCopied === 'Todos' ? '#05a86a' : 'linear-gradient(135deg, #05a86a, #10f49c)', border: 'none', color: '#fff', padding: '0.45rem 0.8rem', borderRadius: '0.6rem', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s', boxShadow: '0 2px 8px rgba(5,168,106,0.3)' }}>
-                            {transferCopied === 'Todos' ? <><CheckCircle2 size={12} /> ¡Copiado!</> : <><Copy size={12} /> Copiar todo</>}
+                            style={{ background: transferCopied === 'Todos' ? '#05a86a' : '#f1f5f9', border: '1px solid #e2e8f0', color: transferCopied === 'Todos' ? '#fff' : '#64748b', padding: '0.45rem 0.8rem', borderRadius: '0.6rem', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+                            {transferCopied === 'Todos' ? <><CheckCircle2 size={12} /> Copiado</> : <><Copy size={12} /> Copiar todo</>}
                           </button>
                         </div>
                         
@@ -1974,24 +2003,7 @@ const App: React.FC = () => {
                         ))}
                       </div>
 
-                      <div style={{ background: '#fffbeb', borderRadius: '1rem', padding: '1rem', border: '1px solid #fde68a' }}>
-                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <AlertTriangle size={13} /> IMPORTANTE
-                        </div>
-                        <p style={{ fontSize: '0.75rem', color: '#78350f', lineHeight: 1.6, margin: '0 0 0.8rem' }}>
-                          No importa desde qué cuenta transfieras. Solo asegúrate de escribir <strong>tu correo registrado</strong> en el <strong>comentario o glosa</strong> de la transferencia para que el sistema identifique tu pago automáticamente.
-                        </p>
-                        <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#92400e', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Tu correo registrado:</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <div style={{ flex: 1, padding: '0.7rem 1rem', borderRadius: '0.8rem', background: '#fff', border: '1px solid #fde68a', fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace', letterSpacing: '0.02em' }}>
-                            {currentUser?.email || studentsArr[0]?.email || ''}
-                          </div>
-                          <button onClick={() => handleCopyToClipboard(currentUser?.email || studentsArr[0]?.email || '', 'Email')}
-                            style={{ background: transferCopied === 'Email' ? '#05a86a' : '#f59e0b', border: 'none', color: '#fff', padding: '0.7rem 1rem', borderRadius: '0.8rem', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
-                            {transferCopied === 'Email' ? <><CheckCircle2 size={14} /> Copiado</> : <><Copy size={14} /> Copiar</>}
-                          </button>
-                        </div>
-                      </div>
+
 
                       <button onClick={() => { setTransferSubmitted(true); }}
                         style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: 'none', background: '#05a86a', color: '#fff', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 10px 25px rgba(5,168,106,0.25)', transition: 'all 0.2s' }}>

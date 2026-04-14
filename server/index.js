@@ -1209,29 +1209,16 @@ async function syncTransferPayments() {
                 matchedStudentIds = matched.map(s => s.id.toString());
             }
 
-            // Search in description (glosa) for ID pattern or any registered email
+            // Search in description (glosa) for ID pattern
             if (matchedStudentIds.length === 0 && payment.description) {
-                // Check ID: pattern
-                const idMatch = payment.description.match(/\bID[:\s]*(\d+)\b/i);
-                if (idMatch) {
-                    const potentialId = idMatch[1];
+                // Check ID: pattern (supports multiple IDs for family payments)
+                const idRegex = /\bID[:\s]*(\d+)\b/gi;
+                let match;
+                while ((match = idRegex.exec(payment.description)) !== null) {
+                    const potentialId = match[1];
                     const found = students.find(s => s.id.toString() === potentialId);
-                    if (found) matchedStudentIds.push(potentialId);
-                }
-
-                // If still no match, look for any email matching a student
-                if (matchedStudentIds.length === 0) {
-                    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-                    const emailsInDesc = payment.description.match(emailRegex);
-                    if (emailsInDesc) {
-                        for (const emailToken of emailsInDesc) {
-                            const normalized = emailToken.toLowerCase().trim();
-                            const matches = emailToStudents[normalized];
-                            if (matches && matches.length > 0) {
-                                matchedStudentIds = matches.map(s => s.id.toString());
-                                break; 
-                            }
-                        }
+                    if (found && !matchedStudentIds.includes(potentialId)) {
+                        matchedStudentIds.push(potentialId);
                     }
                 }
             }
