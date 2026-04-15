@@ -146,6 +146,11 @@ app.get('/api/admin/payments', async (req, res) => {
                 student = students.find(s => s.name && description.includes(s.name.toLowerCase()));
             }
 
+            // 4. Intentar cruce por ID en la descripción (evitando falsos positivos ej. separar 73 de 173, pero permitiendo ID73)
+            if (!student) {
+                student = students.find(s => s.id && new RegExp(`(^|\\D)${s.id}(\\D|$)`).test(description));
+            }
+
             if (student) {
                 matched.push({
                     studentName: student.name,
@@ -405,7 +410,8 @@ async function syncStudentsBackground(students) {
             const matchedPayments = payments.filter(pay => {
                  const payerEmail = pay.payer?.email?.toLowerCase() || '';
                  const description = pay.description?.toLowerCase() || '';
-                 return payerEmail === studentEmail || description.includes(studentName);
+                 const idRegex = new RegExp(`(^|\\D)${student.id}(\\D|$)`);
+                 return payerEmail === studentEmail || description.includes(studentName) || idRegex.test(description);
             });
 
             if (matchedPayments.length > 0) {
@@ -445,7 +451,14 @@ async function syncStudentsBackground(students) {
 
 app.post('/api/students', async (req, res) => {
     try {
-        const newId = Date.now().toString();
+        const { data: existingIds } = await supabase.from('students').select('id');
+        const takenIds = existingIds ? existingIds.map(e => parseInt(e.id)).filter(n => !isNaN(n)) : [];
+        let newNum = 1;
+        while (takenIds.includes(newNum)) {
+            newNum++;
+        }
+        const newId = newNum.toString();
+
         const newStudent = { 
             id: newId,
             name: req.body.name,
@@ -488,6 +501,7 @@ app.post('/api/students', async (req, res) => {
                             <p style="margin: 0 0 1rem 0; font-weight: 800; font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">TUS DATOS DE ACCESO:</p>
                             <p style="margin: 0.5rem 0; font-size: 1.1rem;"><strong>Email:</strong> ${newStudent.email}</p>
                             <p style="margin: 0.5rem 0; font-size: 1.1rem;"><strong>Contraseña:</strong> <span style="background: #05a86a; color: #fff; padding: 2px 8px; border-radius: 6px;">${newStudent.password}</span></p>
+                            <p style="margin: 0.5rem 0; font-size: 1.1rem;"><strong>Tu ID de Alumno:</strong> <span style="background: #05a86a; color: #fff; padding: 2px 8px; border-radius: 6px;">${newStudent.id}</span> (Úsalo en la glosa al transferir)</p>
                             
                             <a href="https://ranasjiujitsu.cl" style="display: block; background: #05a86a; color: #fff; padding: 1.2rem; text-decoration: none; border-radius: 1rem; font-weight: 800; text-align: center; margin-top: 2rem; box-shadow: 0 10px 20px rgba(5,168,106,0.2);">ENTRAR AL PORTAL 🥋</a>
                         </div>
@@ -608,7 +622,8 @@ app.post('/api/students/:id/sync-payments', async (req, res) => {
         const newPayments = payments.filter(pay => {
              const payerEmail = pay.payer?.email?.toLowerCase() || '';
              const description = pay.description?.toLowerCase() || '';
-             return payerEmail === studentEmail || description.includes(studentName);
+             const idRegex = new RegExp(`(^|\\D)${student.id}(\\D|$)`);
+             return payerEmail === studentEmail || description.includes(studentName) || idRegex.test(description);
         });
 
         let updatedCount = 0;
