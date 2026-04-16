@@ -5,8 +5,10 @@ key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFi
 
 headers = { "apikey": key, "Authorization": f"Bearer {key}" }
 
-r = requests.get(f"{url}/rest/v1/students?select=name,email,password", headers=headers)
+r = requests.get(f"{url}/rest/v1/students?select=*", headers=headers)
 students = r.json()
 
 for s in students:
-    print(f"{s['name']}: {s['email']} / {s['password']}")
+    if str(s.get('id')) == '73' or s.get('id') == 73:
+        print(f"FOUND ID 73: {s['id']} - {s['name']} - paid: {s['ispaid']} - date: {s.get('lastpaymentdate')}")
+        print(f"History: {s.get('history')}")

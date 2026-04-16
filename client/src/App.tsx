@@ -1912,169 +1912,55 @@ const App: React.FC = () => {
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: '0.8rem', padding: '4px', gap: '4px', marginBottom: '1rem' }}>
-                    <button onClick={() => { setPaymentTab('transfer'); setTransferSubmitted(false); }}
-                      style={{ flex: 1, padding: '0.65rem', borderRadius: '0.65rem', border: 'none', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.25s',
-                        background: paymentTab === 'transfer' ? '#05a86a' : 'transparent',
-                        color: paymentTab === 'transfer' ? '#fff' : '#64748b' }}>
-                      <Banknote size={14} style={{ marginBottom: '-2px', marginRight: '4px' }} />
-                      Transferencia
-                    </button>
-                    <button onClick={() => setPaymentTab('card')}
-                      style={{ flex: 1, padding: '0.65rem', borderRadius: '0.65rem', border: 'none', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer', transition: 'all 0.25s',
-                        background: paymentTab === 'card' ? '#3b82f6' : 'transparent',
-                        color: paymentTab === 'card' ? '#fff' : '#64748b' }}>
-                      <CreditCard size={14} style={{ marginBottom: '-2px', marginRight: '4px' }} />
-                      Tarjeta
-                    </button>
-                  </div>
+                  
                 </div>
-
                 <div style={{ flex: 1, overflowY: 'auto', padding: '0 1.5rem 1.5rem' }}>
                   
-                  {paymentTab === 'transfer' && !transferSubmitted && (
-                    <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                      <div style={{ background: '#fffbeb', borderRadius: '1.2rem', padding: '1.2rem', border: '1px solid #fde68a', boxShadow: '0 4px 12px rgba(251,191,36,0.08)' }}>
-                        <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <AlertTriangle size={14} /> INSTRUCCIÓN DE GLOSA
-                        </div>
-                        <p style={{ fontSize: '0.8rem', color: '#78350f', lineHeight: 1.5, margin: '0 0 1rem', fontWeight: 600 }}>
-                          {studentsArr.length > 1 
-                            ? 'Debes incluir los IDs de todos los alumnos en la glosa/comentario para que el pago se divida automáticamente:' 
-                            : 'Copia y pega este ID en la glosa/comentario de tu transferencia para identificar tu pago:'}
-                        </p>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                          {studentsArr.map(s => (
-                            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                              <div style={{ flex: 1, padding: '0.8rem 1rem', borderRadius: '0.8rem', background: '#fff', border: '1px solid #fde68a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#92400e', textTransform: 'uppercase' }}>{s.name.split(' ')[0]}</span>
-                                <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a', fontFamily: 'monospace' }}>ID {s.id}</span>
-                              </div>
-                              <button onClick={() => handleCopyToClipboard(`ID ${s.id}`, `ID ${s.name}`)}
-                                style={{ background: transferCopied === `ID ${s.name}` ? '#05a86a' : '#f59e0b', border: 'none', color: '#fff', padding: '0.8rem 1rem', borderRadius: '0.8rem', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
-                                {transferCopied === `ID ${s.name}` ? <CheckCircle2 size={16} /> : <Copy size={16} />}
-                              </button>
-                            </div>
-                          ))}
-
-                          {studentsArr.length > 1 && (
-                            <button onClick={() => {
-                              const combined = studentsArr.map(s => `ID ${s.id}`).join(' ');
-                              handleCopyToClipboard(combined, 'CombinedID');
-                            }}
-                              style={{ width: '100%', padding: '1rem', marginTop: '0.4rem', border: '2px dashed #f59e0b', background: transferCopied === 'CombinedID' ? '#05a86a' : 'rgba(245,158,11,0.05)', color: transferCopied === 'CombinedID' ? '#fff' : '#92400e', borderRadius: '1rem', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', transition: 'all 0.2s' }}>
-                              {transferCopied === 'CombinedID' 
-                                ? <><CheckCircle2 size={18} /> ¡TODOS LOS IDS COPIADOS!</> 
-                                : <><Copy size={18} /> COPIAR TODOS LOS IDS JUNTOS</>}
-                            </button>
-                          )}
-                        </div>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    
+                    <div style={{ background: '#eff6ff', borderRadius: '1rem', padding: '1.2rem', border: '1px solid #bfdbfe' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 900, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <CreditCard size={15} /> PORTAL DE PAGOS SEGURO
                       </div>
-
-                      <div style={{ background: '#f8fafc', borderRadius: '1rem', padding: '1rem', border: '1px solid #e2e8f0' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
-                          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>DATOS BANCARIOS</div>
-                          <button onClick={() => handleCopyToClipboard(ALL_BANK_DATA, 'Todos')}
-                            style={{ background: transferCopied === 'Todos' ? '#05a86a' : '#f1f5f9', border: '1px solid #e2e8f0', color: transferCopied === 'Todos' ? '#fff' : '#64748b', padding: '0.45rem 0.8rem', borderRadius: '0.6rem', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
-                            {transferCopied === 'Todos' ? <><CheckCircle2 size={12} /> Copiado</> : <><Copy size={12} /> Copiar todo</>}
-                          </button>
-                        </div>
-                        
-                        {[
-                          { label: 'Nombre', value: MP_TITULAR },
-                          { label: 'RUT', value: MP_RUT },
-                          { label: 'Banco / Medio', value: MP_BANCO },
-                          { label: 'Tipo de cuenta', value: MP_TIPO },
-                          { label: 'N° de cuenta', value: MP_CUENTA },
-                          { label: 'Correo', value: MP_EMAIL },
-                          { label: 'Monto', value: formatCLP(baseAmount) }
-                        ].map(item => (
-                          <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                            <div>
-                              <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>{item.label}</div>
-                              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace' }}>{item.value}</div>
-                            </div>
-                            <button onClick={() => handleCopyToClipboard(item.value, item.label)}
-                              style={{ background: transferCopied === item.label ? '#05a86a' : '#f1f5f9', border: '1px solid ' + (transferCopied === item.label ? '#05a86a' : '#e2e8f0'), color: transferCopied === item.label ? '#fff' : '#64748b', padding: '0.4rem 0.6rem', borderRadius: '0.6rem', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
-                              {transferCopied === item.label ? <><CheckCircle2 size={12} /> Copiado</> : <><Copy size={12} /> Copiar</>}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-
-
-                      <button onClick={() => { setTransferSubmitted(true); }}
-                        style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: 'none', background: '#05a86a', color: '#fff', fontWeight: 900, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 10px 25px rgba(5,168,106,0.25)', transition: 'all 0.2s' }}>
-                        <CheckCircle2 size={18} /> YA REALICÉ LA TRANSFERENCIA
-                      </button>
-                    </motion.div>
-                  )}
-
-                  {paymentTab === 'transfer' && transferSubmitted && (
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                      style={{ textAlign: 'center', padding: '2rem 0' }}>
-                      <div style={{ width: 70, height: 70, borderRadius: '50%', background: '#f0fdf4', border: '3px solid #05a86a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem' }}>
-                        <CheckCircle2 size={35} color="#05a86a" />
-                      </div>
-                      <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#111', marginBottom: '0.5rem' }}>¡Gracias!</h3>
-                      <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-                        El sistema verificará tu transferencia automáticamente y actualizará tu estado de pago en los próximos minutos.
+                      <p style={{ fontSize: '0.8rem', color: '#1e3a5f', lineHeight: 1.5, margin: 0, fontWeight: 600 }}>
+                        Este link te permite pagar tu mensualidad utilizando <b>cualquier método de pago</b>: transferencia bancaria, tu cuenta de Mercado Pago, o tarjetas de débito/crédito.
                       </p>
-                      <button onClick={() => setShowPaymentModal(false)}
-                        style={{ padding: '0.8rem 2rem', borderRadius: '1rem', border: 'none', background: '#05a86a', color: '#fff', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer' }}>
-                        CERRAR
-                      </button>
-                    </motion.div>
-                  )}
+                    </div>
 
-                  {paymentTab === 'card' && (
-                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                      <div style={{ background: '#eff6ff', borderRadius: '1rem', padding: '1rem', border: '1px solid #bfdbfe' }}>
-                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <CreditCard size={13} /> PAGO INMEDIATO CON TARJETA
-                        </div>
-                        <p style={{ fontSize: '0.75rem', color: '#1e3a5f', lineHeight: 1.5, margin: 0 }}>
-                          Paga con tarjeta de débito o crédito vía Mercado Pago. El pago se acredita al instante y tu mensualidad queda registrada automáticamente.
-                        </p>
+                    <div style={{ background: '#f8fafc', borderRadius: '1rem', padding: '1.2rem', border: '1px solid #e2e8f0', margin: '0.5rem 0' }}>
+                      <div style={{ fontSize: '0.65rem', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.8rem' }}>RESUMEN DE COBRO</div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.6rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 600 }}>Mensualidad Base</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>{formatCLP(baseAmount)}</span>
                       </div>
-
-                      <div style={{ background: '#f8fafc', borderRadius: '1rem', padding: '1rem', border: '1px solid #e2e8f0' }}>
-                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.6rem' }}>DESGLOSE DEL PAGO</div>
-                        
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                          <span style={{ fontSize: '0.8rem', color: '#475569' }}>Mensualidad</span>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a' }}>{formatCLP(baseAmount)}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                          <span style={{ fontSize: '0.8rem', color: '#475569' }}>Cargo procesadora</span>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ef4444' }}>+ {formatCLP(surcharge)}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.7rem 0 0.3rem', marginTop: '0.3rem' }}>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#0f172a' }}>Total a pagar</span>
-                          <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#3b82f6' }}>{formatCLP(charged)}</span>
-                        </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.6rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 600 }}>Cargo plataforma Mercado Pago</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ef4444' }}>+ {formatCLP(surcharge)}</span>
                       </div>
-
-                      <div style={{ background: '#fefce8', borderRadius: '0.8rem', padding: '0.7rem 1rem', border: '1px solid #fde68a' }}>
-                        <p style={{ fontSize: '0.68rem', color: '#854d0e', margin: 0, lineHeight: 1.5 }}>
-                          <strong>¿Por qué hay un cargo adicional?</strong> Las plataformas de pago con tarjeta cobran una comisión (~4.75%). Este cargo asegura que el 100% de tu mensualidad llegue al Dojo. Si prefieres evitarlo, usa la opción de <strong>Transferencia</strong>.
-                        </p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.8rem 0 0.2rem', marginTop: '0.3rem' }}>
+                        <span style={{ fontSize: '1rem', fontWeight: 900, color: '#0f172a' }}>Total a pagar</span>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#3b82f6' }}>{formatCLP(charged)}</span>
                       </div>
+                    </div>
 
-                      <button 
-                        onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
-                        disabled={isGeneratingPayment}
-                        style={{ width: '100%', padding: '1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#3b82f6', color: '#fff', fontWeight: 900, fontSize: '0.9rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 10px 25px rgba(59,130,246,0.25)', transition: 'all 0.2s' }}>
-                        {isGeneratingPayment ? (
-                          <>Generando link...</>
-                        ) : (
-                          <><CreditCard size={18} /> PAGAR {formatCLP(charged)} CON TARJETA</>
-                        )}
-                      </button>
-                    </motion.div>
-                  )}
+                    <div style={{ background: '#fefce8', borderRadius: '0.8rem', padding: '0.7rem 1rem', border: '1px solid #fde68a', marginBottom: '1rem' }}>
+                      <p style={{ fontSize: '0.68rem', color: '#854d0e', margin: 0, lineHeight: 1.5 }}>
+                        <strong>¿Por qué hay un cargo adicional?</strong> Las plataformas de pago retienen una comisión operativa. Este cargo se suma para asegurar que el 100% del valor de tu mensualidad llegue íntegramente al Dojo.
+                      </p>
+                    </div>
+
+                    <button 
+                      onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
+                      disabled={isGeneratingPayment}
+                      style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '1.5rem' }}>
+                      {isGeneratingPayment ? (
+                        <>Generando link seguro...</>
+                      ) : (
+                        <><CreditCard size={20} /> IR A MERCADO PAGO</>
+                      )}
+                    </button>
+                  </motion.div>
 
                   <p style={{ fontSize: '0.6rem', color: '#94a3b8', textAlign: 'center', marginTop: '1rem', lineHeight: 1.4 }}>
                     Pagos procesados de forma segura. Ante cualquier duda,{' '}
