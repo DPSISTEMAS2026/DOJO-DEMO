@@ -31,8 +31,7 @@ import {
   ImageIcon,
   Monitor,
   Trash2,
-  Phone,
-  CheckCircle2
+  Phone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'react-qr-code';
