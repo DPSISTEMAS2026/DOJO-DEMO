@@ -3629,9 +3629,10 @@ const App: React.FC = () => {
                       </div>
                     )}
                   </div>
+                </div>
 
-                  {/* Tab selector */}
-                  
+                {/* Content area - scrollable */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '0 1.5rem 1.5rem' }}>
                   {/* Unified Payment Area */}
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                     
@@ -3678,8 +3679,8 @@ const App: React.FC = () => {
                       )}
                     </button>
                   </motion.div>
-                </div>
- {/* Footer note */}
+
+                  {/* Footer note */}
                   <p style={{ fontSize: '0.6rem', color: '#94a3b8', textAlign: 'center', marginTop: '1rem', lineHeight: 1.4 }}>
                     Pagos procesados de forma segura. Ante cualquier duda,{' '}
                     <a href="mailto:ranasjiujitsu@gmail.com" style={{ color: '#05a86a', fontWeight: 700 }}>contáctanos</a>.
