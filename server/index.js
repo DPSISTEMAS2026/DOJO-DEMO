@@ -1231,9 +1231,10 @@ async function syncTransferPayments() {
                 let match;
                 while ((match = idRegex.exec(payment.description)) !== null) {
                     const potentialId = match[1];
-                    const found = students.find(s => s.id.toString() === potentialId);
-                    if (found && !matchedStudentIds.includes(potentialId)) {
-                        matchedStudentIds.push(potentialId);
+                    const numIdStr = Number(potentialId).toString();
+                    const found = students.find(s => s.id.toString() === numIdStr);
+                    if (found && !matchedStudentIds.includes(numIdStr)) {
+                        matchedStudentIds.push(numIdStr);
                     }
                 }
             }
