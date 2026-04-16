@@ -32,10 +32,7 @@ import {
   Monitor,
   Trash2,
   Phone,
-  Copy,
-  Banknote,
-  CheckCircle2,
-  AlertTriangle
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'react-qr-code';
@@ -321,9 +318,7 @@ const App: React.FC = () => {
   const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalTarget, setPaymentModalTarget] = useState<Student | Student[] | null>(null);
-  const [paymentTab, setPaymentTab] = useState<'transfer' | 'card'>('transfer');
-  const [transferCopied, setTransferCopied] = useState<string | null>(null);
-  const [transferSubmitted, setTransferSubmitted] = useState(false);
+
   
   const handleManualPayment = async (studentId: string, customDate?: string) => {
     try {
@@ -589,18 +584,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleCopyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setTransferCopied(label);
-      setTimeout(() => setTransferCopied(null), 2000);
-    });
-  };
-
   const openPaymentModal = (target: Student | Student[]) => {
     setPaymentModalTarget(target);
-    setPaymentTab('transfer');
-    setTransferCopied(null);
-    setTransferSubmitted(false);
     setShowPaymentModal(true);
   };
 
@@ -1874,13 +1859,7 @@ const App: React.FC = () => {
           const { charged, surcharge } = getSurcharge(baseAmount);
           const isGroup = studentsArr.length > 1;
 
-          const MP_TITULAR = 'Manuel Alejandro Plaza Arenas';
-          const MP_RUT = '18122714-1';
-          const MP_BANCO = 'Mercado Pago';
-          const MP_TIPO = 'Cuenta Vista';
-          const MP_CUENTA = '1064388798';
-          const MP_EMAIL = 'manuelplazaarenas@gmail.com';
-          const ALL_BANK_DATA = `Nombre: ${MP_TITULAR}\nRUT: ${MP_RUT}\nBanco / Medio: ${MP_BANCO}\nTipo de cuenta: ${MP_TIPO}\nNúmero de cuenta: ${MP_CUENTA}\nCorreo: ${MP_EMAIL}`;
+
           return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
@@ -3590,13 +3569,7 @@ const App: React.FC = () => {
           const isGroup = studentsArr.length > 1;
 
           // Datos de Mercado Pago para transferencia directa
-          const MP_TITULAR = 'Manuel Alejandro Plaza Arenas';
-          const MP_RUT = '18122714-1';
-          const MP_BANCO = 'Mercado Pago';
-          const MP_TIPO = 'Cuenta Vista';
-          const MP_CUENTA = '1064388798';
-          const MP_EMAIL = 'manuelplazaarenas@gmail.com';
-          const ALL_BANK_DATA = `Nombre: ${MP_TITULAR}\nRUT: ${MP_RUT}\nBanco / Medio: ${MP_BANCO}\nTipo de cuenta: ${MP_TIPO}\nNúmero de cuenta: ${MP_CUENTA}\nCorreo: ${MP_EMAIL}`;
+
 
           return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
