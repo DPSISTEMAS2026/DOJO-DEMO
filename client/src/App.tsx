@@ -229,7 +229,7 @@ const App: React.FC = () => {
       newScheduled = scheduled.filter(c => !(c.day === day && c.time === time && c.timestamp >= currentWeekStart));
     } else {
       // Lógica de límites del plan
-      const planLimits: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 4, 'Ilimitado': 99 };
+      const planLimits: Record<string, number> = { '1': 1, '1x': 1, '2': 2, '3': 3, '4': 4, 'Ilimitado': 99 };
       let planMax = 2;
       const planVal = currentUser.plan ? (currentUser.plan.includes(' ') ? currentUser.plan.split(' ')[0] : currentUser.plan[0]) : '2';
       
@@ -605,8 +605,8 @@ const App: React.FC = () => {
   const [newStudentData, setNewStudentData] = useState({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000 });
 
   const [fees, setFees] = useState<PlanFees>({
-    adults: { '1': 5000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 },
-    kids: { '1': 5000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 }
+    adults: { '1': 5000, '1x': 20000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 },
+    kids: { '1': 5000, '1x': 20000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 }
   });
 
   const handleSaveFees = async (updatedFees: PlanFees) => {
@@ -677,7 +677,7 @@ const App: React.FC = () => {
   };
 
   const beltLabels: Record<Belt, string> = { WHITE: 'Blanco', BLUE: 'Azul', PURPLE: 'Morado', BROWN: 'Marrón', BLACK: 'Negro', GRAY: 'Gris' };
-  const planLabels: Record<string, string> = { '1': 'Clase Individual', '2': '2x Semana', '3': '3x Semana', '4': '4x Semana', 'Ilimitado': 'Full Rana' };
+  const planLabels: Record<string, string> = { '1': 'Clase Individual', '1x': '1x Semana', '2': '2x Semana', '3': '3x Semana', '4': '4x Semana', 'Ilimitado': 'Full Rana' };
   const formatCLP = (amount: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
 
   const handleLogin = (studentToLogin?: Student) => {
@@ -3340,6 +3340,7 @@ const App: React.FC = () => {
                           const val = e.target.value;
                           const feeMap: Record<string, number> = {
                             "Clase Individual": 5000,
+                            "1x Semana": 20000,
                             "2x Semana": 35000,
                             "3x Semana": 40000,
                             "4x Semana": 45000,
@@ -3348,6 +3349,7 @@ const App: React.FC = () => {
                           setEditedStudent(prev => prev ? { ...prev, plan: val, monthlyFee: feeMap[val] || prev.monthlyFee } : null);
                         }}>
                         <option value="Clase Individual">Clase Individual ($5.000)</option>
+                        <option value="1x Semana">1x Semana ($20.000)</option>
                         <option value="2x Semana">2x Semana ($35.000)</option>
                         <option value="3x Semana">3x Semana ($40.000)</option>
                         <option value="4x Semana">4x Semana ($45.000)</option>
