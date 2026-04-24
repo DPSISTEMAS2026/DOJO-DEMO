@@ -1535,17 +1535,23 @@ cron.schedule('0 9 * * *', async () => {
 });
 
 // --- FEES & AUTOMATION PERSISTENCE (Using reserved news IDs) ---
+const DEFAULT_FEES = {
+    adults: { '1': 5000, '1x': 20000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 },
+    kids: { '1': 5000, '1x': 20000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 }
+};
+
 app.get('/api/fees', async (req, res) => {
     try {
         const { data, error } = await supabase.from('news').select('*').eq('id', 999998).maybeSingle();
         if (data && data.body) {
-            return res.json(JSON.parse(data.body));
+            const stored = JSON.parse(data.body);
+            // Merge con defaults para que claves nuevas siempre existan
+            return res.json({
+                adults: { ...DEFAULT_FEES.adults, ...stored.adults },
+                kids: { ...DEFAULT_FEES.kids, ...stored.kids }
+            });
         }
-        // Default fallback if not found
-        res.json({
-            adults: { '1': 5000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 },
-            kids: { '1': 5000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 }
-        });
+        res.json(DEFAULT_FEES);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
