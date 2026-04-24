@@ -231,12 +231,11 @@ const App: React.FC = () => {
       // Lógica de límites del plan
       const planLimits: Record<string, number> = { '1': 1, '1x': 1, '2': 2, '3': 3, '4': 4, 'Ilimitado': 99 };
       let planMax = 2;
-      const planVal = currentUser.plan ? (currentUser.plan.includes(' ') ? currentUser.plan.split(' ')[0] : currentUser.plan[0]) : '2';
-      
       if (currentUser.plan?.toLowerCase().includes('ilimitado')) {
         planMax = 99;
-      } else {
-        planMax = planLimits[planVal] || 2;
+      } else if (currentUser.plan) {
+        const match = currentUser.plan.match(/^(\d+)/);
+        planMax = match ? parseInt(match[1]) : 2;
       }
 
       const thisWeekClasses = scheduled.filter(c => c.timestamp >= currentWeekStart);
@@ -1709,9 +1708,11 @@ const App: React.FC = () => {
                       const cWeekStart = getWeekStart(new Date());
                       const booked = (currentUser?.scheduledClasses || []).filter(c => c.timestamp >= cWeekStart);
                       let planMax = 2;
-                      const planVal = currentUser?.plan ? currentUser.plan[0] : '2';
                       if (currentUser?.plan?.toLowerCase().includes('ilimitado')) planMax = 99;
-                      else planMax = parseInt(planVal) || 2;
+                      else if (currentUser?.plan) {
+                        const match = currentUser.plan.match(/^(\d+)/);
+                        planMax = match ? parseInt(match[1]) : 2;
+                      }
 
                       if (booked.length > 0) {
                         return <div style={{ fontWeight: 900, fontSize: '0.95rem' }}>{booked.length} de {planMax} <span style={{ fontSize: '0.7rem', color: 'var(--panel-muted)' }}>esta semana</span></div>;
