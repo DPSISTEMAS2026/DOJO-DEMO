@@ -388,6 +388,12 @@ const App: React.FC = () => {
   const [editedStudent, setEditedStudent] = useState<Student | null>(null);
   const [studentNewPassword, setStudentNewPassword] = useState('');
 
+  // Password recovery state
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryStatus, setRecoveryStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [recoveryMessage, setRecoveryMessage] = useState('');
+
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
   const [isSendingBirthdays, setIsSendingBirthdays] = useState(false);
 
@@ -706,6 +712,30 @@ const App: React.FC = () => {
       setViewMode('app');
     } else {
       alert('Correo o contraseña incorrecta');
+    }
+  };
+
+  const handleRecoverPassword = async () => {
+    if (!recoveryEmail.trim()) return;
+    setRecoveryStatus('loading');
+    setRecoveryMessage('');
+    try {
+      const res = await fetch(`${API_URL}/api/recover-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: recoveryEmail.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setRecoveryStatus('success');
+        setRecoveryMessage(data.message || 'Si el correo está registrado, recibirás un email con tus datos de acceso.');
+      } else {
+        setRecoveryStatus('error');
+        setRecoveryMessage(data.error || 'Error al procesar la solicitud.');
+      }
+    } catch (e) {
+      setRecoveryStatus('error');
+      setRecoveryMessage('Error de conexión. Verifica tu internet e intenta nuevamente.');
     }
   };
 
@@ -1330,7 +1360,7 @@ const App: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Contraseña</label>
-                  <button type="button" onClick={() => alert('Sistema de recuperación de contraseña disponible próximamente.')} style={{ background: 'none', border: 'none', color: 'var(--logo-green)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', padding: 0 }}>¿Olvidaste tu contraseña?</button>
+                  <button type="button" onClick={() => { setRecoveryEmail(authEmail); setRecoveryStatus('idle'); setRecoveryMessage(''); setShowRecoveryModal(true); }} style={{ background: 'none', border: 'none', color: 'var(--logo-green)', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', padding: 0 }}>¿Olvidaste tu contraseña?</button>
                 </div>
                 <div style={{ position: 'relative' }}>
                   <Lock size={18} style={{ position: 'absolute', left: '1.2rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--logo-green)' }} />
@@ -1419,6 +1449,84 @@ const App: React.FC = () => {
                     <button onClick={() => setMultiStudentAuthOptions([])} style={{ width: '100%', padding: '1rem', background: 'transparent', border: 'none', color: '#ef4444', fontWeight: 800, marginTop: '1.5rem', cursor: 'pointer' }}>
                       Cancelar
                     </button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Password Recovery Modal */}
+            <AnimatePresence>
+              {showRecoveryModal && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+                  onClick={(e) => e.target === e.currentTarget && setShowRecoveryModal(false)}
+                >
+                  <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 50 }}
+                    style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2.5rem', padding: '3rem 2.5rem', width: '100%', maxWidth: '420px', color: '#fff', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
+                  >
+                    {recoveryStatus === 'success' ? (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ width: '70px', height: '70px', background: 'rgba(5,168,106,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', border: '2px solid var(--logo-green)' }}>
+                          <Mail size={30} style={{ color: 'var(--logo-green)' }} />
+                        </div>
+                        <h3 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '1rem', color: '#fff' }}>¡Correo enviado!</h3>
+                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '2rem' }}>{recoveryMessage}</p>
+                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', marginBottom: '2rem' }}>Revisa tu bandeja de entrada y también la carpeta de spam.</p>
+                        <button onClick={() => setShowRecoveryModal(false)}
+                          style={{ width: '100%', padding: '1.2rem', background: 'var(--logo-green)', border: 'none', borderRadius: '1.2rem', color: '#fff', fontWeight: 900, fontSize: '1rem', cursor: 'pointer' }}
+                        >Volver al Login</button>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                          <div style={{ width: '60px', height: '60px', background: 'rgba(5,168,106,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                            <Lock size={24} style={{ color: 'var(--logo-green)' }} />
+                          </div>
+                          <h3 style={{ fontSize: '1.6rem', fontWeight: 900, marginBottom: '0.5rem', color: '#fff' }}>Recuperar Contraseña</h3>
+                          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', lineHeight: 1.5 }}>Ingresa tu correo electrónico y te enviaremos tus datos de acceso.</p>
+                        </div>
+
+                        {recoveryStatus === 'error' && (
+                          <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', padding: '1rem', borderRadius: '1rem', marginBottom: '1.5rem' }}>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#ef4444', fontWeight: 600 }}>❌ {recoveryMessage}</p>
+                          </div>
+                        )}
+
+                        <div style={{ marginBottom: '1.5rem' }}>
+                          <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '0.6rem' }}>Correo Electrónico</label>
+                          <div style={{ position: 'relative' }}>
+                            <Mail size={18} style={{ position: 'absolute', left: '1.2rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--logo-green)' }} />
+                            <input
+                              type="email"
+                              placeholder="nombre@ejemplo.com"
+                              value={recoveryEmail}
+                              onChange={e => setRecoveryEmail(e.target.value)}
+                              onKeyDown={e => e.key === 'Enter' && handleRecoverPassword()}
+                              autoFocus
+                              style={{ width: '100%', padding: '1.2rem 1.2rem 1.2rem 3.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '1.2rem', color: '#fff', fontSize: '1rem', outline: 'none' }}
+                              onFocus={(e) => e.target.style.borderColor = 'var(--logo-green)'}
+                              onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.15)'}
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={handleRecoverPassword}
+                          disabled={recoveryStatus === 'loading' || !recoveryEmail.trim()}
+                          style={{ width: '100%', padding: '1.3rem', background: recoveryStatus === 'loading' ? 'rgba(5,168,106,0.5)' : 'var(--logo-green)', border: 'none', borderRadius: '1.2rem', color: '#fff', fontWeight: 900, fontSize: '1rem', cursor: recoveryStatus === 'loading' ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', transition: 'all 0.3s' }}
+                        >
+                          {recoveryStatus === 'loading' ? (
+                            <><span style={{ display: 'inline-block', width: '18px', height: '18px', border: '3px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> Enviando...</>
+                          ) : (
+                            <><Mail size={18} /> Enviar Credenciales</>
+                          )}
+                        </button>
+
+                        <button onClick={() => setShowRecoveryModal(false)}
+                          style={{ width: '100%', padding: '1rem', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.5)', fontWeight: 800, marginTop: '1rem', cursor: 'pointer', fontSize: '0.9rem' }}
+                        >Cancelar</button>
+                      </>
+                    )}
                   </motion.div>
                 </motion.div>
               )}

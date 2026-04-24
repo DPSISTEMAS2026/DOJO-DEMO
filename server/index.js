@@ -936,6 +936,111 @@ app.post('/api/admin/send-credentials', async (req, res) => {
     }
 });
 
+// Recuperar contraseña - envía las credenciales por email
+app.post('/api/recover-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: 'Correo electrónico requerido' });
+
+        if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+            return res.status(500).json({ error: 'El servicio de correo no está configurado. Contacta al administrador.' });
+        }
+
+        const lowerEmail = email.trim().toLowerCase();
+        const { data: students, error: selectError } = await supabase
+            .from('students')
+            .select('name, email, password')
+            .ilike('email', lowerEmail);
+
+        if (selectError) throw selectError;
+
+        // Siempre respondemos con éxito para no revelar si el email existe o no (seguridad)
+        if (!students || students.length === 0) {
+            return res.json({ success: true, message: 'Si el correo está registrado, recibirás un email con tus datos de acceso.' });
+        }
+
+        const validStudents = students.filter(s => s.password);
+        if (validStudents.length === 0) {
+            return res.json({ success: true, message: 'Si el correo está registrado, recibirás un email con tus datos de acceso.' });
+        }
+
+        const smtpUser = process.env.SMTP_USER || process.env.SMTP_FROM;
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: Number(process.env.SMTP_PORT) || 587,
+            secure: process.env.SMTP_SECURE === 'true',
+            auth: { user: smtpUser, pass: process.env.SMTP_PASS }
+        });
+
+        // Generar filas de credenciales si hay múltiples cuentas con el mismo email
+        const credentialsRows = validStudents.map(s => `
+            <tr>
+                <td style="padding: 0.8rem 1rem; border-bottom: 1px solid #e2e8f0; font-weight: 700;">${s.name}</td>
+                <td style="padding: 0.8rem 1rem; border-bottom: 1px solid #e2e8f0;">
+                    <span style="background: #05a86a; color: #fff; padding: 3px 10px; border-radius: 6px; font-weight: 800; letter-spacing: 0.05em;">${s.password}</span>
+                </td>
+            </tr>
+        `).join('');
+
+        const firstName = validStudents[0].name.split(' ')[0];
+
+        const html = `
+            <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; background: #ffffff; padding: 2.5rem; border-radius: 2rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div style="width: 60px; height: 60px; background: #05a86a; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                        <span style="font-size: 1.8rem;">🔑</span>
+                    </div>
+                    <h2 style="color: #05a86a; margin-top: 0.5rem; font-size: 1.6rem;">Recuperación de Contraseña</h2>
+                    <p style="font-size: 1rem; color: #64748b; margin-top: 0.5rem;">Hola <strong>${firstName}</strong>, aquí tienes tus datos de acceso al portal de <strong>Dojo Ranas</strong>.</p>
+                </div>
+                
+                <div style="background: #f8fafc; padding: 2rem; border-radius: 1.5rem; margin-bottom: 2rem; border: 1px solid #e2e8f0;">
+                    <p style="margin: 0 0 1rem 0; font-weight: 800; font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">TUS CREDENCIALES:</p>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                        <thead>
+                            <tr style="background: rgba(5,168,106,0.08);">
+                                <th style="padding: 0.8rem 1rem; text-align: left; font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 2px solid #05a86a;">Nombre</th>
+                                <th style="padding: 0.8rem 1rem; text-align: left; font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 2px solid #05a86a;">Contraseña</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${credentialsRows}
+                        </tbody>
+                    </table>
+                    <p style="margin: 1rem 0 0 0; font-size: 0.85rem; color: #64748b;"><strong>Email de acceso:</strong> ${lowerEmail}</p>
+                    
+                    <a href="https://ranasjiujitsu.cl" style="display: block; background: #05a86a; color: #fff; padding: 1.2rem; text-decoration: none; border-radius: 1rem; font-weight: 800; text-align: center; margin-top: 1.5rem; box-shadow: 0 10px 20px rgba(5,168,106,0.2);">ENTRAR AL PORTAL 🥋</a>
+                </div>
+
+                <div style="background: #fffbeb; border: 1px solid #fbbf24; padding: 1.2rem; border-radius: 1rem; margin-bottom: 1.5rem;">
+                    <p style="margin: 0; font-size: 0.85rem; color: #92400e;">
+                        <strong>⚠️ Seguridad:</strong> Te recomendamos cambiar tu contraseña desde la sección <strong>Mi Perfil</strong> dentro del portal.
+                    </p>
+                </div>
+
+                <p style="font-size: 0.8rem; color: #94a3b8; text-align: center; margin-top: 2rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem;">
+                    Si no solicitaste este correo, puedes ignorarlo.<br>
+                    <strong>Dojo Ranas Concepción</strong> - Orompello 1421
+                </p>
+            </div>
+        `;
+
+        await transporter.sendMail({
+            from: `"Dojo Ranas 🐸" <${process.env.SMTP_FROM || smtpUser}>`,
+            to: lowerEmail,
+            subject: 'Recuperación de contraseña - Dojo Ranas 🐸',
+            html
+        });
+
+        console.log(`🔑 Password recovery email sent to ${lowerEmail} (${validStudents.length} accounts)`);
+        res.json({ success: true, message: 'Si el correo está registrado, recibirás un email con tus datos de acceso.' });
+
+    } catch (error) {
+        console.error('❌ Password recovery error:', error.message);
+        res.status(500).json({ error: 'Error al procesar la solicitud. Intenta nuevamente.' });
+    }
+});
+
 // Health check endpoint (for self-ping keep-alive)
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
