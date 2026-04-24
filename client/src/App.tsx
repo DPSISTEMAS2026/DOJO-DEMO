@@ -229,7 +229,6 @@ const App: React.FC = () => {
       newScheduled = scheduled.filter(c => !(c.day === day && c.time === time && c.timestamp >= currentWeekStart));
     } else {
       // Lógica de límites del plan
-      const planLimits: Record<string, number> = { '1': 1, '1x': 1, '2': 2, '3': 3, '4': 4, 'Ilimitado': 99 };
       let planMax = 2;
       if (currentUser.plan?.toLowerCase().includes('ilimitado')) {
         planMax = 99;
