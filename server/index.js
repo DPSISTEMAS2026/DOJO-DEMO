@@ -311,8 +311,7 @@ app.get('/api/students', async (req, res) => {
         for (const s of data) {
             let currentStatus = s.ispaid;
             if (s.lastpaymentdate) {
-                const pDate = new Date(s.lastpaymentdate);
-                pDate.setMonth(pDate.getMonth() + 1);
+                const pDate = DateTime.fromISO(s.lastpaymentdate).plus({ months: 1 }).toJSDate();
                 if (now > pDate && currentStatus === true) {
                     currentStatus = false;
                     await supabase.from('students').update({ ispaid: false }).eq('id', s.id);
