@@ -781,9 +781,13 @@ const App: React.FC = () => {
         } else {
           alert(`✅ Alumno registrado con éxito.\n\nClave provisional: ${generatedPassword}`);
         }
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        alert(`❌ Error al registrar alumno: ${errData.error || 'Error desconocido'}`);
       }
     } catch (error) {
       console.error("Error adding student:", error);
+      alert("❌ Error de conexión al registrar alumno.");
     }
   };
 

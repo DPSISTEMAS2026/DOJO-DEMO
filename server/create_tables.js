@@ -19,7 +19,7 @@ const sql = `
 CREATE TABLE IF NOT EXISTS students (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  email TEXT UNIQUE,
+  email TEXT,
   password TEXT,
   phone TEXT,
   belt TEXT DEFAULT 'WHITE',

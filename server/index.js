@@ -1461,6 +1461,37 @@ async function repairInconsistentProfiles() {
     }
 }
 
+// ======================================
+// EXPIRATION: Check 28 Days Rule
+// ======================================
+async function expireOldPayments() {
+    console.log('[EXPIRATION] Verificando vencimiento de 28 días...');
+    try {
+        const { data: students, error } = await supabase.from('students').select('id, ispaid, lastpaymentdate, name');
+        if (error) throw error;
+
+        const now = new Date();
+        let expiredCount = 0;
+
+        for (const s of students) {
+            if (s.lastpaymentdate && s.ispaid === true) {
+                const pDate = new Date(s.lastpaymentdate);
+                pDate.setDate(pDate.getDate() + 28);
+                if (now > pDate) {
+                    console.log(`[EXPIRATION] 🔴 Expirando pago de ${s.name} (ID: ${s.id}). Último pago: ${s.lastpaymentdate}`);
+                    await supabase.from('students').update({ ispaid: false }).eq('id', s.id);
+                    expiredCount++;
+                }
+            }
+        }
+        if (expiredCount > 0) {
+            console.log(`[EXPIRATION] Verificación completada. Se expiraron ${expiredCount} pagos.`);
+        }
+    } catch (e) {
+        console.error('[EXPIRATION ERROR]', e.message);
+    }
+}
+
 // API endpoint for manual repair trigger
 app.post('/api/admin/repair-profiles', async (req, res) => {
     try {
@@ -1498,7 +1529,10 @@ cron.schedule('0 9 * * *', async () => {
     // 1. Repair Inconsistent Profiles
     await repairInconsistentProfiles();
 
-    // 2. Birthdays
+    // 2. Expire old payments (28 Days Rule)
+    await expireOldPayments();
+
+    // 3. Birthdays
     try {
         const { data: students, error } = await supabase.from('students').select('*');
         if (error) throw error;
