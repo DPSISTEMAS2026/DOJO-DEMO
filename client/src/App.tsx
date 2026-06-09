@@ -182,6 +182,8 @@ const VIDEO_CATEGORIES = [
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(() => localStorage.getItem('viewMode') as ViewMode || 'landing');
   const [showRanappModal, setShowRanappModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [noticeData, setNoticeData] = useState({ 
     subject: '', 
     message: ''
@@ -1285,12 +1287,57 @@ const App: React.FC = () => {
                   <Facebook size={24} className="hover-lift" style={{ cursor: 'pointer' }} />
                 </div>
               </div>
+              <div className="mobile-center">
+                <h4 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.05em' }}>LEGAL</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', fontWeight: 600 }}>
+                  <span className="footer-link" onClick={() => setShowTermsModal(true)} style={{ cursor: 'pointer' }}>Términos y Condiciones</span>
+                  <span className="footer-link" onClick={() => setShowPrivacyModal(true)} style={{ cursor: 'pointer' }}>Políticas de Privacidad</span>
+                </div>
+              </div>
             </div>
             <div style={{ paddingTop: '3rem', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.1em' }}>
               © 2026 RANAS JIU JITSU • CONCEPCIÓN CHILE
             </div>
           </div>
         </footer>
+
+        {/* Terms and Conditions Modal */}
+        <AnimatePresence>
+          {showTermsModal && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }} onClick={() => setShowTermsModal(false)}>
+              <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2rem', padding: '3rem 2.5rem', width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto', color: '#fff', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+                <button onClick={() => setShowTermsModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '35px', height: '35px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={16} /></button>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '1.5rem', color: 'var(--logo-green)' }}>Términos y Condiciones</h3>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <p><strong>1. Aceptación de los términos</strong><br/>Al descargar, instalar o utilizar la aplicación Ranas Jiu Jitsu (la "Aplicación"), aceptas quedar vinculado por estos Términos y Condiciones. Si no estás de acuerdo, no utilices la Aplicación.</p>
+                  <p><strong>2. Uso de la Aplicación</strong><br/>La Aplicación está destinada exclusivamente a los alumnos y miembros administrativos de la academia Ranas Jiu Jitsu para la gestión de clases, visualización de progreso y pagos de mensualidad.</p>
+                  <p><strong>3. Membresías y Pagos</strong><br/>Los pagos de las mensualidades son procesados por proveedores externos seguros (Mercado Pago u otros). La academia no almacena datos de tarjetas de crédito. No se emitirán reembolsos por clases no asistidas o inactividad del alumno.</p>
+                  <p><strong>4. Conducta del Usuario</strong><br/>Te comprometes a utilizar la Aplicación con respeto y responsabilidad. Cualquier mal uso del sistema para alterar asistencias, falsear pagos o realizar actos fraudulentos resultará en la suspensión inmediata de la cuenta y cancelación de la membresía en la academia.</p>
+                  <p><strong>5. Cancelación de Membresía</strong><br/>Puedes solicitar la cancelación de tu suscripción o eliminación de tu cuenta en cualquier momento poniéndote en contacto con la administración del Dojo de manera presencial o al correo de contacto.</p>
+                  <p><strong>6. Modificaciones</strong><br/>Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigor de manera inmediata al ser publicados en la Aplicación.</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Privacy Policy Modal */}
+        <AnimatePresence>
+          {showPrivacyModal && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }} onClick={() => setShowPrivacyModal(false)}>
+              <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2rem', padding: '3rem 2.5rem', width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto', color: '#fff', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+                <button onClick={() => setShowPrivacyModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '35px', height: '35px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={16} /></button>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '1.5rem', color: 'var(--logo-green)' }}>Políticas de Privacidad</h3>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <p><strong>1. Información que recopilamos</strong><br/>Al registrarte en el Dojo, recopilamos información personal básica necesaria para el funcionamiento de la academia, la cual incluye: nombre completo, correo electrónico, número de teléfono, fecha de nacimiento y documento de identidad. También recopilamos tu foto de perfil si decides subir una.</p>
+                  <p><strong>2. Uso de tu información</strong><br/>Utilizamos tus datos estrictamente para proporcionarte los servicios de la academia, administrar tu suscripción, llevar registro de tu grado (cinturón) y clases asistidas, así como enviarte comunicaciones importantes (recordatorios de pago o noticias del dojo).</p>
+                  <p><strong>3. Protección y Seguridad</strong><br/>Tu información personal se encuentra alojada en bases de datos seguras (Supabase) y no será vendida, arrendada o compartida con terceros para fines comerciales o de marketing ajenos a Ranas Jiu Jitsu.</p>
+                  <p><strong>4. Eliminación de datos de usuario</strong><br/>Como usuario, tienes el derecho de solicitar la eliminación total de tus datos personales e historial en cualquier momento. Para ejercer este derecho, comunícate directamente con la administración del Dojo o envía un correo electrónico. Una vez solicitada, la cuenta y sus datos asociados serán eliminados de nuestras bases de manera irreversible.</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Ranapp Phone Modal */}
         <AnimatePresence>
