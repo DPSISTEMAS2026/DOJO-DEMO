@@ -31,7 +31,8 @@ import {
   ImageIcon,
   Monitor,
   Trash2,
-  Phone
+  Phone,
+  Smartphone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'react-qr-code';
@@ -180,6 +181,7 @@ const VIDEO_CATEGORIES = [
 
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>(() => localStorage.getItem('viewMode') as ViewMode || 'landing');
+  const [showRanappModal, setShowRanappModal] = useState(false);
   const [noticeData, setNoticeData] = useState({ 
     subject: '', 
     message: ''
@@ -956,6 +958,9 @@ const App: React.FC = () => {
                 <a href="#gallery" style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.8 }}>Galería</a>
               </div>
               <div className="mobile-hide" style={{ width: '1px', height: '20px', background: 'var(--glass-border)' }} />
+              <button className="mobile-hide" onClick={() => setShowRanappModal(true)} style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid #334155', padding: '0.6rem 1.2rem', borderRadius: '50px', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', cursor: 'pointer', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                <Smartphone size={14} /> PRÓXIMAMENTE RANAPP
+              </button>
               <button style={{ background: 'var(--logo-green)', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '50px', fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', cursor: 'pointer', color: '#fff' }} onClick={() => setViewMode('auth')}>Entrar</button>
             </div>
           </div>
@@ -1286,6 +1291,51 @@ const App: React.FC = () => {
             </div>
           </div>
         </footer>
+
+        {/* Ranapp Phone Modal */}
+        <AnimatePresence>
+          {showRanappModal && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setShowRanappModal(false)}>
+              <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} style={{ position: 'relative', width: '320px', height: '650px', background: '#0a0a0a', borderRadius: '40px', border: '8px solid #1f2937', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+                {/* Phone Notch */}
+                <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '120px', height: '25px', background: '#1f2937', borderBottomLeftRadius: '15px', borderBottomRightRadius: '15px', zIndex: 10 }}></div>
+                
+                {/* App Content */}
+                <div style={{ padding: '3rem 1.5rem 1.5rem', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', overflowY: 'auto' }}>
+                  <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translate(-50%, -50%)', width: '150px', height: '150px', background: 'var(--logo-green)', filter: 'blur(60px)', opacity: 0.3, borderRadius: '50%', zIndex: 0 }}></div>
+                  <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Ranapp Logo" style={{ width: '80px', height: '80px', borderRadius: '50%', border: '2px solid var(--logo-green)', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }} />
+                  
+                  <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', letterSpacing: '-1px', textAlign: 'center', lineHeight: 1.1, marginBottom: '0.5rem', position: 'relative', zIndex: 1 }}>RANAPP</h3>
+                  <span style={{ color: 'var(--logo-green)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '2rem', position: 'relative', zIndex: 1 }}>Próximamente</span>
+                  
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', textAlign: 'center', lineHeight: 1.5, marginBottom: '2rem', position: 'relative', zIndex: 1, fontWeight: 500 }}>
+                    La experiencia de tu dojo directamente en tu bolsillo. Exclusivo para alumnos.
+                  </p>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', position: 'relative', zIndex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <Calendar size={20} color="var(--logo-green)" />
+                      <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>Revisa tus horarios y clases</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <Play size={20} color="var(--logo-green)" />
+                      <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>Ve contenido exclusivo</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <DollarSign size={20} color="var(--logo-green)" />
+                      <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>Paga tu mensualidad fácil</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Home indicator */}
+                <div style={{ width: '100%', padding: '1rem', display: 'flex', justifyContent: 'center', background: '#0a0a0a' }}>
+                  <div style={{ width: '40%', height: '5px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px' }}></div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
