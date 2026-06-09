@@ -3357,7 +3357,7 @@ const App: React.FC = () => {
                         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                           style={{ background: 'rgba(5,168,106,0.1)', border: '1px solid rgba(5,168,106,0.3)', borderRadius: '1rem', padding: '0.8rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: 'var(--logo-green)', fontWeight: 900, fontSize: '0.8rem' }}
                           onClick={() => {
-                            setNewStudentData({ name: '', email: selectedStudent.email || '', phone: selectedStudent.phone || '', birthDate: '', documentId: '', belt: 'WHITE', plan: selectedStudent.plan ? selectedStudent.plan.toString() : '3', monthlyFee: selectedStudent.monthlyFee || 40000 });
+                            setNewStudentData({ name: '', email: selectedStudent.email || '', phone: selectedStudent.phone || '', birthDate: '', documentId: '', belt: 'WHITE', plan: selectedStudent.plan ? selectedStudent.plan.toString() : '3', monthlyFee: selectedStudent.monthlyFee || 40000, discountCategory: '', discountPercentage: 0 });
                             setSelectedStudent(null);
                             setIsAddingStudent(true);
                           }}
