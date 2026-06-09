@@ -1633,6 +1633,33 @@ app.post('/api/automation', async (req, res) => {
     }
 });
 
+app.get('/api/discount-categories', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('news').select('*').eq('id', 999996).maybeSingle();
+        if (data && data.body) {
+            return res.json(JSON.parse(data.body));
+        }
+        res.json(['Convenio Bomberos', 'Profesor', 'Becados']);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/discount-categories', async (req, res) => {
+    try {
+        const { error } = await supabase.from('news').upsert({
+            id: 999996,
+            title: 'SYSTEM_DISCOUNT_CATEGORIES',
+            body: JSON.stringify(req.body),
+            date: new Date().toISOString()
+        });
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log("- MP Token exists:", !!process.env.VITE_MP_ACCESS_TOKEN);

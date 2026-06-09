@@ -406,7 +406,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [studentsRes, videosRes, newsRes, galleryRes, heroVideosRes, noticeRes, feesRes, automationRes] = await Promise.all([
+        const [studentsRes, videosRes, newsRes, galleryRes, heroVideosRes, noticeRes, feesRes, automationRes, discountCatRes] = await Promise.all([
           fetch(`${API_URL}/api/students`),
           fetch(`${API_URL}/api/videos`),
           fetch(`${API_URL}/api/news`),
@@ -414,7 +414,8 @@ const App: React.FC = () => {
           fetch(`${API_URL}/api/hero-videos`),
           fetch(`${API_URL}/api/global-notice`),
           fetch(`${API_URL}/api/fees`),
-          fetch(`${API_URL}/api/automation`)
+          fetch(`${API_URL}/api/automation`),
+          fetch(`${API_URL}/api/discount-categories`)
         ]);
         const studentsData = await studentsRes.json();
         const videosData = await videosRes.json();
@@ -424,6 +425,7 @@ const App: React.FC = () => {
         const noticeDataResult = await noticeRes.json();
         const feesData = await feesRes.json();
         const automationData = await automationRes.json();
+        const discountCatData = await discountCatRes.json().catch(() => null);
 
         setStudents(studentsData || []);
         setVideos(videosData || []);
@@ -433,6 +435,7 @@ const App: React.FC = () => {
         if (noticeDataResult !== null) setNoticeData(noticeDataResult);
         if (feesData !== null) setFees(feesData);
         if (automationData !== null) setAutomation(automationData);
+        if (discountCatData !== null) setDiscountCategories(discountCatData);
 
         // Sync currentUser with fresh data from server (e.g. admin changed payment status)
         const cachedUser = localStorage.getItem('currentUser');
@@ -600,7 +603,10 @@ const App: React.FC = () => {
     const charged = Math.ceil(baseAmount / (1 - rate));
     return { charged, surcharge: charged - baseAmount, rate };
   };
-  const [newStudentData, setNewStudentData] = useState({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000 });
+  const [newStudentData, setNewStudentData] = useState({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000, discountCategory: '', discountPercentage: 0 });
+  const [discountCategories, setDiscountCategories] = useState<string[]>(['Convenio Bomberos', 'Profesor', 'Becados']);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   const [fees, setFees] = useState<PlanFees>({
     adults: { '1': 5000, '1x': 20000, '2': 35000, '3': 40000, '4': 45000, 'Ilimitado': 50000 },
@@ -763,7 +769,31 @@ const App: React.FC = () => {
     }
     const existingStudentSameEmail = students.find(s => s.email && s.email.trim().toLowerCase() === newStudentData.email.trim().toLowerCase());
     const generatedPassword = existingStudentSameEmail?.password || Math.random().toString(36).slice(-6).toUpperCase();
-    const newStudent = { ...newStudentData, classesAttended: 0, classesToNextBelt: 40, isPaid: false, history: [], lastPaymentMonth: '', password: generatedPassword };
+    
+    let finalPlan = newStudentData.plan;
+    let finalFee = newStudentData.monthlyFee;
+
+    if (newStudentData.discountPercentage > 0 && newStudentData.discountCategory) {
+        finalPlan = `${finalPlan} (Desc. ${newStudentData.discountPercentage}% - ${newStudentData.discountCategory})`;
+        finalFee = Math.round(newStudentData.monthlyFee * (1 - newStudentData.discountPercentage / 100));
+    }
+
+    const newStudent = { 
+      name: newStudentData.name, 
+      email: newStudentData.email, 
+      phone: newStudentData.phone, 
+      birthDate: newStudentData.birthDate, 
+      documentId: newStudentData.documentId, 
+      belt: newStudentData.belt, 
+      plan: finalPlan, 
+      monthlyFee: finalFee, 
+      classesAttended: 0, 
+      classesToNextBelt: 40, 
+      isPaid: false, 
+      history: [], 
+      lastPaymentMonth: '', 
+      password: generatedPassword 
+    };
 
     try {
       const response = await fetch(`${API_URL}/api/students`, {
@@ -774,7 +804,7 @@ const App: React.FC = () => {
       if (response.ok) {
         const savedStudent = await response.json();
         setStudents([...students, savedStudent]);
-        setNewStudentData({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000 });
+        setNewStudentData({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000, discountCategory: '', discountPercentage: 0 });
         setIsAddingStudent(false);
         if (existingStudentSameEmail) {
           alert(`✅ Familiar registrado con éxito.\nSe asignó automáticamente la misma clave de acceso para vincular las cuentas.`);
@@ -3150,9 +3180,70 @@ const App: React.FC = () => {
                       {Object.keys(planLabels).map(p => <option key={p} value={p}>{planLabels[p]}</option>)}
                     </select>
                   </div>
+                  
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 2 }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--panel-muted)' }}>CATEGORÍA DESCUENTO</label>
+                        <select 
+                            style={{ padding: '1.2rem', borderRadius: '1rem', border: '1px solid var(--panel-border)', background: '#fff', color: '#111', fontWeight: 900, fontSize: '1rem', outline: 'none', cursor: 'pointer' }}
+                            value={newStudentData.discountCategory}
+                            onChange={e => {
+                                if (e.target.value === 'NEW') {
+                                    setIsAddingCategory(true);
+                                    setNewStudentData({ ...newStudentData, discountCategory: '' });
+                                } else {
+                                    setIsAddingCategory(false);
+                                    setNewStudentData({ ...newStudentData, discountCategory: e.target.value });
+                                }
+                            }}
+                        >
+                            <option value="">Ninguno</option>
+                            {discountCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                            <option value="NEW">+ Crear nueva categoría...</option>
+                        </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--panel-muted)' }}>% DSCTO.</label>
+                        <input 
+                            type="number" min="0" max="100"
+                            style={{ padding: '1.2rem', borderRadius: '1rem', border: '1px solid var(--panel-border)', background: '#f8fafc', color: '#111', fontWeight: 900, fontSize: '1rem', outline: 'none' }}
+                            placeholder="0"
+                            value={newStudentData.discountPercentage || ''}
+                            onChange={e => setNewStudentData({ ...newStudentData, discountPercentage: Number(e.target.value) })}
+                        />
+                    </div>
+                  </div>
+
+                  {isAddingCategory && (
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <input 
+                              style={{ flex: 1, padding: '1rem', borderRadius: '0.8rem', border: '1px solid var(--panel-border)', outline: 'none' }} 
+                              placeholder="Nombre nueva categoría..."
+                              value={newCategoryName}
+                              onChange={e => setNewCategoryName(e.target.value)}
+                          />
+                          <button 
+                              style={{ padding: '0 1rem', background: 'var(--logo-green)', color: '#fff', border: 'none', borderRadius: '0.8rem', fontWeight: 800, cursor: 'pointer' }}
+                              onClick={async () => {
+                                  if (!newCategoryName) return;
+                                  const updatedCategories = [...discountCategories, newCategoryName];
+                                  setDiscountCategories(updatedCategories);
+                                  setNewStudentData({ ...newStudentData, discountCategory: newCategoryName });
+                                  setIsAddingCategory(false);
+                                  setNewCategoryName('');
+                                  await fetch(`${API_URL}/api/discount-categories`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updatedCategories) });
+                              }}
+                          >
+                              GUARDAR
+                          </button>
+                      </div>
+                  )}
+
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 0', borderTop: '2px dashed var(--panel-border)', marginTop: '0.5rem' }}>
-                    <span style={{ fontWeight: 800, color: '#111', fontSize: '0.9rem' }}>Mensualidad Auto:</span>
-                    <span style={{ fontWeight: 900, color: 'var(--logo-green)', fontSize: '1.6rem', letterSpacing: '-1px' }}>{formatCLP(newStudentData.monthlyFee)}</span>
+                    <span style={{ fontWeight: 800, color: '#111', fontSize: '0.9rem' }}>Mensualidad Final:</span>
+                    <span style={{ fontWeight: 900, color: 'var(--logo-green)', fontSize: '1.6rem', letterSpacing: '-1px' }}>
+                      {formatCLP(Math.round(newStudentData.monthlyFee * (1 - (newStudentData.discountPercentage || 0) / 100)))}
+                    </span>
                   </div>
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ marginTop: '0.5rem', width: '100%', padding: '1.4rem', background: 'var(--logo-green)', color: '#fff', fontSize: '0.9rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 900, borderRadius: '1.2rem', border: 'none', cursor: 'pointer', boxShadow: '0 15px 30px rgba(5,168,106,0.3)' }} onClick={handleAddStudent}>REGISTRAR EN EL DOJO</motion.button>
                 </div>
