@@ -184,6 +184,7 @@ const App: React.FC = () => {
   const [showRanappModal, setShowRanappModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [isLandingMobileMenuOpen, setIsLandingMobileMenuOpen] = useState(false);
   const [noticeData, setNoticeData] = useState({ 
     subject: '', 
     message: ''
@@ -963,10 +964,60 @@ const App: React.FC = () => {
               <button className="mobile-hide" onClick={() => setShowRanappModal(true)} style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid #334155', padding: '0.6rem 1.2rem', borderRadius: '50px', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', cursor: 'pointer', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
                 <Smartphone size={14} /> PRÓXIMAMENTE RANAPP
               </button>
-              <button style={{ background: 'var(--logo-green)', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '50px', fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', cursor: 'pointer', color: '#fff' }} onClick={() => setViewMode('auth')}>Entrar</button>
+              <button style={{ background: 'var(--logo-green)', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '50px', fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', cursor: 'pointer', color: '#fff' }} onClick={() => { setIsLandingMobileMenuOpen(false); setViewMode('auth'); }}>Entrar</button>
+              {isMobile && (
+                <button 
+                  onClick={() => setIsLandingMobileMenuOpen(!isLandingMobileMenuOpen)} 
+                  style={{ background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0.2rem' }}
+                >
+                  {isLandingMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                </button>
+              )}
             </div>
           </div>
         </nav>
+
+        {/* Landing Mobile Menu Drawer */}
+        <AnimatePresence>
+          {isMobile && isLandingMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                position: 'fixed',
+                top: '5.5rem',
+                left: '1rem',
+                right: '1rem',
+                background: 'var(--bg-glass)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '24px',
+                border: '1px solid var(--glass-border)',
+                padding: '2rem',
+                zIndex: 999,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.5rem',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+              }}
+            >
+              <a href="#inicio" onClick={() => setIsLandingMobileMenuOpen(false)} style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center' }}>Inicio</a>
+              <a href="#profesor" onClick={() => setIsLandingMobileMenuOpen(false)} style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center' }}>Noticias</a>
+              <a href="#gallery" onClick={() => setIsLandingMobileMenuOpen(false)} style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center' }}>Galería</a>
+              <div style={{ width: '100%', height: '1px', background: 'var(--glass-border)' }} />
+              <button 
+                onClick={() => {
+                  setShowRanappModal(true);
+                  setIsLandingMobileMenuOpen(false);
+                }} 
+                style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid #334155', padding: '0.8rem 1.5rem', borderRadius: '50px', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', cursor: 'pointer', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}
+              >
+                <Smartphone size={16} /> PRÓXIMAMENTE RANAPP
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Hero Section - 1. INICIO */}
         <section id="inicio" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', padding: '12rem 0 2rem', position: 'relative' }}>
@@ -1305,9 +1356,9 @@ const App: React.FC = () => {
         <AnimatePresence>
           {showTermsModal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }} onClick={() => setShowTermsModal(false)}>
-              <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2rem', padding: '3rem 2.5rem', width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto', color: '#fff', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+              <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: isMobile ? '1.5rem' : '2rem', padding: isMobile ? '2rem 1.5rem' : '3rem 2.5rem', width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto', color: '#fff', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', position: 'relative' }} onClick={e => e.stopPropagation()}>
                 <button onClick={() => setShowTermsModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '35px', height: '35px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={16} /></button>
-                <h3 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '1.5rem', color: 'var(--logo-green)' }}>Términos y Condiciones</h3>
+                <h3 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 900, marginBottom: '1.5rem', color: 'var(--logo-green)' }}>Términos y Condiciones</h3>
                 <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <p><strong>1. Aceptación de los términos</strong><br/>Al descargar, instalar o utilizar la aplicación Ranas Jiu Jitsu (la "Aplicación"), aceptas quedar vinculado por estos Términos y Condiciones. Si no estás de acuerdo, no utilices la Aplicación.</p>
                   <p><strong>2. Uso de la Aplicación</strong><br/>La Aplicación está destinada exclusivamente a los alumnos y miembros administrativos de la academia Ranas Jiu Jitsu para la gestión de clases, visualización de progreso y pagos de mensualidad.</p>
@@ -1325,9 +1376,9 @@ const App: React.FC = () => {
         <AnimatePresence>
           {showPrivacyModal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }} onClick={() => setShowPrivacyModal(false)}>
-              <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '2rem', padding: '3rem 2.5rem', width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto', color: '#fff', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+              <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: isMobile ? '1.5rem' : '2rem', padding: isMobile ? '2rem 1.5rem' : '3rem 2.5rem', width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto', color: '#fff', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', position: 'relative' }} onClick={e => e.stopPropagation()}>
                 <button onClick={() => setShowPrivacyModal(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '35px', height: '35px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={16} /></button>
-                <h3 style={{ fontSize: '1.8rem', fontWeight: 900, marginBottom: '1.5rem', color: 'var(--logo-green)' }}>Políticas de Privacidad</h3>
+                <h3 style={{ fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 900, marginBottom: '1.5rem', color: 'var(--logo-green)' }}>Políticas de Privacidad</h3>
                 <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <p><strong>1. Información que recopilamos</strong><br/>Al registrarte en el Dojo, recopilamos información personal básica necesaria para el funcionamiento de la academia, la cual incluye: nombre completo, correo electrónico, número de teléfono, fecha de nacimiento y documento de identidad. También recopilamos tu foto de perfil si decides subir una.</p>
                   <p><strong>2. Uso de tu información</strong><br/>Utilizamos tus datos estrictamente para proporcionarte los servicios de la academia, administrar tu suscripción, llevar registro de tu grado (cinturón) y clases asistidas, así como enviarte comunicaciones importantes (recordatorios de pago o noticias del dojo).</p>
@@ -1343,7 +1394,10 @@ const App: React.FC = () => {
         <AnimatePresence>
           {showRanappModal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setShowRanappModal(false)}>
-              <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} style={{ position: 'relative', width: '320px', height: '650px', background: '#0a0a0a', borderRadius: '40px', border: '8px solid #1f2937', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+              <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} style={{ position: 'relative', width: '320px', height: '650px', maxHeight: 'min(650px, 90vh)', background: '#0a0a0a', borderRadius: '40px', border: '8px solid #1f2937', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+                {/* Close Button on Phone Mockup */}
+                <button onClick={() => setShowRanappModal(false)} style={{ position: 'absolute', top: '1.2rem', right: '1.2rem', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '30px', height: '30px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 20 }}><X size={14} /></button>
+
                 {/* Phone Notch */}
                 <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '120px', height: '25px', background: '#1f2937', borderBottomLeftRadius: '15px', borderBottomRightRadius: '15px', zIndex: 10 }}></div>
                 
@@ -3244,11 +3298,13 @@ const App: React.FC = () => {
       <AnimatePresence>
         {
           showQRModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(30px)' }} onClick={() => setShowQRModal(false)}>
-              <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="glass" style={{ padding: '5rem', borderRadius: '4rem', textAlign: 'center', background: 'white', border: '1px solid var(--glass-border)' }} onClick={e => e.stopPropagation()}>
-                <h2 style={{ color: '#111', fontSize: '2.5rem', fontWeight: 900, marginBottom: '2rem' }}>Acceso Tatami</h2>
-                <QRCode value="CLASS_CHECKIN_2024" size={400} />
-                <button className="btn-primary" style={{ marginTop: '3rem', width: '100%' }} onClick={() => setShowQRModal(false)}>CERRAR</button>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(30px)' }} onClick={() => setShowQRModal(false)}>
+              <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="glass" style={{ padding: isMobile ? '2.5rem 2rem' : '5rem', borderRadius: isMobile ? '2.5rem' : '4rem', width: '100%', maxWidth: '480px', textAlign: 'center', background: 'white', border: '1px solid var(--glass-border)', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+                <h2 style={{ color: '#111', fontSize: isMobile ? '1.8rem' : '2.5rem', fontWeight: 900, marginBottom: '2rem' }}>Acceso Tatami</h2>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', overflow: 'hidden' }}>
+                  <QRCode value="CLASS_CHECKIN_2024" size={isMobile ? 220 : 360} style={{ width: '100%', height: 'auto', maxWidth: isMobile ? '220px' : '360px' }} />
+                </div>
+                <button className="btn-primary" style={{ marginTop: isMobile ? '2rem' : '3rem', width: '100%', justifyContent: 'center' }} onClick={() => setShowQRModal(false)}>CERRAR</button>
               </motion.div>
             </motion.div>
           )
@@ -3256,8 +3312,8 @@ const App: React.FC = () => {
 
         {
           isAddingStudent && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(10px)' }}>
-              <motion.div style={{ width: '100%', maxWidth: '450px', padding: window.innerWidth < 768 ? '2rem' : '3.5rem', borderRadius: window.innerWidth < 768 ? '2rem' : '3rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)' }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(10px)' }}>
+              <motion.div style={{ width: '100%', maxWidth: '450px', padding: isMobile ? '2rem 1.5rem' : '3.5rem', borderRadius: isMobile ? '2rem' : '3rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
                   <h2 style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-1px', color: '#111', lineHeight: 1 }}>Nuevo <br /><span style={{ color: 'var(--logo-green)' }}>Alumno</span></h2>
                   <button onClick={() => setIsAddingStudent(false)} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#111', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
@@ -3278,8 +3334,8 @@ const App: React.FC = () => {
                     </select>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 2 }}>
+                  <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '1rem', marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: isMobile ? 'none' : 2 }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--panel-muted)' }}>CATEGORÍA DESCUENTO</label>
                         <select 
                             style={{ padding: '1.2rem', borderRadius: '1rem', border: '1px solid var(--panel-border)', background: '#fff', color: '#111', fontWeight: 900, fontSize: '1rem', outline: 'none', cursor: 'pointer' }}
@@ -3299,7 +3355,7 @@ const App: React.FC = () => {
                             <option value="NEW">+ Crear nueva categoría...</option>
                         </select>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: isMobile ? 'none' : 1 }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--panel-muted)' }}>% DSCTO.</label>
                         <input 
                             type="number" min="0" max="100"
@@ -3351,8 +3407,8 @@ const App: React.FC = () => {
 
         {
           isSendingNotice && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(10px)' }}>
-              <motion.div className="glass" style={{ width: '100%', maxWidth: '600px', padding: isMobile ? '2rem' : '4rem', borderRadius: isMobile ? '2rem' : '3rem', border: '1px solid var(--glass-border)', background: 'var(--panel-surface)' }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(10px)' }}>
+              <motion.div className="glass" style={{ width: '100%', maxWidth: '600px', padding: isMobile ? '2rem 1.5rem' : '4rem', borderRadius: isMobile ? '2rem' : '3rem', border: '1px solid var(--glass-border)', background: 'var(--panel-surface)', maxHeight: '90vh', overflowY: 'auto' }}>
                 <h2 style={{ marginBottom: '2rem', color: 'var(--panel-text)' }}>Comunicado Masivo</h2>
                 <input className="glass" style={{ width: '100%', padding: '1.2rem', marginBottom: '1.5rem', background: 'var(--panel-bg)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)' }} placeholder="Asunto del correo" value={noticeData.subject} onChange={e => setNoticeData({ ...noticeData, subject: e.target.value })} />
                 <textarea className="glass" style={{ width: '100%', height: '200px', padding: '1.5rem', resize: 'none', background: 'var(--panel-bg)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)' }} placeholder="Mensaje para todos los alumnos..." value={noticeData.message} onChange={e => setNoticeData({ ...noticeData, message: e.target.value })} />
@@ -3753,10 +3809,10 @@ const App: React.FC = () => {
 
         {
           isAddingNews && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(10px)' }}>
-              <motion.div style={{ width: '100%', maxWidth: '500px', padding: '3.5rem', borderRadius: '3rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(10px)' }}>
+              <motion.div style={{ width: '100%', maxWidth: '500px', padding: isMobile ? '2rem 1.5rem' : '3.5rem', borderRadius: isMobile ? '2rem' : '3rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                  <h2 style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-1px', color: '#111' }}>Crear <span style={{ color: 'var(--logo-green)' }}>Noticia</span></h2>
+                  <h2 style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', fontWeight: 900, letterSpacing: '-1px', color: '#111' }}>Crear <span style={{ color: 'var(--logo-green)' }}>Noticia</span></h2>
                   <button onClick={() => setIsAddingNews(false)} style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', color: '#111', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
@@ -3815,10 +3871,10 @@ const App: React.FC = () => {
 
         {
           isAddingGallery && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backdropFilter: 'blur(10px)' }}>
-              <motion.div style={{ width: '100%', maxWidth: '450px', padding: '3.5rem', borderRadius: '3rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)' }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backdropFilter: 'blur(10px)' }}>
+              <motion.div style={{ width: '100%', maxWidth: '450px', padding: isMobile ? '2rem 1.5rem' : '3.5rem', borderRadius: isMobile ? '2rem' : '3rem', background: '#fff', color: '#111', border: '1px solid rgba(0,0,0,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)', maxHeight: '90vh', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-                  <h2 style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-1px', color: '#111' }}>Añadir a <span style={{ color: 'var(--logo-green)' }}>Galería</span></h2>
+                  <h2 style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', fontWeight: 900, letterSpacing: '-1px', color: '#111' }}>Añadir a <span style={{ color: 'var(--logo-green)' }}>Galería</span></h2>
                   <button onClick={() => setIsAddingGallery(false)} style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', color: '#111', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={18} /></button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
