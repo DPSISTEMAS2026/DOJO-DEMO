@@ -198,7 +198,6 @@ const App: React.FC = () => {
 
   // PWA States and Logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isAppInstalled, setIsAppInstalled] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -207,13 +206,8 @@ const App: React.FC = () => {
     };
 
     const handleAppInstalled = () => {
-      setIsAppInstalled(true);
       setDeferredPrompt(null);
     };
-
-    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
-      setIsAppInstalled(true);
-    }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
@@ -229,7 +223,6 @@ const App: React.FC = () => {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
-        setIsAppInstalled(true);
         setDeferredPrompt(null);
         setShowRanappModal(false);
       }
