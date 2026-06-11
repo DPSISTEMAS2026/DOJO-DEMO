@@ -196,6 +196,48 @@ const App: React.FC = () => {
   });
   const [multiStudentAuthOptions, setMultiStudentAuthOptions] = useState<Student[]>([]);
 
+  // PWA States and Logic
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isAppInstalled, setIsAppInstalled] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setIsAppInstalled(true);
+      setDeferredPrompt(null);
+    };
+
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setIsAppInstalled(true);
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsAppInstalled(true);
+        setDeferredPrompt(null);
+        setShowRanappModal(false);
+      }
+    } else {
+      setShowRanappModal(true);
+    }
+  };
+
   // --- UTILITIES ---
   const getWeekStart = (date: Date) => {
     const d = new Date(date);
@@ -961,8 +1003,8 @@ const App: React.FC = () => {
                 <a href="#gallery" style={{ fontWeight: 800, color: 'var(--text-main)', textDecoration: 'none', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.8 }}>Galería</a>
               </div>
               <div className="mobile-hide" style={{ width: '1px', height: '20px', background: 'var(--glass-border)' }} />
-              <button className="mobile-hide" onClick={() => setShowRanappModal(true)} style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid #334155', padding: '0.6rem 1.2rem', borderRadius: '50px', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', cursor: 'pointer', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                <Smartphone size={14} /> PRÓXIMAMENTE RANAPP
+              <button className="mobile-hide" onClick={handleInstallApp} style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid #334155', padding: '0.6rem 1.2rem', borderRadius: '50px', fontWeight: 800, fontSize: '0.7rem', textTransform: 'uppercase', cursor: 'pointer', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                <Smartphone size={14} /> DESCARGAR RANAPP
               </button>
               <button style={{ background: 'var(--logo-green)', border: 'none', padding: '0.7rem 1.5rem', borderRadius: '50px', fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', cursor: 'pointer', color: '#fff' }} onClick={() => { setIsLandingMobileMenuOpen(false); setViewMode('auth'); }}>Entrar</button>
               {isMobile && (
@@ -1008,12 +1050,12 @@ const App: React.FC = () => {
               <div style={{ width: '100%', height: '1px', background: 'var(--glass-border)' }} />
               <button 
                 onClick={() => {
-                  setShowRanappModal(true);
+                  handleInstallApp();
                   setIsLandingMobileMenuOpen(false);
                 }} 
                 style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', border: '1px solid #334155', padding: '0.8rem 1.5rem', borderRadius: '50px', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', cursor: 'pointer', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}
               >
-                <Smartphone size={16} /> PRÓXIMAMENTE RANAPP
+                <Smartphone size={16} /> DESCARGAR RANAPP
               </button>
             </motion.div>
           )}
@@ -1407,11 +1449,42 @@ const App: React.FC = () => {
                   <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Ranapp Logo" style={{ width: '80px', height: '80px', borderRadius: '50%', border: '2px solid var(--logo-green)', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }} />
                   
                   <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', letterSpacing: '-1px', textAlign: 'center', lineHeight: 1.1, marginBottom: '0.5rem', position: 'relative', zIndex: 1 }}>RANAPP</h3>
-                  <span style={{ color: 'var(--logo-green)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '2rem', position: 'relative', zIndex: 1 }}>Próximamente</span>
+                  <span style={{ color: 'var(--logo-green)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>{deferredPrompt ? '¡Lista para instalar!' : 'PWA App'}</span>
                   
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', textAlign: 'center', lineHeight: 1.5, marginBottom: '2rem', position: 'relative', zIndex: 1, fontWeight: 500 }}>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', textAlign: 'center', lineHeight: 1.5, marginBottom: '1.5rem', position: 'relative', zIndex: 1, fontWeight: 500 }}>
                     La experiencia de tu dojo directamente en tu bolsillo. Exclusivo para alumnos.
                   </p>
+
+                  {deferredPrompt ? (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleInstallApp();
+                      }}
+                      style={{ 
+                        width: '100%', 
+                        padding: '0.8rem', 
+                        background: 'var(--logo-green)', 
+                        border: 'none', 
+                        borderRadius: '12px', 
+                        color: '#000', 
+                        fontWeight: 900, 
+                        fontSize: '0.9rem',
+                        textTransform: 'uppercase',
+                        cursor: 'pointer', 
+                        marginBottom: '1.5rem',
+                        boxShadow: '0 4px 15px rgba(74, 222, 128, 0.3)',
+                        position: 'relative',
+                        zIndex: 10
+                      }}
+                    >
+                      Instalar Ahora
+                    </button>
+                  ) : (
+                    <p style={{ color: '#38bdf8', fontSize: '0.8rem', textAlign: 'center', margin: '0 0 1.5rem', position: 'relative', zIndex: 1, fontWeight: 600 }}>
+                      En iPhone, toca el ícono de compartir ⬆️ y luego "Añadir a pantalla de inicio".
+                    </p>
+                  )}
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', position: 'relative', zIndex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
