@@ -1,10 +1,10 @@
-const CACHE_NAME = 'ranapp-cache-v2';
+const CACHE_NAME = 'ranapp-cache-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/icon-192-v2.png',
-  '/icon-512-v2.png'
+  '/icon-192-v3.png',
+  '/icon-512-v3.png'
 ];
 
 // Install Event
