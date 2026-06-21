@@ -1,0 +1,6 @@
+# Ranas Jiu Jitsu - robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://ranasjiujitsu.cl/sitemap.xml

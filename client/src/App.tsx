@@ -96,6 +96,139 @@ const SocialVideoPlayer: React.FC<{
   );
 };
 
+// ─── Splash Screen ───────────────────────────────────────────────────────────
+const SplashScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
+  useEffect(() => {
+    const timer = setTimeout(onFinish, 2600);
+    return () => clearTimeout(timer);
+  }, [onFinish]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 99999,
+        background: 'linear-gradient(135deg, #020408 0%, #050d0a 50%, #02090a 100%)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        gap: '2rem', overflow: 'hidden'
+      }}
+    >
+      {/* Background ambient glow */}
+      <div style={{
+        position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)',
+        width: '500px', height: '500px',
+        background: 'radial-gradient(circle, rgba(74,222,128,0.12) 0%, transparent 70%)',
+        borderRadius: '50%', pointerEvents: 'none'
+      }} />
+      <div style={{
+        position: 'absolute', top: '30%', left: '30%',
+        width: '300px', height: '300px',
+        background: 'radial-gradient(circle, rgba(56,189,248,0.05) 0%, transparent 70%)',
+        borderRadius: '50%', pointerEvents: 'none'
+      }} />
+
+      {/* Logo container */}
+      <motion.div
+        initial={{ scale: 0.4, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+        style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}
+      >
+        {/* Logo glow ring */}
+        <motion.div
+          animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '170px', height: '170px',
+            background: 'radial-gradient(circle, rgba(74,222,128,0.35) 0%, transparent 70%)',
+            borderRadius: '50%', pointerEvents: 'none'
+          }}
+        />
+        {/* Logo image */}
+        <motion.img
+          src="/icon-512-v3.png"
+          alt="Ranas Jiu Jitsu"
+          animate={{ rotate: [0, 2, -2, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+          style={{
+            width: '130px', height: '130px',
+            borderRadius: '32px',
+            boxShadow: '0 0 60px rgba(74,222,128,0.4), 0 20px 60px rgba(0,0,0,0.8)',
+            border: '2px solid rgba(74,222,128,0.3)',
+            position: 'relative', zIndex: 2
+          }}
+        />
+
+        {/* Brand text */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          style={{ textAlign: 'center' }}
+        >
+          <div style={{
+            fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.5px',
+            color: '#fff', lineHeight: 1.1
+          }}>
+            RANAS <span style={{ color: '#4ade80' }}>JIU JITSU</span>
+          </div>
+          <div style={{
+            fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.25em',
+            color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginTop: '0.3rem'
+          }}>
+            Concepción • Chile
+          </div>
+        </motion.div>
+      </motion.div>
+
+      {/* Progress bar */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        style={{ width: '180px', position: 'relative' }}
+      >
+        <div style={{
+          width: '100%', height: '3px',
+          background: 'rgba(255,255,255,0.08)',
+          borderRadius: '10px', overflow: 'hidden'
+        }}>
+          <motion.div
+            initial={{ width: '0%' }}
+            animate={{ width: '100%' }}
+            transition={{ duration: 2, ease: 'easeInOut', delay: 0.2 }}
+            style={{
+              height: '100%',
+              background: 'linear-gradient(90deg, #4ade80, #22d3ee)',
+              borderRadius: '10px',
+              boxShadow: '0 0 10px rgba(74,222,128,0.6)'
+            }}
+          />
+        </div>
+      </motion.div>
+
+      {/* Bottom tagline */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.2 }}
+        style={{
+          position: 'absolute', bottom: '3rem',
+          fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)',
+          letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600
+        }}
+      >
+        Ranapp • Portal de Alumnos
+      </motion.div>
+    </motion.div>
+  );
+};
+// ─────────────────────────────────────────────────────────────────────────────
 
 import type {
   Belt,
@@ -180,6 +313,12 @@ const VIDEO_CATEGORIES = [
 ];
 
 const App: React.FC = () => {
+  const [isSplashVisible, setIsSplashVisible] = useState(() => {
+    // Show splash only once per session
+    const shown = sessionStorage.getItem('splashShown');
+    if (!shown) { sessionStorage.setItem('splashShown', '1'); return true; }
+    return false;
+  });
   const [viewMode, setViewMode] = useState<ViewMode>(() => localStorage.getItem('viewMode') as ViewMode || 'landing');
   const [showRanappModal, setShowRanappModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -976,9 +1115,25 @@ const App: React.FC = () => {
     }
   };
 
+  // ── Splash Screen gate ──────────────────────────────────────────────────────
+  if (isSplashVisible) {
+    return (
+      <AnimatePresence>
+        <SplashScreen onFinish={() => setIsSplashVisible(false)} />
+      </AnimatePresence>
+    );
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
   if (viewMode === 'landing') {
     return (
-      <div className="landing-page" style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}>
+      <motion.div
+        key="landing"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0, y: -15 }}
+        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        className="landing-page" style={{ background: 'var(--bg-main)', color: 'var(--text-main)' }}>
         {/* Navbar */}
         <nav className="mobile-nav-compact" style={{ position: 'fixed', top: '2.5rem', left: '0', right: '0', zIndex: 1000, display: 'flex', justifyContent: 'center' }}>
           <div className="glass" style={{ padding: '0.8rem 2rem', display: 'flex', gap: '2rem', alignItems: 'center', borderRadius: '100px', border: '1px solid var(--glass-border)' }}>
@@ -1503,14 +1658,20 @@ const App: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
     );
   }
 
   // --- RENDERING AUTH PAGE ---
   if (viewMode === 'auth') {
     return (
-      <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: window.innerWidth < 1024 ? 'column' : 'row', position: 'relative', overflowX: 'hidden', background: '#000' }}>
+      <motion.div
+        key="auth"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: window.innerWidth < 1024 ? 'column' : 'row', position: 'relative', overflowX: 'hidden', background: '#000' }}>
         {/* Decorative Background for Mobile */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.4 }}>
           <div style={{ position: 'absolute', top: '20%', left: '10%', width: '300px', height: '300px', background: 'var(--logo-green)', filter: 'blur(100px)', borderRadius: '50%' }} />
@@ -1782,7 +1943,7 @@ const App: React.FC = () => {
             </AnimatePresence>
           </motion.div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -1791,7 +1952,13 @@ const App: React.FC = () => {
 
   if (viewMode === 'app' && role === 'student' && currentUser) {
     return (
-      <div style={{ background: 'var(--panel-bg)', minHeight: '100vh', color: 'var(--panel-text)', overflowX: 'hidden' }}>
+      <motion.div
+        key="app-student"
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+        style={{ background: 'var(--panel-bg)', minHeight: '100vh', color: 'var(--panel-text)', overflowX: 'hidden' }}>
         {/* Waiver / Terms Modal Check */}
         {currentUser && !currentUser.terms_accepted && (
           <AcceptTermsModal student={currentUser} onAccept={async () => {
@@ -2310,14 +2477,20 @@ const App: React.FC = () => {
         })()}
         </AnimatePresence>
 
-      </div>
+      </motion.div>
     );
   }
 
   // --- RENDERING ADMIN PANEL ---
   const tabLabels: Record<string, string> = { dashboard: 'Resumen', students: 'Alumnos', videos: 'Biblioteca', attendance: 'Asistencia', payments: 'Finanzas', settings: 'Ajustes', website: 'Sitio Web', communications: 'Comunicaciones' };
   return (
-    <div style={{ background: 'var(--panel-bg)', minHeight: '100vh', display: 'flex', color: 'var(--panel-text)', overflow: 'hidden' }}>
+    <motion.div
+      key="app-admin"
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+      style={{ background: 'var(--panel-bg)', minHeight: '100vh', display: 'flex', color: 'var(--panel-text)', overflow: 'hidden' }}>
 
 
       {/* BG */}
@@ -4088,7 +4261,7 @@ const App: React.FC = () => {
         })()}
         
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 
