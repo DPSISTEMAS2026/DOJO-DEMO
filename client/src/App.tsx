@@ -240,7 +240,12 @@ import type {
   AutomationConfig
 } from './types';
 
-const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname.includes('localhost') ? 'http://localhost:3002' : 'https://dojo-demo-server.onrender.com');
+// Detect environment: Capacitor native apps run on localhost bridge (capacitor://localhost or http://localhost)
+// but must connect to the production server. We always use VITE_API_URL if set (baked in at build time).
+const _isLocalDev = window.location.hostname === 'localhost' && !window.location.href.includes('capacitor://');
+const API_URL: string = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL
+  : (_isLocalDev ? 'http://localhost:3002' : 'https://dojo-demo-server.onrender.com');
 
 const newsItems = [
   {
