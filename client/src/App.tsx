@@ -2185,6 +2185,34 @@ const App: React.FC = () => {
                    </div>
                  </motion.section>
 
+                  {/* Graduaciones */}
+                  {(currentUser.lastGrade || currentUser.graduationDate) && (
+                    <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+                      style={{ marginBottom: '1.5rem' }}>
+                      <div style={{ padding: '1.5rem', background: 'linear-gradient(135deg, rgba(5,168,106,0.06) 0%, rgba(16,244,156,0.06) 100%)', borderRadius: '1.2rem', border: '1px solid rgba(5,168,106,0.2)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em', marginBottom: '1rem', textTransform: 'uppercase' }}>🥋 Graduaciones</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          {currentUser.lastGrade && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem 1rem', background: 'var(--panel-surface)', borderRadius: '0.8rem', border: '1px solid var(--panel-border)' }}>
+                              <div>
+                                <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Último grado</div>
+                                <div style={{ fontWeight: 900, fontSize: '0.95rem', color: 'var(--panel-text)' }}>{currentUser.lastGrade}</div>
+                              </div>
+                              {currentUser.graduationDate && (
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--panel-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Fecha</div>
+                                  <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--logo-green)' }}>
+                                    {new Date(currentUser.graduationDate + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </motion.section>
+                  )}
+
                 {/* Library Highlights */}
                 <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                   style={{ marginBottom: '6rem' }}>
@@ -2282,30 +2310,7 @@ const App: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Graduaciones */}
-                    {(currentUser.lastGrade || currentUser.graduationDate) && (
-                      <div style={{ marginBottom: '1.5rem', padding: '1.5rem', background: 'linear-gradient(135deg, rgba(5,168,106,0.06) 0%, rgba(16,244,156,0.06) 100%)', borderRadius: '1.2rem', border: '1px solid rgba(5,168,106,0.2)' }}>
-                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.1em', marginBottom: '1rem' }}>🥋 GRADUACIONES</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                          {currentUser.lastGrade && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem 1rem', background: 'rgba(255,255,255,0.5)', borderRadius: '0.8rem' }}>
-                              <div>
-                                <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Último grado</div>
-                                <div style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--panel-text)' }}>{currentUser.lastGrade}</div>
-                              </div>
-                              {currentUser.graduationDate && (
-                                <div style={{ textAlign: 'right' }}>
-                                  <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--panel-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Fecha</div>
-                                  <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--logo-green)' }}>
-                                    {new Date(currentUser.graduationDate + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
+
 
                     <div style={{ marginBottom: '2.5rem', padding: '1.5rem', background: 'var(--panel-surface)', borderRadius: '1.2rem', border: '1px solid var(--panel-border)' }}>
                       <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.1em', marginBottom: '1rem' }}>SEGURIDAD</div>
@@ -3915,7 +3920,17 @@ const App: React.FC = () => {
                   <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
                     <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>ÚLTIMO GRADO</p>
                     {isEditingStudent ? (
-                      <input type="text" style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 700, fontSize: '0.85rem', width: '100%', textAlign: 'center' }} value={editedStudent?.lastGrade || ''} onChange={e => setEditedStudent(prev => prev ? { ...prev, lastGrade: e.target.value } : null)} placeholder="Ej: Cinturón Azul" />
+                      <select
+                        style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 700, fontSize: '0.85rem', width: '100%', textAlign: 'center', outline: 'none', cursor: 'pointer' }}
+                        value={editedStudent?.lastGrade || ''}
+                        onChange={e => setEditedStudent(prev => prev ? { ...prev, lastGrade: e.target.value } : null)}
+                      >
+                        <option value="">Seleccionar grado...</option>
+                        <option value="1er grado">1er grado</option>
+                        <option value="2do grado">2do grado</option>
+                        <option value="3er grado">3er grado</option>
+                        <option value="4to grado">4to grado</option>
+                      </select>
                     ) : (
                       <p style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--panel-text)' }}>{selectedStudent.lastGrade || '—'}</p>
                     )}
