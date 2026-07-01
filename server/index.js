@@ -370,7 +370,10 @@ app.get('/api/students', async (req, res) => {
             birthDate: s.birthdate,
             history: Array.isArray(s.history) ? s.history : [],
             terms_accepted: s.terms_accepted === true,
-            scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : []
+            scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : [],
+            joinDate: s.joindate || null,
+            lastGrade: s.lastgrade || null,
+            graduationDate: s.graduationdate || null
         }));
 
         res.json(formatted);
@@ -474,7 +477,10 @@ app.post('/api/students', async (req, res) => {
             avatar: req.body.avatar || null,
             birthdate: req.body.birthDate || null,
             history: Array.isArray(req.body.history) ? req.body.history : [],
-            scheduledclasses: Array.isArray(req.body.scheduledClasses) ? req.body.scheduledClasses : []
+            scheduledclasses: Array.isArray(req.body.scheduledClasses) ? req.body.scheduledClasses : [],
+            joindate: req.body.joinDate || null,
+            lastgrade: req.body.lastGrade || null,
+            graduationdate: req.body.graduationDate || null
         };
         const { error } = await supabase.from('students').insert(newStudent);
         if (error) throw error;
@@ -557,6 +563,9 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.lastPaymentDate !== undefined) updateData.lastpaymentdate = req.body.lastPaymentDate;
         if (req.body.lastPaymentMonth !== undefined) updateData.lastpaymentmonth = req.body.lastPaymentMonth;
         if (req.body.scheduledClasses !== undefined) updateData.scheduledclasses = req.body.scheduledClasses;
+        if (req.body.joinDate !== undefined) updateData.joindate = req.body.joinDate;
+        if (req.body.lastGrade !== undefined) updateData.lastgrade = req.body.lastGrade;
+        if (req.body.graduationDate !== undefined) updateData.graduationdate = req.body.graduationDate;
 
         console.log(`PUT /api/students/${req.params.id}`, JSON.stringify(updateData));
         const { error } = await supabase.from('students').update(updateData).eq('id', req.params.id);

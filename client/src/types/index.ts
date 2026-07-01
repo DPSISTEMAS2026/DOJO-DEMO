@@ -37,6 +37,8 @@ export interface Student {
     plan?: string;
     monthlyFee?: number;
     joinDate?: string;
+    lastGrade?: string;
+    graduationDate?: string;
     lastPaymentDate?: string;
     avatar?: string;
     password?: string;

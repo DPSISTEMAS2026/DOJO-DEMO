@@ -670,6 +670,9 @@ const App: React.FC = () => {
       if (updatedStudent.lastPaymentDate !== undefined) payload.lastPaymentDate = updatedStudent.lastPaymentDate;
       if (updatedStudent.lastPaymentMonth !== undefined) payload.lastPaymentMonth = updatedStudent.lastPaymentMonth;
       if (updatedStudent.scheduledClasses !== undefined) payload.scheduledClasses = updatedStudent.scheduledClasses;
+      if (updatedStudent.joinDate !== undefined) payload.joinDate = updatedStudent.joinDate;
+      if (updatedStudent.lastGrade !== undefined) payload.lastGrade = updatedStudent.lastGrade;
+      if (updatedStudent.graduationDate !== undefined) payload.graduationDate = updatedStudent.graduationDate;
 
       const response = await fetch(`${API_URL}/api/students/${updatedStudent.id}`, {
         method: 'PUT',
@@ -2269,6 +2272,41 @@ const App: React.FC = () => {
                       </div>
                     </div>
 
+                    {/* Fecha de Ingreso */}
+                    {currentUser.joinDate && (
+                      <div style={{ marginBottom: '1.5rem', padding: '1.5rem', background: 'var(--panel-surface)', borderRadius: '1.2rem', border: '1px solid var(--panel-border)' }}>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.1em', marginBottom: '0.8rem' }}>📅 FECHA DE INGRESO AL DOJO</div>
+                        <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--panel-text)' }}>
+                          {new Date(currentUser.joinDate + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Graduaciones */}
+                    {(currentUser.lastGrade || currentUser.graduationDate) && (
+                      <div style={{ marginBottom: '1.5rem', padding: '1.5rem', background: 'linear-gradient(135deg, rgba(5,168,106,0.06) 0%, rgba(16,244,156,0.06) 100%)', borderRadius: '1.2rem', border: '1px solid rgba(5,168,106,0.2)' }}>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.1em', marginBottom: '1rem' }}>🥋 GRADUACIONES</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                          {currentUser.lastGrade && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem 1rem', background: 'rgba(255,255,255,0.5)', borderRadius: '0.8rem' }}>
+                              <div>
+                                <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Último grado</div>
+                                <div style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--panel-text)' }}>{currentUser.lastGrade}</div>
+                              </div>
+                              {currentUser.graduationDate && (
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--panel-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Fecha</div>
+                                  <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--logo-green)' }}>
+                                    {new Date(currentUser.graduationDate + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <div style={{ marginBottom: '2.5rem', padding: '1.5rem', background: 'var(--panel-surface)', borderRadius: '1.2rem', border: '1px solid var(--panel-border)' }}>
                       <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.1em', marginBottom: '1rem' }}>SEGURIDAD</div>
                       <div style={{ display: 'flex', gap: '0.8rem' }}>
@@ -3860,6 +3898,34 @@ const App: React.FC = () => {
                       </div>
                     ) : (
                       <p style={{ fontWeight: 900, fontSize: '1.4rem', color: 'var(--logo-green)' }}>{formatCLP(selectedStudent.monthlyFee || 0)}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* ── Fecha de Ingreso / Último Grado / Graduación ── */}
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
+                  <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
+                    <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>FECHA DE INGRESO</p>
+                    {isEditingStudent ? (
+                      <input type="date" style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 700, fontSize: '0.85rem', width: '100%', textAlign: 'center' }} value={editedStudent?.joinDate || ''} onChange={e => setEditedStudent(prev => prev ? { ...prev, joinDate: e.target.value } : null)} title="Fecha de ingreso al Dojo" />
+                    ) : (
+                      <p style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--panel-text)' }}>{selectedStudent.joinDate ? new Date(selectedStudent.joinDate + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</p>
+                    )}
+                  </div>
+                  <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
+                    <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>ÚLTIMO GRADO</p>
+                    {isEditingStudent ? (
+                      <input type="text" style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 700, fontSize: '0.85rem', width: '100%', textAlign: 'center' }} value={editedStudent?.lastGrade || ''} onChange={e => setEditedStudent(prev => prev ? { ...prev, lastGrade: e.target.value } : null)} placeholder="Ej: Cinturón Azul" />
+                    ) : (
+                      <p style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--panel-text)' }}>{selectedStudent.lastGrade || '—'}</p>
+                    )}
+                  </div>
+                  <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: selectedStudent.graduationDate ? 'rgba(5,168,106,0.06)' : 'var(--panel-surface)', border: `1px solid ${selectedStudent.graduationDate ? 'rgba(5,168,106,0.25)' : 'var(--panel-border)'}`, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
+                    <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>FECHA DE GRADUACIÓN</p>
+                    {isEditingStudent ? (
+                      <input type="date" style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 700, fontSize: '0.85rem', width: '100%', textAlign: 'center' }} value={editedStudent?.graduationDate || ''} onChange={e => setEditedStudent(prev => prev ? { ...prev, graduationDate: e.target.value } : null)} title="Fecha de graduación del último grado" />
+                    ) : (
+                      <p style={{ fontWeight: 800, fontSize: '0.95rem', color: selectedStudent.graduationDate ? 'var(--logo-green)' : 'var(--panel-text)' }}>{selectedStudent.graduationDate ? new Date(selectedStudent.graduationDate + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</p>
                     )}
                   </div>
                 </div>
