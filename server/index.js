@@ -47,7 +47,12 @@ async function getMPClientForSede(sedeId) {
             console.error(`[MP-CLIENT] Error fetching token for Sede ${sedeId}:`, e.message);
         }
     }
-    return client; // Fallback to global config
+    // Si es la Sede 1 (Concepción), permitimos el fallback a las credenciales globales (Manuel)
+    if (Number(sedeId) === 1) {
+        return client;
+    }
+    // Para cualquier otra sede, si no tiene tokens configurados, NO permitimos pagar (retornamos null)
+    return null;
 }
 
 app.use(cors());
@@ -115,6 +120,9 @@ app.get('/api/admin/payments', async (req, res) => {
     try {
         const { year = '2026', month = '02', sedeId } = req.query;
         const mpClient = await getMPClientForSede(sedeId);
+        if (!mpClient) {
+            return res.status(400).json({ error: 'Mercado Pago no está configurado para esta sede.' });
+        }
         const mpPayment = new Payment(mpClient);
         
         const nextMonth = Number(month) === 12 ? 1 : Number(month) + 1;
@@ -693,6 +701,7 @@ app.post('/api/students/:id/sync-payments', async (req, res) => {
         if (selectError || !student) return res.status(404).json({ error: 'Alumno no encontrado' });
 
         const mpClient = await getMPClientForSede(student.sede_id);
+        if (!mpClient) return res.status(400).json({ error: 'Mercado Pago no está configurado para la sede de este alumno.' });
         const mpPayment = new Payment(mpClient);
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -821,6 +830,9 @@ app.post('/api/checkout', async (req, res) => {
         // Determinar sede para checkout
         const targetSedeId = isGroup ? (students[0].sede_id || students[0].sedeId) : (student.sede_id || student.sedeId);
         const mpClient = await getMPClientForSede(targetSedeId);
+        if (!mpClient) {
+            return res.status(400).json({ success: false, error: 'Mercado Pago no está configurado para tu sede aún. Por favor contacta al administrador.' });
+        }
         console.log(`[CHECKOUT] Sede: ${targetSedeId}, Amount: $${amount}, WithSurcharge: ${!!withSurcharge}, Total charged: $${totalCharged}`);
 
         const preference = new Preference(mpClient);
@@ -862,6 +874,7 @@ app.post('/api/students/:id/send-payment-reminder', async (req, res) => {
         if (!student.monthlyfee) return res.status(400).json({ error: 'Alumno no tiene mensualidad configurada' });
 
         const mpClient = await getMPClientForSede(student.sede_id);
+        if (!mpClient) return res.status(400).json({ error: 'Mercado Pago no está configurado para la sede de este alumno.' });
         const preference = new Preference(mpClient);
         const webhookUrl = (process.env.BACKEND_URL || 'https://dojo-demo-server.onrender.com') + `/api/webhooks?sede_id=${student.sede_id || ''}`;
         const result = await preference.create({
@@ -1179,6 +1192,10 @@ app.post('/api/webhooks', async (req, res) => {
     try {
         const sedeId = req.query.sede_id;
         const mpClient = await getMPClientForSede(sedeId);
+        if (!mpClient) {
+            console.error(`[WEBHOOK ERROR] Sede ${sedeId} does not have MP configured.`);
+            return res.status(400).json({ error: 'Sede sin Mercado Pago configurado.' });
+        }
         const mpPayment = new Payment(mpClient);
         const payDetails = await mpPayment.get({ id: paymentId });
 
@@ -1421,6 +1438,10 @@ async function syncTransferPaymentsForSede(sedeId) {
 
         // Get MP payments
         const mpClient = await getMPClientForSede(sedeId);
+        if (!mpClient) {
+            console.log(`[SYNC-SEDE-${sedeId}] Saltando sincronización: Mercado Pago no configurado para esta sede.`);
+            return { synced: 0, details: [] };
+        }
         const mpPayment = new Payment(mpClient);
         const since = new Date();
         since.setDate(since.getDate() - 15);
