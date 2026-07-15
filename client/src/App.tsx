@@ -103,6 +103,8 @@ const SplashScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
     return () => clearTimeout(timer);
   }, [onFinish]);
 
+  const cachedSedeName = localStorage.getItem('activeSedeName') || 'Concepción';
+
   return (
     <motion.div
       initial={{ opacity: 1 }}
@@ -181,7 +183,7 @@ const SplashScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
             fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.25em',
             color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', marginTop: '0.3rem'
           }}>
-            Concepción • Chile
+            {cachedSedeName} • Chile
           </div>
         </motion.div>
       </motion.div>
@@ -344,6 +346,7 @@ const App: React.FC = () => {
     return u ? JSON.parse(u) : null;
   });
   const [multiStudentAuthOptions, setMultiStudentAuthOptions] = useState<Student[]>([]);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // PWA States and Logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -711,6 +714,18 @@ const App: React.FC = () => {
     fetchDataForSede(activeSedeId);
   }, [activeSedeId]);
 
+  // Sincronizar datos de la sede activa en localStorage para su uso en la carga (Splash Screen)
+  useEffect(() => {
+    if (sedes.length > 0) {
+      const targetId = role === 'student' ? (currentUser?.sedeId || currentUser?.sede_id || 1) : (activeSedeId || 1);
+      const activeSede = sedes.find(s => s.id === Number(targetId));
+      if (activeSede) {
+        localStorage.setItem('activeSedeName', activeSede.name);
+        localStorage.setItem('activeSedeAddress', activeSede.address || '');
+      }
+    }
+  }, [sedes, activeSedeId, role, currentUser]);
+
   const syncWebsite = async (type: 'news' | 'gallery' | 'hero-videos', data: any) => {
     try {
       const endpoint = type === 'hero-videos' ? 'hero-videos' : type;
@@ -1051,6 +1066,7 @@ const App: React.FC = () => {
     }
 
     try {
+      setIsLoggingIn(true);
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1099,6 +1115,8 @@ const App: React.FC = () => {
     } catch (e) {
       console.error('Error logging in:', e);
       alert('Error de conexión al iniciar sesión');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -1440,7 +1458,7 @@ const App: React.FC = () => {
                 className="mobile-center"
               >
                 <span className="font-cartoon" style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '1.2rem', textTransform: 'uppercase', display: 'block', marginBottom: '2rem' }}>
-                  Concepción • Chile • Orompello 1421
+                  {sedes.length > 0 ? sedes.map(s => s.name.toUpperCase()).join(' • ') : 'CONCEPCIÓN'} • CHILE
                 </span>
                 <h1 className="font-martial pop-text" style={{ fontSize: '7rem', marginBottom: '3rem', color: 'var(--text-main)', maxWidth: '800px', lineHeight: 0.9 }}>
                   ÚNETE AL <br />
@@ -1735,8 +1753,12 @@ const App: React.FC = () => {
                 <h4 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.05em' }}>CONTACTO</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', fontWeight: 600 }}>
                   <span>+56 9 3960 1560</span>
-                  <span>manuelplazaarenas@gmail.com</span>
-                  <span>Orompello 1421, Concepción</span>
+                  <span>ranasjiujitsu@gmail.com</span>
+                  {sedes.length > 0 ? sedes.map(s => (
+                    <span key={s.id}>{s.address}, {s.name}</span>
+                  )) : (
+                    <span>Orompello 1421, Concepción</span>
+                  )}
                 </div>
               </div>
               <div className="mobile-center">
@@ -2023,6 +2045,7 @@ const App: React.FC = () => {
               <button 
                 type="submit"
                 className="btn-primary"
+                disabled={isLoggingIn}
                 style={{ 
                   marginTop: '1.5rem', 
                   padding: '1.5rem', 
@@ -2030,10 +2053,18 @@ const App: React.FC = () => {
                   background: 'var(--logo-green)', 
                   width: '100%', 
                   fontSize: '1rem',
-                  borderRadius: '1.5rem'
+                  borderRadius: '1.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.8rem',
+                  cursor: isLoggingIn ? 'wait' : 'pointer'
                 }}
               >
-                Iniciar Sesión
+                {isLoggingIn ? (
+                  <><span className="premium-spinner" style={{ width: '18px', height: '18px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Iniciando...</>
+                ) : (
+                  'Iniciar Sesión'
+                )}
               </button>
             </form>
 
@@ -2144,7 +2175,7 @@ const App: React.FC = () => {
                           style={{ width: '100%', padding: '1.3rem', background: recoveryStatus === 'loading' ? 'rgba(5,168,106,0.5)' : 'var(--logo-green)', border: 'none', borderRadius: '1.2rem', color: '#fff', fontWeight: 900, fontSize: '1rem', cursor: recoveryStatus === 'loading' ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', transition: 'all 0.3s' }}
                         >
                           {recoveryStatus === 'loading' ? (
-                            <><span style={{ display: 'inline-block', width: '18px', height: '18px', border: '3px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> Enviando...</>
+                            <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Enviando...</>
                           ) : (
                             <><Mail size={18} /> Enviar Credenciales</>
                           )}
@@ -2726,7 +2757,7 @@ const App: React.FC = () => {
                       disabled={isGeneratingPayment}
                       style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '1.5rem' }}>
                       {isGeneratingPayment ? (
-                        <>Generando link seguro...</>
+                        <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Generando link seguro...</>
                       ) : (
                         <><CreditCard size={20} /> IR A MERCADO PAGO</>
                       )}
@@ -2971,7 +3002,13 @@ const App: React.FC = () => {
               </button>
             )}
             <div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '0.3rem' }}>Ranas · Orompello 1421</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+                {(() => {
+                  const currentSedeId = activeSedeId || 1;
+                  const activeSede = sedes.find(s => s.id === Number(currentSedeId));
+                  return activeSede ? `Ranas · ${activeSede.name} · ${activeSede.address}` : 'Ranas · Orompello 1421';
+                })()}
+              </div>
               <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px', color: 'var(--logo-green)' }}>{tabLabels[activeTab]}</h1>
             </div>
           </div>
@@ -4423,7 +4460,11 @@ const App: React.FC = () => {
                           opacity: isGeneratingPayment ? 0.7 : 1
                         }}
                         onClick={() => handleCreatePaymentLink(selectedStudent)}>
-                        <CreditCard size={18} /> {isGeneratingPayment ? 'GENERANDO...' : 'PAGAR CON MERCADO PAGO'}
+                        {isGeneratingPayment ? (
+                          <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> GENERANDO...</>
+                        ) : (
+                          <><CreditCard size={18} /> PAGAR CON MERCADO PAGO</>
+                        )}
                       </motion.button>
                     )}
                     <motion.button whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(37, 211, 102, 0.2)' }} whileTap={{ scale: 0.98 }}
@@ -4710,7 +4751,7 @@ const App: React.FC = () => {
                       disabled={isGeneratingPayment}
                       style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '1.5rem' }}>
                       {isGeneratingPayment ? (
-                        <>Generando link seguro...</>
+                        <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Generando link seguro...</>
                       ) : (
                         <><CreditCard size={20} /> IR A MERCADO PAGO</>
                       )}

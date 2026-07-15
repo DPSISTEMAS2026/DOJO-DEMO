@@ -679,3 +679,20 @@ section {
   top: 0 !important;
   left: 0 !important;
 }
+
+/* Premium dynamic loading spinner */
+.premium-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(74, 222, 128, 0.15);
+  border-radius: 50%;
+  border-top-color: #4ade80;
+  border-right-color: #22d3ee;
+  animation: premium-spin 0.75s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
+}
+
+@keyframes premium-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
