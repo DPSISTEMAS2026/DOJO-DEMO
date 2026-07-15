@@ -1067,6 +1067,7 @@ app.post('/api/admin/send-credentials', async (req, res) => {
 });
 
 // Recuperar contraseña - envía las credenciales por email
+const recoveryCooldowns = {};
 app.post('/api/recover-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -1077,6 +1078,13 @@ app.post('/api/recover-password', async (req, res) => {
         }
 
         const lowerEmail = email.trim().toLowerCase();
+        const now = Date.now();
+        if (recoveryCooldowns[lowerEmail] && (now - recoveryCooldowns[lowerEmail] < 60000)) {
+            console.log(`[RECOVERY-COOLDOWN] Ignorando petición repetida para: ${lowerEmail}`);
+            return res.json({ success: true, message: 'Si el correo está registrado, recibirás un email con tus datos de acceso.' });
+        }
+        recoveryCooldowns[lowerEmail] = now;
+
         const { data: students, error: selectError } = await supabase
             .from('students')
             .select('name, email, password')
