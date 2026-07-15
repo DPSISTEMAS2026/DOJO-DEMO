@@ -283,7 +283,10 @@ app.delete('/api/videos/:id', async (req, res) => {
 // News
 app.get('/api/news', async (req, res) => {
     try {
-        let query = supabase.from('news').select('*');
+        let query = supabase.from('news')
+            .select('*')
+            .not('title', 'like', 'SYSTEM_%')
+            .lt('id', 999900);
         if (req.query.sedeId) {
             query = query.or(`sede_id.eq.${req.query.sedeId},sede_id.is.null`);
         }

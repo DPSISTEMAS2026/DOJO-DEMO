@@ -726,6 +726,14 @@ const App: React.FC = () => {
     }
   }, [sedes, activeSedeId, role, currentUser]);
 
+  // Si es una sede secundaria, no permitir estar en Biblioteca (videos) ni Sitio Web (website)
+  useEffect(() => {
+    const isSecondarySede = role === 'admin' && activeSedeId !== 1;
+    if (isSecondarySede && ['videos', 'website'].includes(activeTab)) {
+      setActiveTab('dashboard');
+    }
+  }, [activeSedeId, role, activeTab]);
+
   const syncWebsite = async (type: 'news' | 'gallery' | 'hero-videos', data: any) => {
     try {
       const endpoint = type === 'hero-videos' ? 'hero-videos' : type;
@@ -1458,7 +1466,7 @@ const App: React.FC = () => {
                 className="mobile-center"
               >
                 <span className="font-cartoon" style={{ color: 'var(--logo-green)', fontWeight: 900, letterSpacing: '0.4em', fontSize: '1.2rem', textTransform: 'uppercase', display: 'block', marginBottom: '2rem' }}>
-                  {sedes.length > 0 ? sedes.map(s => s.name.toUpperCase()).join(' • ') : 'CONCEPCIÓN'} • CHILE
+                  Concepción • Chile • Orompello 1421
                 </span>
                 <h1 className="font-martial pop-text" style={{ fontSize: '7rem', marginBottom: '3rem', color: 'var(--text-main)', maxWidth: '800px', lineHeight: 0.9 }}>
                   ÚNETE AL <br />
@@ -1753,12 +1761,8 @@ const App: React.FC = () => {
                 <h4 style={{ fontSize: '1rem', marginBottom: '1.5rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.05em' }}>CONTACTO</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', fontWeight: 600 }}>
                   <span>+56 9 3960 1560</span>
-                  <span>ranasjiujitsu@gmail.com</span>
-                  {sedes.length > 0 ? sedes.map(s => (
-                    <span key={s.id}>{s.address}, {s.name}</span>
-                  )) : (
-                    <span>Orompello 1421, Concepción</span>
-                  )}
+                  <span>manuelplazaarenas@gmail.com</span>
+                  <span>Orompello 1421, Concepción</span>
                 </div>
               </div>
               <div className="mobile-center">
@@ -2959,6 +2963,11 @@ const App: React.FC = () => {
             { id: 'website', label: 'Sitio Web', icon: <Monitor size={17} /> },
             { id: 'settings', label: 'Ajustes', icon: <Settings size={17} /> },
           ].filter(item => {
+              // Si es una sede secundaria, no mostrar Biblioteca (videos) ni Sitio Web (website)
+              const isSecondarySede = role === 'admin' && activeSedeId !== 1;
+              if (isSecondarySede && ['videos', 'website'].includes(item.id)) {
+                  return false;
+              }
               if (isMobile) {
                   return ['dashboard', 'attendance', 'students', 'payments', 'videos', 'communications'].includes(item.id);
               }
