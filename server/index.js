@@ -132,8 +132,14 @@ app.get('/api/admin/payments', async (req, res) => {
             }
         });
 
-        // Cargar alumnos para el cruce
-        const students = readData(studentsFile) || [];
+        // Cargar alumnos para el cruce desde Supabase
+        let query = supabase.from('students').select('id, name, email');
+        if (sedeId) {
+            query = query.eq('sede_id', Number(sedeId));
+        }
+        const { data: dbStudents, error: dbError } = await query;
+        if (dbError) throw dbError;
+        const students = dbStudents || [];
 
         const payments = result.results || [];
         const matched = [];
@@ -285,8 +291,13 @@ app.get('/api/news', async (req, res) => {
 app.post('/api/news', async (req, res) => {
     try {
         const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
-        // Borrar noticias previas (exceptuando el aviso global reservado con ID 999999) filtrado por sede
-        let deleteQuery = supabase.from('news').delete().neq('id', 999999);
+        // Borrar noticias previas, protegiendo las configuraciones de sistema (SYSTEM_*) y las tarjetas de cumpleaños (ID >= 999900)
+        let deleteQuery = supabase.from('news')
+            .delete()
+            .neq('id', 999999)
+            .not('title', 'like', 'SYSTEM_%')
+            .lt('id', 999900);
+        
         if (targetSedeId) {
             deleteQuery = deleteQuery.eq('sede_id', targetSedeId);
         } else {
