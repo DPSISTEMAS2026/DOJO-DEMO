@@ -1980,7 +1980,7 @@ app.post('/api/auth/login', async (req, res) => {
         }
 
         // 2. Fallback: Logins hardcodeados para superadmins (Compatibilidad)
-        const adminEmails = ['d.diazaraya19@gmail.com', 'manuelplazaarenas@gmail.com', 'contacto@dpsistemas.cl'];
+        const adminEmails = ['contacto@dpsistemas.cl'];
         if (trimmedPass === 'admin123' && adminEmails.includes(lowerEmail)) {
             return res.json({
                 success: true,
