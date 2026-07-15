@@ -334,6 +334,11 @@ const App: React.FC = () => {
     message: ''
   });
   const [role, setRole] = useState<UserRole>(() => localStorage.getItem('role') as UserRole || 'guest');
+  const [activeSedeId, setActiveSedeId] = useState<number | null>(() => {
+    const s = localStorage.getItem('activeSedeId');
+    return s && s !== 'null' ? Number(s) : null;
+  });
+  const [sedes, setSedes] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<Student | null>(() => {
     const u = localStorage.getItem('currentUser');
     return u ? JSON.parse(u) : null;
@@ -463,12 +468,17 @@ const App: React.FC = () => {
     localStorage.setItem('viewMode', viewMode);
     localStorage.setItem('role', role);
     localStorage.setItem('activeTab', activeTab);
+    if (activeSedeId !== null) {
+      localStorage.setItem('activeSedeId', activeSedeId.toString());
+    } else {
+      localStorage.removeItem('activeSedeId');
+    }
     if (currentUser) {
       localStorage.setItem('currentUser', JSON.stringify(currentUser));
     } else {
       localStorage.removeItem('currentUser');
     }
-  }, [viewMode, role, currentUser, activeTab]);
+  }, [viewMode, role, currentUser, activeTab, activeSedeId]);
   const [liveNews, setLiveNews] = useState(newsItems);
   const [liveHeroVideos, setLiveHeroVideos] = useState([
     "/assets/WhatsApp Video 2026-03-04 at 3.29.01 PM.mp4",
@@ -552,6 +562,65 @@ const App: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [newVideoData, setNewVideoData] = useState<Omit<Video, 'id'>>({ title: '', description: '', url: '', thumbnail: '', targetAudience: 'BOTH', category: VIDEO_CATEGORIES[0] });
   const [isAddingStudent, setIsAddingStudent] = useState(false);
+  const [rawImageForCrop, setRawImageForCrop] = useState<string | null>(null);
+  const [cropZoom, setCropZoom] = useState<number>(1);
+  const [cropOffset, setCropOffset] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
+  const [isCroppingSave, setIsCroppingSave] = useState<boolean>(false);
+  const [isDraggingCrop, setIsDraggingCrop] = useState<boolean>(false);
+  const [dragStartCrop, setDragStartCrop] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
+  const [cropImageObj, setCropImageObj] = useState<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    if (!rawImageForCrop) {
+      setCropImageObj(null);
+      setCropZoom(1);
+      setCropOffset({ x: 0, y: 0 });
+      return;
+    }
+    const img = new Image();
+    img.src = rawImageForCrop;
+    img.onload = () => {
+      setCropImageObj(img);
+    };
+  }, [rawImageForCrop]);
+
+  const clampOffset = (x: number, y: number, zoomVal: number) => {
+    if (!cropImageObj) return { x: 0, y: 0 };
+    const C = 250;
+    const s0 = C / Math.min(cropImageObj.width, cropImageObj.height);
+    const W = cropImageObj.width * s0 * zoomVal;
+    const H = cropImageObj.height * s0 * zoomVal;
+    
+    const maxOffsetX = Math.max(0, (W - C) / 2);
+    const maxOffsetY = Math.max(0, (H - C) / 2);
+    
+    return {
+      x: Math.max(-maxOffsetX, Math.min(maxOffsetX, x)),
+      y: Math.max(-maxOffsetY, Math.min(maxOffsetY, y))
+    };
+  };
+
+  const handleZoomChange = (newZoom: number) => {
+    setCropZoom(newZoom);
+    setCropOffset(prev => clampOffset(prev.x, prev.y, newZoom));
+  };
+
+  const handleDragStart = (clientX: number, clientY: number) => {
+    if (!cropImageObj) return;
+    setIsDraggingCrop(true);
+    setDragStartCrop({ x: clientX - cropOffset.x, y: clientY - cropOffset.y });
+  };
+
+  const handleDragMove = (clientX: number, clientY: number) => {
+    if (!isDraggingCrop || !cropImageObj) return;
+    const newX = clientX - dragStartCrop.x;
+    const newY = clientY - dragStartCrop.y;
+    setCropOffset(clampOffset(newX, newY, cropZoom));
+  };
+
+  const handleDragEnd = () => {
+    setIsDraggingCrop(false);
+  };
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSendingNotice, setIsSendingNotice] = useState(false);
   const [isAddingNews, setIsAddingNews] = useState(false);
@@ -586,61 +655,67 @@ const App: React.FC = () => {
     return () => clearInterval(timer);
   }, [liveNews.length]);
 
-  // API Data Loading
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [studentsRes, videosRes, newsRes, galleryRes, heroVideosRes, noticeRes, feesRes, automationRes, discountCatRes] = await Promise.all([
-          fetch(`${API_URL}/api/students`),
-          fetch(`${API_URL}/api/videos`),
-          fetch(`${API_URL}/api/news`),
-          fetch(`${API_URL}/api/gallery`),
-          fetch(`${API_URL}/api/hero-videos`),
-          fetch(`${API_URL}/api/global-notice`),
-          fetch(`${API_URL}/api/fees`),
-          fetch(`${API_URL}/api/automation`),
-          fetch(`${API_URL}/api/discount-categories`)
-        ]);
-        const studentsData = await studentsRes.json();
-        const videosData = await videosRes.json();
-        const newsData = await newsRes.json();
-        const galleryData = await galleryRes.json();
-        const heroVideosData = await heroVideosRes.json();
-        const noticeDataResult = await noticeRes.json();
-        const feesData = await feesRes.json();
-        const automationData = await automationRes.json();
-        const discountCatData = await discountCatRes.json().catch(() => null);
+  // API Data Loading (Scoped by Sede)
+  const fetchDataForSede = async (sedeId: number | null) => {
+    try {
+      const queryParams = sedeId ? `?sedeId=${sedeId}` : '';
+      const [studentsRes, videosRes, newsRes, galleryRes, heroVideosRes, noticeRes, feesRes, automationRes, discountCatRes, sedesRes] = await Promise.all([
+        fetch(`${API_URL}/api/students${queryParams}`),
+        fetch(`${API_URL}/api/videos`),
+        fetch(`${API_URL}/api/news${queryParams}`),
+        fetch(`${API_URL}/api/gallery${queryParams}`),
+        fetch(`${API_URL}/api/hero-videos`),
+        fetch(`${API_URL}/api/global-notice${queryParams}`),
+        fetch(`${API_URL}/api/fees${queryParams}`),
+        fetch(`${API_URL}/api/automation${queryParams}`),
+        fetch(`${API_URL}/api/discount-categories${queryParams}`),
+        fetch(`${API_URL}/api/sedes`)
+      ]);
+      const studentsData = await studentsRes.json();
+      const videosData = await videosRes.json();
+      const newsData = await newsRes.json();
+      const galleryData = await galleryRes.json();
+      const heroVideosData = await heroVideosRes.json();
+      const noticeDataResult = await noticeRes.json();
+      const feesData = await feesRes.json();
+      const automationData = await automationRes.json();
+      const discountCatData = await discountCatRes.json().catch(() => null);
+      const sedesData = await sedesRes.json().catch(() => []);
 
-        setStudents(studentsData || []);
-        setVideos(videosData || []);
-        if (newsData !== null) setLiveNews(newsData);
-        if (galleryData !== null) setLiveGallery(galleryData);
-        if (heroVideosData !== null) setLiveHeroVideos(heroVideosData);
-        if (noticeDataResult !== null) setNoticeData(noticeDataResult);
-        if (feesData !== null) setFees(feesData);
-        if (automationData !== null) setAutomation(automationData);
-        if (discountCatData !== null) setDiscountCategories(discountCatData);
+      setStudents(studentsData || []);
+      setVideos(videosData || []);
+      setSedes(sedesData || []);
+      if (newsData !== null) setLiveNews(newsData);
+      if (galleryData !== null) setLiveGallery(galleryData);
+      if (heroVideosData !== null) setLiveHeroVideos(heroVideosData);
+      if (noticeDataResult !== null) setNoticeData(noticeDataResult);
+      if (feesData !== null) setFees(feesData);
+      if (automationData !== null) setAutomation(automationData);
+      if (discountCatData !== null) setDiscountCategories(discountCatData);
 
-        // Sync currentUser with fresh data from server (e.g. admin changed payment status)
-        const cachedUser = localStorage.getItem('currentUser');
-        if (cachedUser) {
-          const cached = JSON.parse(cachedUser);
-          const fresh = (studentsData || []).find((s: Student) => s.id === cached.id);
-          if (fresh) {
-            setCurrentUser(fresh);
-          }
+      // Sync currentUser with fresh data from server (e.g. admin changed payment status)
+      const cachedUser = localStorage.getItem('currentUser');
+      if (cachedUser) {
+        const cached = JSON.parse(cachedUser);
+        const fresh = (studentsData || []).find((s: Student) => s.id === cached.id);
+        if (fresh) {
+          setCurrentUser(fresh);
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
       }
-    };
-    fetchData();
-  }, []);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDataForSede(activeSedeId);
+  }, [activeSedeId]);
 
   const syncWebsite = async (type: 'news' | 'gallery' | 'hero-videos', data: any) => {
     try {
       const endpoint = type === 'hero-videos' ? 'hero-videos' : type;
-      await fetch(`${API_URL}/api/${endpoint}`, {
+      const queryParams = (type !== 'hero-videos' && activeSedeId) ? `?sedeId=${activeSedeId}` : '';
+      await fetch(`${API_URL}/api/${endpoint}${queryParams}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -673,6 +748,8 @@ const App: React.FC = () => {
       if (updatedStudent.joinDate !== undefined) payload.joinDate = updatedStudent.joinDate;
       if (updatedStudent.lastGrade !== undefined) payload.lastGrade = updatedStudent.lastGrade;
       if (updatedStudent.graduationDate !== undefined) payload.graduationDate = updatedStudent.graduationDate;
+      if (updatedStudent.sedeId !== undefined) payload.sedeId = updatedStudent.sedeId;
+      if (updatedStudent.sede_id !== undefined) payload.sedeId = updatedStudent.sede_id;
 
       const response = await fetch(`${API_URL}/api/students/${updatedStudent.id}`, {
         method: 'PUT',
@@ -748,13 +825,15 @@ const App: React.FC = () => {
           student: !isGroup ? {
             id: (studentsOrStudent as Student).id,
             name: (studentsOrStudent as Student).name,
-            email: (studentsOrStudent as Student).email || "test_user_123@testuser.com"
+            email: (studentsOrStudent as Student).email || "test_user_123@testuser.com",
+            sedeId: (studentsOrStudent as Student).sedeId || (studentsOrStudent as Student).sede_id
           } : undefined,
           students: isGroup ? studentsToPay.map(s => ({
             id: s.id,
             name: s.name,
             email: s.email || "test_user_123@testuser.com",
-            monthlyFee: s.monthlyFee || 40000
+            monthlyFee: s.monthlyFee || 40000,
+            sedeId: s.sedeId || s.sede_id
           })) : undefined,
           amount,
           withSurcharge: true
@@ -790,7 +869,7 @@ const App: React.FC = () => {
     const charged = Math.ceil(baseAmount / (1 - rate));
     return { charged, surcharge: charged - baseAmount, rate };
   };
-  const [newStudentData, setNewStudentData] = useState({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000, discountCategory: '', discountPercentage: 0 });
+  const [newStudentData, setNewStudentData] = useState({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000, discountCategory: '', discountPercentage: 0, sedeId: '' });
   const [discountCategories, setDiscountCategories] = useState<string[]>(['Convenio Bomberos', 'Profesor', 'Becados']);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -802,7 +881,8 @@ const App: React.FC = () => {
 
   const handleSaveFees = async (updatedFees: PlanFees) => {
     try {
-      await fetch(`${API_URL}/api/fees`, {
+      const queryParams = activeSedeId ? `?sedeId=${activeSedeId}` : '';
+      await fetch(`${API_URL}/api/fees${queryParams}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedFees)
@@ -812,11 +892,97 @@ const App: React.FC = () => {
     }
   };
 
+  const handleOpenAddStudent = () => {
+    setNewStudentData({
+      name: '',
+      email: '',
+      phone: '',
+      birthDate: '',
+      documentId: '',
+      belt: 'WHITE' as Belt,
+      plan: '3',
+      monthlyFee: fees.adults['3'] || 40000,
+      discountCategory: '',
+      discountPercentage: 0,
+      sedeId: activeSedeId ? activeSedeId.toString() : ''
+    });
+    setIsAddingStudent(true);
+  };
+
+
+
+  const handleUploadAvatar = () => {
+    if (!currentUser) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setRawImageForCrop(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+
+  const handleSaveCrop = async () => {
+    if (!cropImageObj || !currentUser) return;
+    setIsCroppingSave(true);
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 200;
+      canvas.height = 200;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context error');
+
+      const C = 250;
+      const scaleFactor = 200 / C;
+      
+      const canvasScale = (200 / Math.min(cropImageObj.width, cropImageObj.height)) * cropZoom;
+      const destW = cropImageObj.width * canvasScale;
+      const destH = cropImageObj.height * canvasScale;
+      
+      const destX = (200 - destW) / 2 + cropOffset.x * scaleFactor;
+      const destY = (200 - destH) / 2 + cropOffset.y * scaleFactor;
+
+      ctx.drawImage(cropImageObj, destX, destY, destW, destH);
+      
+      const base64Image = canvas.toDataURL('image/jpeg', 0.6);
+      
+      const updatedStudent = { ...currentUser, avatar: base64Image } as Student;
+      
+      const saveResponse = await fetch(`${API_URL}/api/students/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatar: base64Image })
+      });
+
+      if (saveResponse.ok) {
+        setCurrentUser(updatedStudent);
+        setStudents(prev => prev.map(s => s.id === currentUser.id ? updatedStudent : s));
+        setRawImageForCrop(null);
+        alert('✅ Foto de perfil actualizada con éxito.');
+      } else {
+        alert('❌ Error al guardar la foto de perfil en el servidor.');
+      }
+    } catch (error) {
+      console.error('Error saving cropped avatar:', error);
+      alert('❌ Error al procesar la imagen.');
+    } finally {
+      setIsCroppingSave(false);
+    }
+  };
+
   const [automation, setAutomation] = useState<AutomationConfig>({ reminderDay: 5, whatsappTemplate: "Hola {nombre}...", emailTemplate: "Hola {nombre}..." });
 
   const handleSaveAutomation = async (updatedAutomation: AutomationConfig) => {
     try {
-      await fetch(`${API_URL}/api/automation`, {
+      const queryParams = activeSedeId ? `?sedeId=${activeSedeId}` : '';
+      await fetch(`${API_URL}/api/automation${queryParams}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedAutomation)
@@ -871,38 +1037,68 @@ const App: React.FC = () => {
   const planLabels: Record<string, string> = { '1': 'Clase Individual', '1x': '1x Semana', '2': '2x Semana', '3': '3x Semana', '4': '4x Semana', 'Ilimitado': 'Full Rana' };
   const formatCLP = (amount: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
 
-  const handleLogin = (studentToLogin?: Student) => {
-    const adminEmails = ['d.diazaraya19@gmail.com', 'manuelplazaarenas@gmail.com', 'contacto@dpsistemas.cl'];
-    const lowerEmail = authEmail.trim().toLowerCase();
-    
-    // Unified login: try admin password first + white-listed emails
-    if (authPassword.trim() === 'admin123' && adminEmails.includes(lowerEmail)) {
-      setRole('admin');
-      setViewMode('app');
-      return;
-    }
-
-    // Try student login
-    const matchingStudents = students.filter(s => 
-      s.email && 
-      s.email.trim().toLowerCase() === authEmail.trim().toLowerCase() && 
-      s.password && s.password.trim().toLowerCase() === authPassword.trim().toLowerCase()
-    );
-
+  const handleLogin = async (studentToLogin?: Student) => {
     if (studentToLogin) {
       setRole('student');
       setCurrentUser(studentToLogin);
+      const sId = studentToLogin.sedeId || studentToLogin.sede_id || 1;
+      setActiveSedeId(sId);
+      localStorage.setItem('activeSedeId', sId.toString());
       setViewMode('app');
       setMultiStudentAuthOptions([]);
-    } else if (matchingStudents.length > 1) {
-      // Show student selector modal
-      setMultiStudentAuthOptions(matchingStudents);
-    } else if (matchingStudents.length === 1) {
-      setRole('student');
-      setCurrentUser(matchingStudents[0]);
-      setViewMode('app');
-    } else {
-      alert('Correo o contraseña incorrecta');
+      fetchDataForSede(sId);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: authEmail, password: authPassword })
+      });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        if (data.role === 'superadmin') {
+          setRole('superadmin');
+          localStorage.setItem('role', 'superadmin');
+          setActiveSedeId(null);
+          localStorage.removeItem('activeSedeId');
+          setViewMode('app');
+          fetchDataForSede(null);
+        } else if (data.role === 'admin_sede' || data.role === 'admin') {
+          setRole('admin');
+          localStorage.setItem('role', 'admin');
+          const sId = data.sedeId || 1;
+          setActiveSedeId(sId);
+          localStorage.setItem('activeSedeId', sId.toString());
+          setViewMode('app');
+          fetchDataForSede(sId);
+        } else if (data.role === 'student') {
+          const loggedStudent = data.student;
+          
+          // Si hay múltiples alumnos con el mismo correo, mostrar el modal
+          const matchingStudents = students.filter(s => s.email && s.email.trim().toLowerCase() === authEmail.trim().toLowerCase());
+          if (matchingStudents.length > 1) {
+            setMultiStudentAuthOptions(matchingStudents);
+          } else {
+            setRole('student');
+            localStorage.setItem('role', 'student');
+            setCurrentUser(loggedStudent);
+            localStorage.setItem('currentUser', JSON.stringify(loggedStudent));
+            const sId = loggedStudent.sedeId || loggedStudent.sede_id || 1;
+            setActiveSedeId(sId);
+            localStorage.setItem('activeSedeId', sId.toString());
+            setViewMode('app');
+            fetchDataForSede(sId);
+          }
+        }
+      } else {
+        alert(data.error || 'Correo o contraseña incorrecta');
+      }
+    } catch (e) {
+      console.error('Error logging in:', e);
+      alert('Error de conexión al iniciar sesión');
     }
   };
 
@@ -954,6 +1150,16 @@ const App: React.FC = () => {
       alert("Por favor completa los campos principales (Nombre, Correo, Teléfono).");
       return;
     }
+
+    const finalSedeId = role === 'superadmin'
+      ? (newStudentData.sedeId ? Number(newStudentData.sedeId) : (activeSedeId || null))
+      : (activeSedeId || 1);
+
+    if (!finalSedeId) {
+      alert("Por favor selecciona una Sede para el nuevo alumno.");
+      return;
+    }
+
     const existingStudentSameEmail = students.find(s => s.email && s.email.trim().toLowerCase() === newStudentData.email.trim().toLowerCase());
     const generatedPassword = existingStudentSameEmail?.password || Math.random().toString(36).slice(-6).toUpperCase();
     
@@ -979,7 +1185,8 @@ const App: React.FC = () => {
       isPaid: false, 
       history: [], 
       lastPaymentMonth: '', 
-      password: generatedPassword 
+      password: generatedPassword,
+      sedeId: finalSedeId
     };
 
     try {
@@ -991,7 +1198,7 @@ const App: React.FC = () => {
       if (response.ok) {
         const savedStudent = await response.json();
         setStudents([...students, savedStudent]);
-        setNewStudentData({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000, discountCategory: '', discountPercentage: 0 });
+        setNewStudentData({ name: '', email: '', phone: '', birthDate: '', documentId: '', belt: 'WHITE' as Belt, plan: '3', monthlyFee: 40000, discountCategory: '', discountPercentage: 0, sedeId: '' });
         setIsAddingStudent(false);
         if (existingStudentSameEmail) {
           alert(`✅ Familiar registrado con éxito.\nSe asignó automáticamente la misma clave de acceso para vincular las cuentas.`);
@@ -1046,7 +1253,8 @@ const App: React.FC = () => {
   const handleSendBirthdayGreetings = async () => {
     try {
       setIsSendingBirthdays(true);
-      const res = await fetch(`${API_URL}/api/admin/check-birthdays`, { method: 'POST' });
+      const queryParams = activeSedeId ? `?sedeId=${activeSedeId}` : '';
+      const res = await fetch(`${API_URL}/api/admin/check-birthdays${queryParams}`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         alert(`🎂 ¡Operación exitosa!\n\n${data.message}`);
@@ -1064,7 +1272,8 @@ const App: React.FC = () => {
   const handleGeneratePasswordsForAll = async () => {
     if (!confirm("¿Deseas generar contraseñas automáticas para TODOS los alumnos que aún no tienen una clave?")) return;
     try {
-      const response = await fetch(`${API_URL}/api/admin/generate-passwords`, { method: 'POST' });
+      const queryParams = activeSedeId ? `?sedeId=${activeSedeId}` : '';
+      const response = await fetch(`${API_URL}/api/admin/generate-passwords${queryParams}`, { method: 'POST' });
       const result = await response.json();
       if (result.success) {
         alert(`✅ Se generaron claves para ${result.count} alumnos correctamente en el servidor.`);
@@ -1079,7 +1288,8 @@ const App: React.FC = () => {
   const handleSendCredentialsByEmail = async (group: 'ALL' | 'KIDS' | 'ADULTS') => {
     if (!confirm(`¿Deseas enviar un correo de bienvenida y credenciales a todo el grupo ${group === 'ALL' ? 'TODOS' : group}?`)) return;
     try {
-      const response = await fetch(`${API_URL}/api/admin/send-credentials`, {
+      const queryParams = activeSedeId ? `?sedeId=${activeSedeId}` : '';
+      const response = await fetch(`${API_URL}/api/admin/send-credentials${queryParams}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ageGroup: group })
@@ -1994,7 +2204,9 @@ const App: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <div style={{ position: 'relative', width: '52px', height: '52px' }}>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'conic-gradient(var(--logo-green) 0%, transparent 60%, var(--logo-green) 100%)' }} />
-                <img src={currentUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} style={{ position: 'absolute', inset: '2px', borderRadius: '50%', background: '#111', objectFit: 'cover' }} />
+                <div className="strict-avatar-container" style={{ position: 'absolute', inset: '2px', width: '48px', height: '48px', background: '#111' }}>
+                  <img src={currentUser.avatar ? (currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('data:') ? currentUser.avatar : `${API_URL}${currentUser.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} />
+                </div>
               </div>
               <div>
                 <div style={{ fontSize: '0.6rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>Bienvenido</div>
@@ -2275,13 +2487,20 @@ const App: React.FC = () => {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem', padding: '1rem' }}>
                       <div style={{ position: 'relative' }}>
-                        <div style={{ width: '85px', height: '85px', borderRadius: '50%', overflow: 'hidden', border: '3px solid var(--logo-green)', background: 'var(--panel-surface)' }}>
-                          <img src={currentUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div className="strict-avatar-container" style={{ width: '85px', height: '85px', border: '3px solid var(--logo-green)', background: 'var(--panel-surface)' }}>
+                          <img src={currentUser.avatar ? (currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('data:') ? currentUser.avatar : `${API_URL}${currentUser.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} />
                         </div>
                       </div>
-                      <div>
-                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.1em', marginBottom: '0.3rem' }}>TU FOTO DE PERFIL</div>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--panel-muted)', maxWidth: '180px', lineHeight: 1.3 }}>La actualización de fotos está desactivada temporalmente.</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.1em' }}>TU FOTO DE PERFIL</div>
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }} 
+                          whileTap={{ scale: 0.95 }}
+                          onClick={handleUploadAvatar}
+                          style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '0.5rem', padding: '0.4rem 0.8rem', color: '#fff', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', alignSelf: 'flex-start' }}
+                        >
+                          Subir Foto
+                        </motion.button>
                       </div>
                     </div>
 
@@ -2525,6 +2744,105 @@ const App: React.FC = () => {
         })()}
         </AnimatePresence>
 
+        {/* Interactive Avatar Cropper Modal */}
+        {rawImageForCrop && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+            <div className="glass" style={{ background: '#ffffff', color: '#1e293b', padding: '2rem', borderRadius: '2rem', width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid rgba(0,0,0,0.08)' }}>
+              
+              <div style={{ textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, color: 'var(--tatami-black)' }}>Ajustar Foto</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--panel-muted)', marginTop: '0.4rem' }}>Arrastra para encuadrar y usa el zoom</p>
+              </div>
+
+              {/* Circular Cropping Frame */}
+              <div 
+                onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
+                onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+                onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
+                onTouchMove={(e) => handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
+                onTouchEnd={handleDragEnd}
+                style={{ 
+                  width: '250px', 
+                  height: '250px', 
+                  borderRadius: '50%', 
+                  overflow: 'hidden', 
+                  position: 'relative', 
+                  background: '#f1f5f9', 
+                  border: '3px solid var(--logo-green)',
+                  boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.15), 0 10px 25px rgba(0,0,0,0.1)',
+                  cursor: 'move',
+                  touchAction: 'none'
+                }}
+              >
+                {cropImageObj && (() => {
+                  const C = 250;
+                  const s0 = C / Math.min(cropImageObj.width, cropImageObj.height);
+                  const W = cropImageObj.width * s0 * cropZoom;
+                  const H = cropImageObj.height * s0 * cropZoom;
+                  const left = (C - W) / 2 + cropOffset.x;
+                  const top = (C - H) / 2 + cropOffset.y;
+
+                  return (
+                    <img 
+                      src={rawImageForCrop} 
+                      style={{ 
+                        position: 'absolute',
+                        width: `${W}px`,
+                        height: `${H}px`,
+                        left: `${left}px`,
+                        top: `${top}px`,
+                        maxWidth: 'none',
+                        maxHeight: 'none',
+                        userSelect: 'none',
+                        pointerEvents: 'none'
+                      }} 
+                    />
+                  );
+                })()}
+                
+                {/* Outer shadow overlay to emphasize the circle crop */}
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', boxShadow: 'inset 0 0 15px rgba(0,0,0,0.2)', pointerEvents: 'none' }} />
+              </div>
+
+              {/* Slider zoom */}
+              <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0 0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--panel-muted)' }}>A-</span>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max="3" 
+                  step="0.01" 
+                  value={cropZoom} 
+                  onChange={(e) => handleZoomChange(parseFloat(e.target.value))} 
+                  style={{ flex: 1, accentColor: 'var(--logo-green)', cursor: 'pointer', height: '6px', borderRadius: '3px', background: '#e2e8f0' }} 
+                />
+                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--panel-muted)' }}>A+</span>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                <button 
+                  onClick={() => setRawImageForCrop(null)} 
+                  disabled={isCroppingSave}
+                  style={{ flex: 1, background: '#f1f5f9', border: 'none', borderRadius: '1rem', padding: '0.8rem', color: '#64748b', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleSaveCrop} 
+                  disabled={isCroppingSave}
+                  style={{ flex: 1, background: 'var(--logo-green)', border: 'none', borderRadius: '1rem', padding: '0.8rem', color: '#fff', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', boxShadow: '0 10px 20px rgba(5,168,106,0.2)' }}
+                >
+                  {isCroppingSave ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
       </motion.div>
     );
   }
@@ -2578,6 +2896,25 @@ const App: React.FC = () => {
           <div style={{ fontSize: '2.2rem', fontWeight: 900, color: 'var(--logo-green)', lineHeight: 1, letterSpacing: '-2px', marginBottom: '0.5rem' }}>RANAS</div>
           <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#fff', letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.9 }}>Panel de Administración</div>
         </div>
+        {/* Selector de Sede para Super-Admin */}
+        {role === 'superadmin' && sedes.length > 0 && (
+          <div style={{ padding: '0.8rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '0.8rem', width: '80%', alignSelf: 'center' }}>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>SEDE ACTIVA</span>
+            <select 
+              value={activeSedeId || ''} 
+              onChange={e => {
+                const val = e.target.value;
+                setActiveSedeId(val ? Number(val) : null);
+              }}
+              style={{ width: '100%', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.2)', background: '#1e293b', color: '#fff', fontSize: '0.8rem', outline: 'none', fontWeight: 600, cursor: 'pointer' }}
+            >
+              <option value="">Todas las Sedes</option>
+              {sedes.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
         {/* Nav items */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
           {[
@@ -2646,14 +2983,14 @@ const App: React.FC = () => {
                 value={studentSearchTerm} onChange={e => setStudentSearchTerm(e.target.value)} />
             </div>
             <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-              onClick={() => activeTab === 'videos' ? setIsAddingVideo(true) : setIsAddingStudent(true)}
+              onClick={() => activeTab === 'videos' ? setIsAddingVideo(true) : handleOpenAddStudent()}
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.4rem', background: 'var(--logo-green)', border: 'none', borderRadius: '100px', color: '#fff', fontWeight: 900, fontSize: '0.8rem', cursor: 'pointer', letterSpacing: '0.03em' }}>
               <Plus size={16} /> {activeTab === 'videos' ? 'Nuevo Video' : 'Nuevo Alumno'}
             </motion.button>
           </div>
           {isMobile && ['students', 'videos'].includes(activeTab) && (
             <motion.button whileTap={{ scale: 0.95 }}
-              onClick={() => activeTab === 'videos' ? setIsAddingVideo(true) : setIsAddingStudent(true)}
+              onClick={() => activeTab === 'videos' ? setIsAddingVideo(true) : handleOpenAddStudent()}
               style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '12px', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 10px rgba(5,168,106,0.3)', flexShrink: 0 }}>
               <Plus size={20} />
             </motion.button>
@@ -2668,7 +3005,7 @@ const App: React.FC = () => {
               {isMobile && (
                 <motion.div key="mobile-quick-actions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                   style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem', gridColumn: 'span 1' }}>
-                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsAddingStudent(true)}
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleOpenAddStudent()}
                     style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '1.2rem', padding: '1.2rem', color: '#fff', fontWeight: 900, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
                     <Plus size={22} /> NUEVO ALUMNO
                   </motion.button>
@@ -2801,7 +3138,7 @@ const App: React.FC = () => {
                   <option value="PENDING">Pendiente</option>
                 </select>
                 {isMobile && (
-                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsAddingStudent(true)}
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleOpenAddStudent()}
                     style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '1rem', padding: '0.7rem 1.2rem', color: '#fff', fontWeight: 900, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     <Plus size={14} /> Nuevo
                   </motion.button>
@@ -2839,8 +3176,10 @@ const App: React.FC = () => {
                       <motion.div key={student.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                         style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', padding: '0.8rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flex: 1, minWidth: 0 }}>
-                          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: student.isPaid ? 'rgba(5,168,106,0.1)' : 'rgba(239,68,68,0.1)', border: `1px solid ${student.isPaid ? 'rgba(5,168,106,0.2)' : 'rgba(239,68,68,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: student.isPaid ? 'var(--logo-green)' : '#ef4444', fontSize: '0.85rem', flexShrink: 0 }}>
-                            {student.name[0]}
+                          <div className="strict-avatar-container" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--panel-surface)', border: `1px solid var(--panel-border)` }}>
+                            <img 
+                              src={student.avatar ? (student.avatar.startsWith('http') || student.avatar.startsWith('data:') ? student.avatar : `${API_URL}${student.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(student.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} 
+                            />
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--panel-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{student.name}</div>
@@ -2915,8 +3254,17 @@ const App: React.FC = () => {
                         .map((student) => (
                           <tr key={student.id} style={{ borderBottom: '1px solid var(--glass-border)', transition: 'all 0.3s' }} className="hover-light">
                             <td style={{ padding: '1.5rem' }}>
-                              <p style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--text-main)' }}>{student.name}</p>
-                              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{student.email}</p>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                <div className="strict-avatar-container" style={{ width: '38px', height: '38px', border: '2px solid var(--glass-border)', background: 'var(--panel-surface)' }}>
+                                  <img 
+                                    src={student.avatar ? (student.avatar.startsWith('http') || student.avatar.startsWith('data:') ? student.avatar : `${API_URL}${student.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(student.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} 
+                                  />
+                                </div>
+                                <div>
+                                  <p style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--text-main)', margin: 0 }}>{student.name}</p>
+                                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{student.email}</p>
+                                </div>
+                              </div>
                             </td>
                             <td style={{ padding: '1.5rem' }}>
                               <div className={`belt-badge belt-${student.belt}`} style={{ display: 'inline-block', padding: '0.5rem 1rem', fontSize: '0.65rem' }}>{beltLabels[student.belt]}</div>
@@ -3155,7 +3503,8 @@ const App: React.FC = () => {
                   if(confirm('¿Deseas LANZAR esta notificación a todos los alumnos?')) {
                     try {
                       setIsSendingNotice(true);
-                      const res = await fetch(`${API_URL}/api/admin/broadcast`, { 
+                      const queryParams = activeSedeId ? `?sedeId=${activeSedeId}` : '';
+                      const res = await fetch(`${API_URL}/api/admin/broadcast${queryParams}`, { 
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ subject: noticeData.subject, message: noticeData.message })
@@ -3610,6 +3959,19 @@ const App: React.FC = () => {
                   <input style={{ padding: '1.2rem', borderRadius: '1rem', border: '1px solid var(--panel-border)', background: '#f8fafc', color: '#111', fontWeight: 700, fontSize: '1rem', outline: 'none' }} placeholder="Correo electrónico" value={newStudentData.email} onChange={e => setNewStudentData({ ...newStudentData, email: e.target.value })} />
                   <input style={{ padding: '1.2rem', borderRadius: '1rem', border: '1px solid var(--panel-border)', background: '#f8fafc', color: '#111', fontWeight: 700, fontSize: '1rem', outline: 'none' }} placeholder="Teléfono" value={newStudentData.phone} onChange={e => setNewStudentData({ ...newStudentData, phone: e.target.value })} />
 
+                  {role === 'superadmin' && sedes.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--panel-muted)' }}>SEDE</label>
+                      <select style={{ padding: '1.2rem', borderRadius: '1rem', border: '1px solid var(--panel-border)', background: '#fff', color: '#111', fontWeight: 900, fontSize: '1rem', outline: 'none', cursor: 'pointer' }} 
+                        value={newStudentData.sedeId || ''} 
+                        onChange={e => setNewStudentData({ ...newStudentData, sedeId: e.target.value })}
+                      >
+                        <option value="">Seleccionar Sede...</option>
+                        {sedes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
                     <label style={{ fontSize: '0.8rem', fontWeight: 900, color: 'var(--panel-muted)' }}>DÍAS POR SEMANA (PLAN)</label>
                     <select style={{ padding: '1.2rem', borderRadius: '1rem', border: '1px solid var(--panel-border)', background: '#fff', color: '#111', fontWeight: 900, fontSize: '1rem', outline: 'none', cursor: 'pointer' }} value={newStudentData.plan} onChange={e => {
@@ -3721,10 +4083,9 @@ const App: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1, flexWrap: 'wrap', gap: '1.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1, minWidth: isMobile ? '100%' : '300px' }}>
                     <div style={{ position: 'relative' }}>
-                      <div style={{ width: '100px', height: '100px', borderRadius: '2.5rem', overflow: 'hidden', background: 'var(--panel-surface)', border: '2px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.05)' }}>
+                      <div className="strict-avatar-container" style={{ width: '100px', height: '100px', borderRadius: '2.5rem', background: 'var(--panel-surface)', border: '2px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.05)' }}>
                         <img
-                          src={selectedStudent.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedStudent.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          src={selectedStudent.avatar ? (selectedStudent.avatar.startsWith('http') || selectedStudent.avatar.startsWith('data:') ? selectedStudent.avatar : `${API_URL}${selectedStudent.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedStudent.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`}
                         />
                       </div>
                     </div>
@@ -3747,7 +4108,7 @@ const App: React.FC = () => {
                         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                           style={{ background: 'rgba(5,168,106,0.1)', border: '1px solid rgba(5,168,106,0.3)', borderRadius: '1rem', padding: '0.8rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: 'var(--logo-green)', fontWeight: 900, fontSize: '0.8rem' }}
                           onClick={() => {
-                            setNewStudentData({ name: '', email: selectedStudent.email || '', phone: selectedStudent.phone || '', birthDate: '', documentId: '', belt: 'WHITE', plan: selectedStudent.plan ? selectedStudent.plan.toString() : '3', monthlyFee: selectedStudent.monthlyFee || 40000, discountCategory: '', discountPercentage: 0 });
+                            setNewStudentData({ name: '', email: selectedStudent.email || '', phone: selectedStudent.phone || '', birthDate: '', documentId: '', belt: 'WHITE', plan: selectedStudent.plan ? selectedStudent.plan.toString() : '3', monthlyFee: selectedStudent.monthlyFee || 40000, discountCategory: '', discountPercentage: 0, sedeId: selectedStudent.sedeId?.toString() || selectedStudent.sede_id?.toString() || '' });
                             setSelectedStudent(null);
                             setIsAddingStudent(true);
                           }}
@@ -3906,6 +4267,27 @@ const App: React.FC = () => {
                     )}
                   </div>
                 </div>
+
+                {/* ── Sede (Solo Super-Admin) ── */}
+                {role === 'superadmin' && sedes.length > 0 && (
+                  <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
+                    <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>SEDE</p>
+                    {isEditingStudent ? (
+                      <select
+                        style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 700, fontSize: '0.85rem', width: '200px', textAlign: 'center', outline: 'none', cursor: 'pointer' }}
+                        value={editedStudent?.sedeId || editedStudent?.sede_id || ''}
+                        onChange={e => setEditedStudent(prev => prev ? { ...prev, sedeId: Number(e.target.value), sede_id: Number(e.target.value) } : null)}
+                      >
+                        <option value="">Seleccionar Sede...</option>
+                        {sedes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    ) : (
+                      <p style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--panel-text)' }}>
+                        {sedes.find(s => s.id === (selectedStudent.sedeId || selectedStudent.sede_id))?.name || '—'}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {/* ── Fecha de Ingreso / Último Grado / Graduación ── */}
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
@@ -4346,6 +4728,105 @@ const App: React.FC = () => {
           );
         })()}
         
+        {/* Interactive Avatar Cropper Modal */}
+        {rawImageForCrop && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(15px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+            <div className="glass" style={{ background: '#ffffff', color: '#1e293b', padding: '2rem', borderRadius: '2rem', width: '100%', maxWidth: '380px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid rgba(0,0,0,0.08)' }}>
+              
+              <div style={{ textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, color: 'var(--tatami-black)' }}>Ajustar Foto</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--panel-muted)', marginTop: '0.4rem' }}>Arrastra para encuadrar y usa el zoom</p>
+              </div>
+
+              {/* Circular Cropping Frame */}
+              <div 
+                onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
+                onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+                onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)}
+                onTouchMove={(e) => handleDragMove(e.touches[0].clientX, e.touches[0].clientY)}
+                onTouchEnd={handleDragEnd}
+                style={{ 
+                  width: '250px', 
+                  height: '250px', 
+                  borderRadius: '50%', 
+                  overflow: 'hidden', 
+                  position: 'relative', 
+                  background: '#f1f5f9', 
+                  border: '3px solid var(--logo-green)',
+                  boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.15), 0 10px 25px rgba(0,0,0,0.1)',
+                  cursor: 'move',
+                  touchAction: 'none'
+                }}
+              >
+                {cropImageObj && (() => {
+                  const C = 250;
+                  const s0 = C / Math.min(cropImageObj.width, cropImageObj.height);
+                  const W = cropImageObj.width * s0 * cropZoom;
+                  const H = cropImageObj.height * s0 * cropZoom;
+                  const left = (C - W) / 2 + cropOffset.x;
+                  const top = (C - H) / 2 + cropOffset.y;
+
+                  return (
+                    <img 
+                      src={rawImageForCrop} 
+                      style={{ 
+                        position: 'absolute',
+                        width: `${W}px`,
+                        height: `${H}px`,
+                        left: `${left}px`,
+                        top: `${top}px`,
+                        maxWidth: 'none',
+                        maxHeight: 'none',
+                        userSelect: 'none',
+                        pointerEvents: 'none'
+                      }} 
+                    />
+                  );
+                })()}
+                
+                {/* Outer shadow overlay to emphasize the circle crop */}
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', boxShadow: 'inset 0 0 15px rgba(0,0,0,0.2)', pointerEvents: 'none' }} />
+              </div>
+
+              {/* Slider zoom */}
+              <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0 0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--panel-muted)' }}>A-</span>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max="3" 
+                  step="0.01" 
+                  value={cropZoom} 
+                  onChange={(e) => handleZoomChange(parseFloat(e.target.value))} 
+                  style={{ flex: 1, accentColor: 'var(--logo-green)', cursor: 'pointer', height: '6px', borderRadius: '3px', background: '#e2e8f0' }} 
+                />
+                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--panel-muted)' }}>A+</span>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '1rem', width: '100%' }}>
+                <button 
+                  onClick={() => setRawImageForCrop(null)} 
+                  disabled={isCroppingSave}
+                  style={{ flex: 1, background: '#f1f5f9', border: 'none', borderRadius: '1rem', padding: '0.8rem', color: '#64748b', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleSaveCrop} 
+                  disabled={isCroppingSave}
+                  style={{ flex: 1, background: 'var(--logo-green)', border: 'none', borderRadius: '1rem', padding: '0.8rem', color: '#fff', fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', boxShadow: '0 10px 20px rgba(5,168,106,0.2)' }}
+                >
+                  {isCroppingSave ? 'Guardando...' : 'Guardar'}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+        
       </AnimatePresence>
     </motion.div>
   );
@@ -4424,7 +4905,8 @@ const AcceptTermsModal: React.FC<{ student: Student, onAccept: () => void }> = (
             7. A través de mi firma en este documento acepto toda responsabilidad de mis acciones en relación con mi participación del Club Deportivo Social y Cultural Ranas Jiu Jitsu.
             8. Acepto la responsabilidad por mis posesiones y equipo deportivo durante los entrenamientos.
             9. A través de este documento libero de toda responsabilidad Club Deportivo Social y Cultural Ranas Jiu Jitsu y a sus representantes, voluntarios, sponsors, directores, miembros, empleados, agentes y administradores de toda compensación o prosecución relacionada a las actividades del club de las cuales pueda resultar lesionado y/o accidentado.
-            10. Libero de toda responsabilidad, posible persecución y responsabilidad económica o demandas de compensación a los organizadores por pérdida de posesiones personales o equipamiento deportivo.`}
+            10. Libero de toda responsabilidad, posible persecución y responsabilidad económica o demandas de compensación a los organizadores por pérdida de posesiones personales o equipamiento deportivo.
+            11. Acepto subir y permitir el uso de una fotografía de mi rostro (foto de perfil) con el fin exclusivo de permitir mi correcta identificación por parte del personal administrativo y los profesores del club en los registros internos.`}
           </div>
         </div>
 

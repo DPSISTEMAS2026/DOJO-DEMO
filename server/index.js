@@ -21,11 +21,34 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Mercado Pago Configuration
+// Mercado Pago Configuration (Fallback global client)
 const client = new MercadoPagoConfig({
     accessToken: process.env.VITE_MP_ACCESS_TOKEN || '',
     options: { timeout: 5000 }
 });
+
+// Helper to get Mercado Pago Config dynamically per Sede
+async function getMPClientForSede(sedeId) {
+    if (sedeId) {
+        try {
+            const { data: sedeRecord, error } = await supabase
+                .from('sedes')
+                .select('mp_access_token')
+                .eq('id', Number(sedeId))
+                .maybeSingle();
+
+            if (!error && sedeRecord && sedeRecord.mp_access_token) {
+                return new MercadoPagoConfig({
+                    accessToken: sedeRecord.mp_access_token,
+                    options: { timeout: 5000 }
+                });
+            }
+        } catch (e) {
+            console.error(`[MP-CLIENT] Error fetching token for Sede ${sedeId}:`, e.message);
+        }
+    }
+    return client; // Fallback to global config
+}
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -90,8 +113,9 @@ const writeData = (file, data) => {
 // Admin Payments Lookup
 app.get('/api/admin/payments', async (req, res) => {
     try {
-        const { year = '2026', month = '02' } = req.query;
-        const mpPayment = new Payment(client);
+        const { year = '2026', month = '02', sedeId } = req.query;
+        const mpClient = await getMPClientForSede(sedeId);
+        const mpPayment = new Payment(mpClient);
         
         const nextMonth = Number(month) === 12 ? 1 : Number(month) + 1;
         const nextYear = Number(month) === 12 ? Number(year) + 1 : Number(year);
@@ -245,7 +269,12 @@ app.delete('/api/videos/:id', async (req, res) => {
 // News
 app.get('/api/news', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('news').select('*').order('id', { ascending: true });
+        let query = supabase.from('news').select('*');
+        if (req.query.sedeId) {
+            query = query.or(`sede_id.eq.${req.query.sedeId},sede_id.is.null`);
+        }
+        query = query.order('id', { ascending: true });
+        const { data, error } = await query;
         if (error) throw error;
         res.json(data || []);
     } catch (error) {
@@ -255,9 +284,23 @@ app.get('/api/news', async (req, res) => {
 
 app.post('/api/news', async (req, res) => {
     try {
-        // Borrar noticias previas (exceptuando el aviso global reservado con ID 999999)
-        await supabase.from('news').delete().neq('id', 999999);
-        const { error } = await supabase.from('news').insert(Array.isArray(req.body) ? req.body : [req.body]);
+        const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
+        // Borrar noticias previas (exceptuando el aviso global reservado con ID 999999) filtrado por sede
+        let deleteQuery = supabase.from('news').delete().neq('id', 999999);
+        if (targetSedeId) {
+            deleteQuery = deleteQuery.eq('sede_id', targetSedeId);
+        } else {
+            deleteQuery = deleteQuery.is('sede_id', null);
+        }
+        await deleteQuery;
+
+        const newsBody = Array.isArray(req.body) ? req.body : [req.body];
+        const newsWithSede = newsBody.map(item => ({
+            ...item,
+            sede_id: targetSedeId
+        }));
+
+        const { error } = await supabase.from('news').insert(newsWithSede);
         if (error) throw error;
         res.status(200).json(req.body);
     } catch (error) {
@@ -268,7 +311,12 @@ app.post('/api/news', async (req, res) => {
 // Gallery
 app.get('/api/gallery', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('gallery').select('*').order('id', { ascending: true });
+        let query = supabase.from('gallery').select('*');
+        if (req.query.sedeId) {
+            query = query.or(`sede_id.eq.${req.query.sedeId},sede_id.is.null`);
+        }
+        query = query.order('id', { ascending: true });
+        const { data, error } = await query;
         if (error) throw error;
         res.json(data || []);
     } catch (error) {
@@ -278,8 +326,22 @@ app.get('/api/gallery', async (req, res) => {
 
 app.post('/api/gallery', async (req, res) => {
     try {
-        await supabase.from('gallery').delete().neq('id', 0);
-        const { error } = await supabase.from('gallery').insert(Array.isArray(req.body) ? req.body : [req.body]);
+        const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
+        let deleteQuery = supabase.from('gallery').delete().neq('id', 0);
+        if (targetSedeId) {
+            deleteQuery = deleteQuery.eq('sede_id', targetSedeId);
+        } else {
+            deleteQuery = deleteQuery.is('sede_id', null);
+        }
+        await deleteQuery;
+
+        const galleryBody = Array.isArray(req.body) ? req.body : [req.body];
+        const galleryWithSede = galleryBody.map(item => ({
+            ...item,
+            sede_id: targetSedeId
+        }));
+
+        const { error } = await supabase.from('gallery').insert(galleryWithSede);
         if (error) throw error;
         res.status(200).json(req.body);
     } catch (error) {
@@ -300,7 +362,11 @@ app.post('/api/hero-videos', (req, res) => {
 // Students with automatic background sync
 app.get('/api/students', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('students').select('*');
+        let query = supabase.from('students').select('*');
+        if (req.query.sedeId) {
+            query = query.eq('sede_id', Number(req.query.sedeId));
+        }
+        const { data, error } = await query;
         if (error) throw error;
 
         // Logic: if lastpaymentdate + 28 days < today, set as unpaid
@@ -329,26 +395,30 @@ app.get('/api/students', async (req, res) => {
         const searchDate = `-${mm}-${dd}`;
         const birthdayStudents = updatedData.filter(s => s.birthdate && s.birthdate.includes(searchDate));
         
+        const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
+        const noticeId = 999900 + (targetSedeId || 99);
+
         if (birthdayStudents.length > 0) {
             const names = birthdayStudents.map(s => s.name.split(' ')[0]).join(', ');
             const subject = '🎂 ¡Felices Cumpleaños de Hoy!';
             const message = `Hoy saludamos especialmente a: **${names}**. ¡Que tengan un excelente día de parte de su Dojo Ranas! 🥋🐸`;
             
             // Verificamos si el aviso ya existe para hoy para evitar actualizaciones innecesarias
-            const { data: currentNotice } = await supabase.from('news').select('*').eq('id', 999999).maybeSingle();
+            const { data: currentNotice } = await supabase.from('news').select('*').eq('id', noticeId).maybeSingle();
             if (!currentNotice || currentNotice.title !== subject || !currentNotice.date.includes(now.toISOString().split('T')[0])) {
                 await supabase.from('news').upsert({
-                    id: 999999,
+                    id: noticeId,
                     title: subject,
                     body: message,
-                    date: now.toISOString()
+                    date: now.toISOString(),
+                    sede_id: targetSedeId
                 });
             }
         } else {
-            // Eliminar si no hay cumpleaños (proceder con cautela si hay avisos manuales, pero ID 999999 es reservado para esto)
-            const { data: currentNotice } = await supabase.from('news').select('*').eq('id', 999999).maybeSingle();
+            // Eliminar si no hay cumpleaños
+            const { data: currentNotice } = await supabase.from('news').select('*').eq('id', noticeId).maybeSingle();
             if (currentNotice && currentNotice.title.includes('Cumpleaños')) {
-                await supabase.from('news').delete().eq('id', 999999);
+                await supabase.from('news').delete().eq('id', noticeId);
             }
         }
 
@@ -373,7 +443,9 @@ app.get('/api/students', async (req, res) => {
             scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : [],
             joinDate: s.joindate || null,
             lastGrade: s.lastgrade || null,
-            graduationDate: s.graduationdate || null
+            graduationDate: s.graduationdate || null,
+            sedeId: s.sede_id || 1,
+            sede_id: s.sede_id || 1
         }));
 
         res.json(formatted);
@@ -480,7 +552,8 @@ app.post('/api/students', async (req, res) => {
             scheduledclasses: Array.isArray(req.body.scheduledClasses) ? req.body.scheduledClasses : [],
             joindate: req.body.joinDate || null,
             lastgrade: req.body.lastGrade || null,
-            graduationdate: req.body.graduationDate || null
+            graduationdate: req.body.graduationDate || null,
+            sede_id: req.body.sedeId ? Number(req.body.sedeId) : 1
         };
         const { error } = await supabase.from('students').insert(newStudent);
         if (error) throw error;
@@ -566,6 +639,8 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.joinDate !== undefined) updateData.joindate = req.body.joinDate;
         if (req.body.lastGrade !== undefined) updateData.lastgrade = req.body.lastGrade;
         if (req.body.graduationDate !== undefined) updateData.graduationdate = req.body.graduationDate;
+        if (req.body.sedeId !== undefined) updateData.sede_id = req.body.sedeId ? Number(req.body.sedeId) : null;
+        if (req.body.sede_id !== undefined) updateData.sede_id = req.body.sede_id ? Number(req.body.sede_id) : null;
 
         console.log(`PUT /api/students/${req.params.id}`, JSON.stringify(updateData));
         const { error } = await supabase.from('students').update(updateData).eq('id', req.params.id);
@@ -606,7 +681,8 @@ app.post('/api/students/:id/sync-payments', async (req, res) => {
         const { data: student, error: selectError } = await supabase.from('students').select('*').eq('id', req.params.id).single();
         if (selectError || !student) return res.status(404).json({ error: 'Alumno no encontrado' });
 
-        const mpPayment = new Payment(client);
+        const mpClient = await getMPClientForSede(student.sede_id);
+        const mpPayment = new Payment(mpClient);
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
@@ -730,9 +806,14 @@ app.post('/api/checkout', async (req, res) => {
         ];
 
         const totalCharged = items.reduce((acc, i) => acc + i.unit_price, 0);
-        console.log(`[CHECKOUT] Amount: $${amount}, WithSurcharge: ${!!withSurcharge}, Total charged: $${totalCharged}`);
+        
+        // Determinar sede para checkout
+        const targetSedeId = isGroup ? (students[0].sede_id || students[0].sedeId) : (student.sede_id || student.sedeId);
+        const mpClient = await getMPClientForSede(targetSedeId);
+        console.log(`[CHECKOUT] Sede: ${targetSedeId}, Amount: $${amount}, WithSurcharge: ${!!withSurcharge}, Total charged: $${totalCharged}`);
 
-        const preference = new Preference(client);
+        const preference = new Preference(mpClient);
+        const webhookUrl = (process.env.BACKEND_URL || 'https://dojo-demo-server.onrender.com') + `/api/webhooks?sede_id=${targetSedeId || ''}`;
         const result = await preference.create({
             body: {
                 items: items,
@@ -746,7 +827,7 @@ app.post('/api/checkout', async (req, res) => {
                     pending: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=pending'
                 },
                 auto_return: "approved",
-                notification_url: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/webhooks` : 'https://dojo-demo-server.onrender.com/api/webhooks'
+                notification_url: webhookUrl
             }
         });
 
@@ -769,7 +850,9 @@ app.post('/api/students/:id/send-payment-reminder', async (req, res) => {
         if (!student.email) return res.status(400).json({ error: 'Alumno sin correo configurado' });
         if (!student.monthlyfee) return res.status(400).json({ error: 'Alumno no tiene mensualidad configurada' });
 
-        const preference = new Preference(client);
+        const mpClient = await getMPClientForSede(student.sede_id);
+        const preference = new Preference(mpClient);
+        const webhookUrl = (process.env.BACKEND_URL || 'https://dojo-demo-server.onrender.com') + `/api/webhooks?sede_id=${student.sede_id || ''}`;
         const result = await preference.create({
             body: {
                 items: [
@@ -787,7 +870,7 @@ app.post('/api/students/:id/send-payment-reminder', async (req, res) => {
                     pending: (process.env.FRONTEND_URL || 'http://localhost:5173') + '?payment=pending'
                 },
                 auto_return: "approved",
-                notification_url: process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/webhooks` : 'https://dojo-demo-server.onrender.com/api/webhooks'
+                notification_url: webhookUrl
             }
         });
 
@@ -829,7 +912,12 @@ app.post('/api/students/:id/send-payment-reminder', async (req, res) => {
 // Generar contraseñas para los que no tienen (Alumnos Antiguos)
 app.post('/api/admin/generate-passwords', async (req, res) => {
     try {
-        const { data: students, error: selectError } = await supabase.from('students').select('*').is('password', null);
+        const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
+        let query = supabase.from('students').select('*').is('password', null);
+        if (targetSedeId) {
+            query = query.eq('sede_id', targetSedeId);
+        }
+        const { data: students, error: selectError } = await query;
         if (selectError) throw selectError;
 
         let counts = 0;
@@ -851,6 +939,8 @@ app.post('/api/admin/send-credentials', async (req, res) => {
             return res.status(400).json({ error: 'Configuración SMTP incompleta en el archivo .env' });
         }
 
+        const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
+
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: Number(process.env.SMTP_PORT) || 587,
@@ -862,7 +952,11 @@ app.post('/api/admin/send-credentials', async (req, res) => {
         });
 
         // Asegúrate de que los estudiantes vivan con password disponible
-        let { data: students, error: selectError } = await supabase.from('students').select('*');
+        let query = supabase.from('students').select('*');
+        if (targetSedeId) {
+            query = query.eq('sede_id', targetSedeId);
+        }
+        let { data: students, error: selectError } = await query;
         if (selectError) throw selectError;
 
         // Filtrar según el grupo solicitado
@@ -1072,7 +1166,9 @@ app.post('/api/webhooks', async (req, res) => {
     }
 
     try {
-        const mpPayment = new Payment(client);
+        const sedeId = req.query.sede_id;
+        const mpClient = await getMPClientForSede(sedeId);
+        const mpPayment = new Payment(mpClient);
         const payDetails = await mpPayment.get({ id: paymentId });
 
         if (payDetails.status === 'approved') {
@@ -1153,7 +1249,12 @@ app.post('/api/webhooks', async (req, res) => {
 // Saludos de hoy - Solo como gatillo manual si se necesita forzar
 app.post('/api/admin/check-birthdays', async (req, res) => {
     try {
-        const { data: students, error } = await supabase.from('students').select('*');
+        const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
+        let query = supabase.from('students').select('*');
+        if (targetSedeId) {
+            query = query.eq('sede_id', targetSedeId);
+        }
+        const { data: students, error } = await query;
         if (error) throw error;
 
         const now = new Date();
@@ -1162,6 +1263,7 @@ app.post('/api/admin/check-birthdays', async (req, res) => {
         const searchDate = `-${mm}-${dd}`;
 
         const birthdayStudents = students.filter(s => s.birthdate && s.birthdate.includes(searchDate));
+        const noticeId = 999900 + (targetSedeId || 99);
         
         if (birthdayStudents.length > 0) {
             const names = birthdayStudents.map(s => s.name.split(' ')[0]).join(', ');
@@ -1169,14 +1271,15 @@ app.post('/api/admin/check-birthdays', async (req, res) => {
             const message = `Hoy saludamos especialmente a: **${names}**. ¡Que tengan un excelente día de parte de su Dojo Ranas! 🥋🐸`;
             
             await supabase.from('news').upsert({
-                id: 999999,
+                id: noticeId,
                 title: subject,
                 body: message,
                 date: now.toISOString(),
                 stats: [],
                 link: '#',
                 img: '',
-                label: 'Aviso del Dojo'
+                label: 'Aviso del Dojo',
+                sede_id: targetSedeId
             });
 
             // Also save to noticeFile since GET /api/global-notice reads it
@@ -1197,30 +1300,34 @@ app.post('/api/admin/broadcast', async (req, res) => {
         const { subject, message } = req.body;
         if (!subject || !message) return res.status(400).json({ error: 'Asunto y mensaje requeridos' });
 
+        const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
+        const noticeId = 999900 + (targetSedeId || 99);
+
         const noticeData = {
             subject,
             message,
             date: new Date().toISOString()
         };
         
-        // Persistencia en Render vía Supabase (Usamos ID reservado 999999 en tabla news)
+        // Persistencia en Render vía Supabase (Usamos ID reservado en tabla news)
         try {
             await supabase.from('news').upsert({
-                id: 999999,
+                id: noticeId,
                 title: subject,
                 body: message,
                 date: noticeData.date,
                 stats: [],
                 link: '#',
                 img: '',
-                label: 'Aviso del Dojo'
+                label: 'Aviso del Dojo',
+                sede_id: targetSedeId
             });
         } catch (supaErr) {
             console.error('Error saving notice to Supabase:', supaErr);
         }
 
         writeData(noticeFile, noticeData);
-        res.json({ success: true, message: `Aviso publicado en los portales de todos los alumnos.` });
+        res.json({ success: true, message: `Aviso publicado en los portales de los alumnos de esta sede.` });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -1228,7 +1335,9 @@ app.post('/api/admin/broadcast', async (req, res) => {
 
 app.get('/api/global-notice', async (req, res) => {
     try {
-        const { data: supaNotice, error } = await supabase.from('news').select('*').eq('id', 999999).maybeSingle();
+        const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
+        const noticeId = 999900 + (targetSedeId || 99);
+        const { data: supaNotice, error } = await supabase.from('news').select('*').eq('id', noticeId).maybeSingle();
         if (supaNotice) {
             // If it's a birthday notice, check if it's still today in Chile timezone
             if (supaNotice.title && supaNotice.title.includes('Cumpleaños') && supaNotice.date) {
@@ -1240,7 +1349,7 @@ app.get('/api/global-notice', async (req, res) => {
                     nowChile.getMonth() !== noticeDateChile.getMonth() ||
                     nowChile.getDate() !== noticeDateChile.getDate()) {
                     // Birthday notice expired — delete it and return null
-                    await supabase.from('news').delete().eq('id', 999999);
+                    await supabase.from('news').delete().eq('id', noticeId);
                     return res.json(null);
                 }
             }
@@ -1277,12 +1386,17 @@ app.get('/api/global-notice', async (req, res) => {
 // ============================
 // AUTO-SYNC: Transferencias MP
 // ============================
-async function syncTransferPayments() {
-    console.log('[SYNC] Iniciando sincronización de transferencias MP...');
+// Función auxiliar para sincronizar transferencias de una sede específica
+async function syncTransferPaymentsForSede(sedeId) {
     try {
-        // Get all students
-        const { data: students, error: studErr } = await supabase.from('students').select('*');
+        // Traer alumnos de esta sede
+        const { data: students, error: studErr } = await supabase
+            .from('students')
+            .select('*')
+            .eq('sede_id', Number(sedeId));
         if (studErr) throw studErr;
+
+        if (!students || students.length === 0) return { synced: 0, details: [] };
 
         // Build email->students map
         const emailToStudents = {};
@@ -1294,8 +1408,9 @@ async function syncTransferPayments() {
             }
         });
 
-        // Get MP payments from last 45 days
-        const mpPayment = new Payment(client);
+        // Get MP payments
+        const mpClient = await getMPClientForSede(sedeId);
+        const mpPayment = new Payment(mpClient);
         const since = new Date();
         since.setDate(since.getDate() - 15);
 
@@ -1340,7 +1455,6 @@ async function syncTransferPayments() {
 
             // Search in description (glosa) for ID pattern
             if (matchedStudentIds.length === 0 && payment.description) {
-                // Check ID: pattern (supports multiple IDs for family payments)
                 const idRegex = /\bID[:\s]*(\d+)\b/gi;
                 let match;
                 while ((match = idRegex.exec(payment.description)) !== null) {
@@ -1385,15 +1499,41 @@ async function syncTransferPayments() {
                 if (!upErr) {
                     synced++;
                     details.push({ name: student.name, amount: perStudentAmount, type: isTransfer ? 'transfer' : 'checkout', txId });
-                    console.log(`[SYNC] ✅ ${student.name} - $${perStudentAmount} (${isTransfer ? 'Transferencia' : 'Checkout'}) - TX: ${txId}`);
+                    console.log(`[SYNC-SEDE-${sedeId}] ✅ ${student.name} - $${perStudentAmount} (${isTransfer ? 'Transferencia' : 'Checkout'}) - TX: ${txId}`);
                 }
             }
         }
-
-        console.log(`[SYNC] Completado: ${synced} pagos sincronizados`);
         return { synced, details };
     } catch (e) {
-        console.error('[SYNC ERROR]', e.message);
+        console.error(`[SYNC-SEDE-${sedeId} ERROR]`, e.message);
+        return { synced: 0, error: e.message };
+    }
+}
+
+async function syncTransferPayments() {
+    console.log('[SYNC] Iniciando sincronización de transferencias MP...');
+    try {
+        // Obtener todas las sedes
+        const { data: sedes, error: sedesErr } = await supabase.from('sedes').select('id, name');
+        if (sedesErr) {
+            console.error('[SYNC] No se pudieron obtener las sedes. Fallback a Concepción (ID: 1).');
+        }
+
+        const activeSedes = sedes && sedes.length > 0 ? sedes : [{ id: 1, name: 'Concepción' }];
+        let totalSynced = 0;
+        let allDetails = [];
+
+        for (const sede of activeSedes) {
+            console.log(`[SYNC] Procesando sede: ${sede.name} (ID: ${sede.id})`);
+            const result = await syncTransferPaymentsForSede(sede.id);
+            totalSynced += result.synced || 0;
+            if (result.details) allDetails = allDetails.concat(result.details);
+        }
+
+        console.log(`[SYNC] Completado global: ${totalSynced} pagos sincronizados`);
+        return { synced: totalSynced, details: allDetails };
+    } catch (e) {
+        console.error('[SYNC GLOBAL ERROR]', e.message);
         return { synced: 0, error: e.message };
     }
 }
@@ -1551,23 +1691,33 @@ cron.schedule('0 9 * * *', async () => {
         const dd = String(chileTime.day).padStart(2, '0');
         const searchDate = `-${mm}-${dd}`;
 
-        const birthdayStudents = students.filter(s => s.birthdate && s.birthdate.includes(searchDate));
-        
-        if (birthdayStudents.length > 0) {
-            const names = birthdayStudents.map(s => s.name.split(' ')[0]).join(', ');
-            const subject = '🎂 ¡Felices Cumpleaños de Hoy!';
-            const message = `Hoy saludamos especialmente a **${names}** en su día. ¡Que tengas un excelente cumpleaños y nos vemos pronto en el Dojo! 🥋🐸`;
-            
-            await supabase.from('news').upsert({
-                id: 999999,
-                title: subject,
-                body: message,
-                date: chileTime.toISO()
-            });
-            console.log(`[CRON] Aviso de cumpleaños publicado: ${names}`);
-        } else {
-            console.log('[CRON] No hay cumpleaños el día de hoy.');
-            await supabase.from('news').delete().eq('id', 999999);
+        const { data: sedes } = await supabase.from('sedes').select('id');
+        const sedeIds = sedes ? sedes.map(s => s.id) : [1];
+
+        for (const sId of sedeIds) {
+            const sedeStudents = students.filter(s => s.sede_id === sId);
+            const birthdayStudents = sedeStudents.filter(s => s.birthdate && s.birthdate.includes(searchDate));
+            const noticeId = 999900 + sId;
+
+            if (birthdayStudents.length > 0) {
+                const names = birthdayStudents.map(s => s.name.split(' ')[0]).join(', ');
+                const subject = '🎂 ¡Felices Cumpleaños de Hoy!';
+                const message = `Hoy saludamos especialmente a **${names}** en su día. ¡Que tengas un excelente cumpleaños y nos vemos pronto en el Dojo! 🥋🐸`;
+                
+                await supabase.from('news').upsert({
+                    id: noticeId,
+                    title: subject,
+                    body: message,
+                    date: chileTime.toISO(),
+                    sede_id: sId
+                });
+                console.log(`[CRON] Sede ${sId} - Aviso de cumpleaños publicado: ${names}`);
+            } else {
+                const { data: currentNotice } = await supabase.from('news').select('*').eq('id', noticeId).maybeSingle();
+                if (currentNotice && currentNotice.title.includes('Cumpleaños')) {
+                    await supabase.from('news').delete().eq('id', noticeId);
+                }
+            }
         }
     } catch (e) {
         console.error('[CRON ERROR] Error en la tarea programada:', e.message);
@@ -1585,10 +1735,25 @@ const DEFAULT_FEES = {
 
 app.get('/api/fees', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('news').select('*').eq('id', 999998).maybeSingle();
+        const sedeId = req.query.sedeId ? Number(req.query.sedeId) : 1;
+        const { data, error } = await supabase
+            .from('news')
+            .select('*')
+            .eq('title', 'SYSTEM_FEES')
+            .eq('sede_id', sedeId)
+            .maybeSingle();
+
         if (data && data.body) {
             const stored = JSON.parse(data.body);
-            // Merge con defaults para que claves nuevas siempre existan
+            return res.json({
+                adults: { ...DEFAULT_FEES.adults, ...stored.adults },
+                kids: { ...DEFAULT_FEES.kids, ...stored.kids }
+            });
+        }
+        // Fallback global check
+        const { data: globalData } = await supabase.from('news').select('*').eq('id', 999998).maybeSingle();
+        if (globalData && globalData.body) {
+            const stored = JSON.parse(globalData.body);
             return res.json({
                 adults: { ...DEFAULT_FEES.adults, ...stored.adults },
                 kids: { ...DEFAULT_FEES.kids, ...stored.kids }
@@ -1602,13 +1767,26 @@ app.get('/api/fees', async (req, res) => {
 
 app.post('/api/fees', async (req, res) => {
     try {
-        const { error } = await supabase.from('news').upsert({
-            id: 999998,
+        const sedeId = req.query.sedeId ? Number(req.query.sedeId) : 1;
+        const { data: existing } = await supabase
+            .from('news')
+            .select('id')
+            .eq('title', 'SYSTEM_FEES')
+            .eq('sede_id', sedeId)
+            .maybeSingle();
+
+        const payload = {
             title: 'SYSTEM_FEES',
             body: JSON.stringify(req.body),
-            date: new Date().toISOString()
-        });
-        if (error) throw error;
+            date: new Date().toISOString(),
+            sede_id: sedeId
+        };
+
+        if (existing) {
+            await supabase.from('news').update(payload).eq('id', existing.id);
+        } else {
+            await supabase.from('news').insert(payload);
+        }
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -1617,9 +1795,21 @@ app.post('/api/fees', async (req, res) => {
 
 app.get('/api/automation', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('news').select('*').eq('id', 999997).maybeSingle();
+        const sedeId = req.query.sedeId ? Number(req.query.sedeId) : 1;
+        const { data, error } = await supabase
+            .from('news')
+            .select('*')
+            .eq('title', 'SYSTEM_AUTOMATION')
+            .eq('sede_id', sedeId)
+            .maybeSingle();
+
         if (data && data.body) {
             return res.json(JSON.parse(data.body));
+        }
+        // Fallback global check
+        const { data: globalData } = await supabase.from('news').select('*').eq('id', 999997).maybeSingle();
+        if (globalData && globalData.body) {
+            return res.json(JSON.parse(globalData.body));
         }
         res.json({ reminderDay: 5, whatsappTemplate: "Hola {nombre}...", emailTemplate: "Hola {nombre}..." });
     } catch (e) {
@@ -1629,13 +1819,26 @@ app.get('/api/automation', async (req, res) => {
 
 app.post('/api/automation', async (req, res) => {
     try {
-        const { error } = await supabase.from('news').upsert({
-            id: 999997,
+        const sedeId = req.query.sedeId ? Number(req.query.sedeId) : 1;
+        const { data: existing } = await supabase
+            .from('news')
+            .select('id')
+            .eq('title', 'SYSTEM_AUTOMATION')
+            .eq('sede_id', sedeId)
+            .maybeSingle();
+
+        const payload = {
             title: 'SYSTEM_AUTOMATION',
             body: JSON.stringify(req.body),
-            date: new Date().toISOString()
-        });
-        if (error) throw error;
+            date: new Date().toISOString(),
+            sede_id: sedeId
+        };
+
+        if (existing) {
+            await supabase.from('news').update(payload).eq('id', existing.id);
+        } else {
+            await supabase.from('news').insert(payload);
+        }
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -1644,9 +1847,21 @@ app.post('/api/automation', async (req, res) => {
 
 app.get('/api/discount-categories', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('news').select('*').eq('id', 999996).maybeSingle();
+        const sedeId = req.query.sedeId ? Number(req.query.sedeId) : 1;
+        const { data, error } = await supabase
+            .from('news')
+            .select('*')
+            .eq('title', 'SYSTEM_DISCOUNT_CATEGORIES')
+            .eq('sede_id', sedeId)
+            .maybeSingle();
+
         if (data && data.body) {
             return res.json(JSON.parse(data.body));
+        }
+        // Fallback global check
+        const { data: globalData } = await supabase.from('news').select('*').eq('id', 999996).maybeSingle();
+        if (globalData && globalData.body) {
+            return res.json(JSON.parse(globalData.body));
         }
         res.json(['Convenio Bomberos', 'Profesor', 'Becados']);
     } catch (e) {
@@ -1656,16 +1871,126 @@ app.get('/api/discount-categories', async (req, res) => {
 
 app.post('/api/discount-categories', async (req, res) => {
     try {
-        const { error } = await supabase.from('news').upsert({
-            id: 999996,
+        const sedeId = req.query.sedeId ? Number(req.query.sedeId) : 1;
+        const { data: existing } = await supabase
+            .from('news')
+            .select('id')
+            .eq('title', 'SYSTEM_DISCOUNT_CATEGORIES')
+            .eq('sede_id', sedeId)
+            .maybeSingle();
+
+        const payload = {
             title: 'SYSTEM_DISCOUNT_CATEGORIES',
             body: JSON.stringify(req.body),
-            date: new Date().toISOString()
-        });
-        if (error) throw error;
+            date: new Date().toISOString(),
+            sede_id: sedeId
+        };
+
+        if (existing) {
+            await supabase.from('news').update(payload).eq('id', existing.id);
+        } else {
+            await supabase.from('news').insert(payload);
+        }
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
+    }
+});
+
+// ======================================
+// MULTI-TENANT NEW ENDPOINTS
+// ======================================
+
+// Obtener todas las sedes
+app.get('/api/sedes', async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('sedes').select('*').order('name', { ascending: true });
+        if (error) throw error;
+        res.json(data || []);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Endpoint seguro de Autenticación
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        if (!email || !password) {
+            return res.status(400).json({ success: false, error: 'Email y contraseña requeridos' });
+        }
+
+        const lowerEmail = email.trim().toLowerCase();
+        const trimmedPass = password.trim();
+
+        // 1. Intentar validar contra la tabla de admins en la base de datos
+        try {
+            const { data: admin, error } = await supabase
+                .from('admins')
+                .select('*')
+                .eq('email', lowerEmail)
+                .maybeSingle();
+
+            if (!error && admin) {
+                if (admin.password_hash === trimmedPass) {
+                    return res.json({
+                        success: true,
+                        role: admin.role, // 'superadmin' o 'admin_sede'
+                        sedeId: admin.sede_id,
+                        email: admin.email
+                    });
+                } else {
+                    return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
+                }
+            }
+        } catch (dbErr) {
+            console.error("Admins table check failed or not created yet:", dbErr.message);
+        }
+
+        // 2. Fallback: Logins hardcodeados para superadmins (Compatibilidad)
+        const adminEmails = ['d.diazaraya19@gmail.com', 'manuelplazaarenas@gmail.com', 'contacto@dpsistemas.cl'];
+        if (trimmedPass === 'admin123' && adminEmails.includes(lowerEmail)) {
+            return res.json({
+                success: true,
+                role: 'superadmin',
+                sedeId: null,
+                email: lowerEmail
+            });
+        }
+
+        // 3. Intentar buscar en la tabla de alumnos (students)
+        const { data: student, error: studentErr } = await supabase
+            .from('students')
+            .select('*')
+            .ilike('email', lowerEmail)
+            .maybeSingle();
+
+        if (!studentErr && student) {
+            if (student.password && student.password.trim().toLowerCase() === trimmedPass.toLowerCase()) {
+                return res.json({
+                    success: true,
+                    role: 'student',
+                    student: {
+                        id: student.id,
+                        name: student.name,
+                        email: student.email,
+                        belt: student.belt || 'WHITE',
+                        isPaid: student.ispaid === true,
+                        plan: student.plan,
+                        monthlyFee: student.monthlyfee,
+                        avatar: student.avatar,
+                        birthDate: student.birthdate,
+                        history: student.history || [],
+                        sedeId: student.sede_id || 1 // Fallback a sede 1 si es nulo
+                    }
+                });
+            }
+        }
+
+        return res.status(401).json({ success: false, error: 'Correo o contraseña incorrecta' });
+    } catch (error) {
+        console.error("Login Error:", error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

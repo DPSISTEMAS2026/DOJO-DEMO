@@ -1,5 +1,5 @@
 export type Belt = 'WHITE' | 'BLUE' | 'PURPLE' | 'BROWN' | 'BLACK' | 'GRAY';
-export type UserRole = 'guest' | 'admin' | 'student';
+export type UserRole = 'guest' | 'admin' | 'superadmin' | 'student';
 export type ViewMode = 'landing' | 'auth' | 'app';
 
 export interface Video {
@@ -49,6 +49,8 @@ export interface Student {
         timestamp: number;
     }[];
     terms_accepted?: boolean;
+    sedeId?: number;
+    sede_id?: number;
 }
 
 export type PlanFees = {
