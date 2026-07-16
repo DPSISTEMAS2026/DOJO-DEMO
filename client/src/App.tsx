@@ -244,10 +244,21 @@ import type {
 
 // Detect environment: Capacitor native apps run on localhost bridge (capacitor://localhost or http://localhost)
 // but must connect to the production server. We always use VITE_API_URL if set (baked in at build time).
-const _isLocalDev = window.location.hostname === 'localhost' && !window.location.href.includes('capacitor://');
-const API_URL: string = import.meta.env.VITE_API_URL
+// Robust detection for Capacitor webview (Android runs on http://localhost with no port, iOS on capacitor://)
+const _isCapacitor = typeof window !== 'undefined' && (
+  !!(window as any).Capacitor || 
+  window.location.href.includes('capacitor://') || 
+  (window.location.hostname === 'localhost' && window.location.port === '')
+);
+const _isLocalDev = window.location.hostname === 'localhost' && !_isCapacitor;
+let API_URL: string = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL
   : (_isLocalDev ? 'http://localhost:3002' : 'https://dojo-demo-server.onrender.com');
+
+// Force production URL if running inside native app (even if VITE_API_URL was baked as localhost)
+if (_isCapacitor && API_URL.includes('localhost')) {
+  API_URL = 'https://dojo-demo-server.onrender.com';
+}
 
 const newsItems = [
   {

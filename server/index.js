@@ -1967,6 +1967,7 @@ app.post('/api/auth/login', async (req, res) => {
         const trimmedPass = password.trim();
 
         // 1. Intentar validar contra la tabla de admins en la base de datos
+        let adminFoundButWrongPass = false;
         try {
             const { data: admin, error } = await supabase
                 .from('admins')
@@ -1983,7 +1984,9 @@ app.post('/api/auth/login', async (req, res) => {
                         email: admin.email
                     });
                 } else {
-                    return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
+                    // No retornamos 401 inmediatamente en caso de que sea un correo compartido
+                    // o que el usuario también esté en la tabla de alumnos y esté intentando ingresar como alumno.
+                    adminFoundButWrongPass = true;
                 }
             }
         } catch (dbErr) {
@@ -2030,6 +2033,9 @@ app.post('/api/auth/login', async (req, res) => {
             }
         }
 
+        if (adminFoundButWrongPass) {
+            return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
+        }
         return res.status(401).json({ success: false, error: 'Correo o contraseña incorrecta' });
     } catch (error) {
         console.error("Login Error:", error);
