@@ -583,6 +583,10 @@ const App: React.FC = () => {
   const [isDraggingCrop, setIsDraggingCrop] = useState<boolean>(false);
   const [dragStartCrop, setDragStartCrop] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
   const [cropImageObj, setCropImageObj] = useState<HTMLImageElement | null>(null);
+  // Admin-specific: which student the admin is editing the avatar for
+  const [adminCropTargetStudent, setAdminCropTargetStudent] = useState<Student | null>(null);
+  // Lightbox: show full-size photo of a student
+  const [photoLightboxStudent, setPhotoLightboxStudent] = useState<Student | null>(null);
 
   useEffect(() => {
     if (!rawImageForCrop) {
@@ -956,6 +960,25 @@ const App: React.FC = () => {
 
       const reader = new FileReader();
       reader.onload = (event) => {
+        setAdminCropTargetStudent(null); // ensure we're editing currentUser
+        setRawImageForCrop(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+
+  // Admin function: upload avatar for any specific student
+  const handleAdminUploadAvatar = (student: Student) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setAdminCropTargetStudent(student);
         setRawImageForCrop(event.target?.result as string);
       };
       reader.readAsDataURL(file);
@@ -964,7 +987,9 @@ const App: React.FC = () => {
   };
 
   const handleSaveCrop = async () => {
-    if (!cropImageObj || !currentUser) return;
+    // Determine who we're saving for: admin editing a student, or currentUser editing themselves
+    const targetStudent = adminCropTargetStudent || currentUser;
+    if (!cropImageObj || !targetStudent) return;
     setIsCroppingSave(true);
     try {
       const canvas = document.createElement('canvas');
@@ -987,18 +1012,27 @@ const App: React.FC = () => {
       
       const base64Image = canvas.toDataURL('image/jpeg', 0.6);
       
-      const updatedStudent = { ...currentUser, avatar: base64Image } as Student;
+      const updatedStudent = { ...targetStudent, avatar: base64Image } as Student;
       
-      const saveResponse = await fetch(`${API_URL}/api/students/${currentUser.id}`, {
+      const saveResponse = await fetch(`${API_URL}/api/students/${targetStudent.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ avatar: base64Image })
       });
 
       if (saveResponse.ok) {
-        setCurrentUser(updatedStudent);
-        setStudents(prev => prev.map(s => s.id === currentUser.id ? updatedStudent : s));
+        // Update students list
+        setStudents(prev => prev.map(s => s.id === targetStudent.id ? updatedStudent : s));
+        // If we edited the currently logged-in student, update currentUser too
+        if (currentUser?.id === targetStudent.id) {
+          setCurrentUser(updatedStudent);
+        }
+        // If admin was editing a selected student, update selectedStudent view
+        if (adminCropTargetStudent && selectedStudent?.id === targetStudent.id) {
+          setSelectedStudent(updatedStudent);
+        }
         setRawImageForCrop(null);
+        setAdminCropTargetStudent(null);
         alert('✅ Foto de perfil actualizada con éxito.');
       } else {
         alert('❌ Error al guardar la foto de perfil en el servidor.');
@@ -1070,6 +1104,30 @@ const App: React.FC = () => {
   const beltLabels: Record<Belt, string> = { WHITE: 'Blanco', BLUE: 'Azul', PURPLE: 'Morado', BROWN: 'Marrón', BLACK: 'Negro', GRAY: 'Gris' };
   const planLabels: Record<string, string> = { '1': 'Clase Individual', '1x': '1x Semana', '2': '2x Semana', '3': '3x Semana', '4': '4x Semana', 'Ilimitado': 'Full Rana' };
   const formatCLP = (amount: number) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(amount);
+
+  // Formatea una fecha YYYY-MM-DD → DD/MM/YYYY (o texto corto de mes si se pide)
+  const formatDate = (dateStr: string | null | undefined, style: 'numeric' | 'long' | 'short' = 'numeric'): string => {
+    if (!dateStr) return 'N/A';
+    try {
+      // Parsear asegurando hora fija para evitar desfase de zona horaria
+      const [y, m, d] = dateStr.split('-').map(Number);
+      if (!y || !m || !d) return dateStr;
+      const date = new Date(y, m - 1, d);
+      if (style === 'numeric') return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
+      if (style === 'short') return date.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+      return date.toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch { return dateStr; }
+  };
+
+  // Formatea YYYY-MM (mes de pago) → MM/YYYY
+  const formatMonth = (monthStr: string | null | undefined): string => {
+    if (!monthStr) return 'N/A';
+    try {
+      const [y, m] = monthStr.split('-');
+      if (!y || !m) return monthStr;
+      return `${m}/${y}`;
+    } catch { return monthStr; }
+  };
 
   const handleLogin = async (studentToLogin?: Student) => {
     if (studentToLogin) {
@@ -2460,7 +2518,7 @@ const App: React.FC = () => {
                                 <div style={{ textAlign: 'right' }}>
                                   <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--panel-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.2rem' }}>Fecha</div>
                                   <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--logo-green)' }}>
-                                    {new Date(currentUser.graduationDate + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    {formatDate(currentUser.graduationDate, 'short')}
                                   </div>
                                 </div>
                               )}
@@ -2570,7 +2628,7 @@ const App: React.FC = () => {
                       <div style={{ marginBottom: '1.5rem', padding: '1.5rem', background: 'var(--panel-surface)', borderRadius: '1.2rem', border: '1px solid var(--panel-border)' }}>
                         <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.1em', marginBottom: '0.8rem' }}>📅 FECHA DE INGRESO AL DOJO</div>
                         <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--panel-text)' }}>
-                          {new Date(currentUser.joinDate + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          {formatDate(currentUser.joinDate, 'long')}
                         </div>
                       </div>
                     )}
@@ -2913,98 +2971,118 @@ const App: React.FC = () => {
       </div>
 
       {/* Sidebar */}
-      <motion.nav initial={{ x: -350, opacity: 0 }} animate={{ x: isMobile ? (isMobileMenuOpen ? 0 : -500) : 0, opacity: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      <motion.nav
+        initial={{ x: -350, opacity: 0 }}
+        animate={{ x: isMobile ? (isMobileMenuOpen ? 0 : -500) : 0, opacity: 1 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className={`sidebar ${isMobileMenuOpen ? 'sidebar-open' : ''}`}
-        style={{ position: 'fixed', left: 0, top: 0, bottom: 0, padding: '2.5rem 1.5rem', display: 'flex', flexDirection: 'column', zIndex: 9999, background: 'rgba(6,6,6,0.98)', backdropFilter: 'blur(40px)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-        
-        {isMobile && (
-          <button onClick={() => setIsMobileMenuOpen(false)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', zIndex: 10 }}>
-            <X size={28} />
-          </button>
-        )}
-
-        {/* Header Branding */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '3.5rem', padding: '1rem 0' }}>
-          <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
-            <div style={{ position: 'absolute', inset: '-8px', background: 'var(--logo-green)', borderRadius: '50%', filter: 'blur(15px)', opacity: 0.3 }} />
-            <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo"
-              style={{
-                width: '140px',
-                aspectRatio: '1/1',
-                borderRadius: '50%',
-                objectFit: 'contain',
-                background: '#000',
-                border: '2px solid var(--logo-green)',
-                position: 'relative',
-                imageRendering: 'auto'
-              }} />
-          </div>
-          <div style={{ fontSize: '2.2rem', fontWeight: 900, color: 'var(--logo-green)', lineHeight: 1, letterSpacing: '-2px', marginBottom: '0.5rem' }}>RANAS</div>
-          <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#fff', letterSpacing: '0.2em', textTransform: 'uppercase', opacity: 0.9 }}>Panel de Administración</div>
-        </div>
-        {/* Selector de Sede para Super-Admin */}
-        {role === 'superadmin' && sedes.length > 0 && (
-          <div style={{ padding: '0.8rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem', marginBottom: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '0.8rem', width: '80%', alignSelf: 'center' }}>
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>SEDE ACTIVA</span>
-            <select 
-              value={activeSedeId || ''} 
-              onChange={e => {
-                const val = e.target.value;
-                setActiveSedeId(val ? Number(val) : null);
-              }}
-              style={{ width: '100%', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.2)', background: '#1e293b', color: '#fff', fontSize: '0.8rem', outline: 'none', fontWeight: 600, cursor: 'pointer' }}
+        style={{
+          position: 'fixed', left: 0, top: 0, bottom: 0,
+          display: 'flex', flexDirection: 'column',
+          zIndex: 9999,
+          background: 'rgba(6,6,6,0.98)',
+          backdropFilter: 'blur(40px)',
+          borderRight: '1px solid rgba(255,255,255,0.06)',
+          overflow: 'hidden',  /* NO overflow en el nav completo */
+          padding: 0
+        }}
+      >
+        {/* ── ZONA 1: Header fijo (nunca scrollea) ── */}
+        <div style={{ flexShrink: 0, padding: '1.5rem 1.5rem 0.8rem', position: 'relative' }}>
+          {isMobile && (
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', zIndex: 10 }}
             >
-              <option value="">Todas las Sedes</option>
-              {sedes.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+              <X size={18} />
+            </button>
+          )}
+
+          {/* Branding compacto */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', paddingRight: isMobile ? '2.5rem' : 0 }}>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', inset: '-4px', background: 'var(--logo-green)', borderRadius: '50%', filter: 'blur(10px)', opacity: 0.35 }} />
+              <img
+                src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg"
+                alt="Logo Ranas"
+                style={{ width: '88px', height: '88px', borderRadius: '50%', objectFit: 'cover', background: '#000', border: '2px solid var(--logo-green)', position: 'relative', display: 'block' }}
+              />
+            </div>
+            <div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--logo-green)', lineHeight: 1, letterSpacing: '-1px' }}>RANAS</div>
+              <div style={{ fontSize: '0.55rem', fontWeight: 800, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '0.15rem' }}>Panel Admin</div>
+            </div>
           </div>
-        )}
-        {/* Nav items */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flex: 1 }}>
+
+          {/* Selector de Sede para Super-Admin */}
+          {role === 'superadmin' && sedes.length > 0 && (
+            <div style={{ marginTop: '0.9rem', padding: '0.6rem 0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '0.7rem' }}>
+              <span style={{ fontSize: '0.58rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: '0.3rem' }}>SEDE ACTIVA</span>
+              <select
+                value={activeSedeId || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  setActiveSedeId(val ? Number(val) : null);
+                }}
+                style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '0.4rem', border: '1px solid rgba(255,255,255,0.15)', background: '#1e293b', color: '#fff', fontSize: '0.78rem', outline: 'none', fontWeight: 600, cursor: 'pointer' }}
+              >
+                <option value="">Todas las Sedes</option>
+                {sedes.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Divisor */}
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', marginTop: '1rem' }} />
+        </div>
+
+        {/* ── ZONA 2: Nav items (SOLO esta zona scrollea si es necesario) ── */}
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0.6rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', minHeight: 0 }}>
           {[
             { id: 'dashboard', label: 'Resumen', icon: <TrendingUp size={17} /> },
             { id: 'attendance', label: 'Agenda', icon: <Calendar size={17} /> },
             { id: 'students', label: 'Alumnos', icon: <Users size={17} /> },
-
             { id: 'payments', label: 'Finanzas', icon: <CreditCard size={17} /> },
             { id: 'videos', label: 'Biblioteca', icon: <Play size={17} /> },
             { id: 'communications', label: 'Comunicaciones', icon: <Mail size={17} /> },
             { id: 'website', label: 'Sitio Web', icon: <Monitor size={17} /> },
             { id: 'settings', label: 'Ajustes', icon: <Settings size={17} /> },
           ].filter(item => {
-              // Si es una sede secundaria, no mostrar Biblioteca (videos) ni Sitio Web (website)
-              const isSecondarySede = role === 'admin' && activeSedeId !== 1;
-              if (isSecondarySede && ['videos', 'website'].includes(item.id)) {
-                  return false;
-              }
-              if (isMobile) {
-                  return ['dashboard', 'attendance', 'students', 'payments', 'videos', 'communications'].includes(item.id);
-              }
-              return true;
+            const isSecondarySede = role === 'admin' && activeSedeId !== 1;
+            if (isSecondarySede && ['videos', 'website'].includes(item.id)) return false;
+            if (isMobile) return ['dashboard', 'attendance', 'students', 'payments', 'videos', 'communications'].includes(item.id);
+            return true;
           }).map(item => (
-            <motion.button key={item.id} whileHover={{ x: 4 }} whileTap={{ scale: 0.97 }}
-              onClick={() => {
-                setActiveTab(item.id as any);
-                setIsMobileMenuOpen(false);
-              }}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', padding: '0.8rem 1rem', borderRadius: '0.8rem', border: 'none', background: activeTab === item.id ? 'var(--panel-green-bg)' : 'transparent', color: '#fff', fontWeight: activeTab === item.id ? 800 : 500, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', position: 'relative', overflow: 'hidden', opacity: activeTab === item.id ? 1 : 0.7 }}>
+            <motion.button
+              key={item.id}
+              whileHover={{ x: 4 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => { setActiveTab(item.id as any); setIsMobileMenuOpen(false); }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', padding: '0.75rem 0.9rem', borderRadius: '0.75rem', border: 'none', background: activeTab === item.id ? 'rgba(5,168,106,0.15)' : 'transparent', color: '#fff', fontWeight: activeTab === item.id ? 800 : 500, fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', position: 'relative', overflow: 'hidden', opacity: activeTab === item.id ? 1 : 0.65, width: '100%', flexShrink: 0 }}
+            >
               {activeTab === item.id && (
-                <motion.div layoutId="sidebar-active"
-                  style={{ position: 'absolute', left: 0, top: '15%', bottom: '15%', width: '3px', borderRadius: '2px', background: 'var(--logo-green)' }} />
+                <motion.div
+                  layoutId="sidebar-active"
+                  style={{ position: 'absolute', left: 0, top: '15%', bottom: '15%', width: '3px', borderRadius: '2px', background: 'var(--logo-green)' }}
+                />
               )}
-              <span style={{ color: activeTab === item.id ? 'var(--logo-green)' : '#fff', opacity: activeTab === item.id ? 1 : 0.6 }}>{item.icon}</span>
+              <span style={{ color: activeTab === item.id ? 'var(--logo-green)' : 'rgba(255,255,255,0.7)', flexShrink: 0 }}>{item.icon}</span>
               {item.label}
             </motion.button>
           ))}
         </div>
 
-        {/* Bottom */}
-        <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1.2rem' }}>
-          <motion.button whileTap={{ scale: 0.95 }} onClick={handleLogout}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.9rem', padding: '0.7rem 1rem', borderRadius: '0.8rem', border: 'none', background: 'transparent', color: 'rgba(239,68,68,0.7)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', width: '100%' }}>
-            <LogOut size={16} /> Cerrar sesión
+        {/* ── ZONA 3: Logout SIEMPRE visible, nunca scrollea ── */}
+        <div style={{ flexShrink: 0, padding: '0.8rem 1rem 1.2rem', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleLogout}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.7rem', padding: '0.75rem 1rem', borderRadius: '0.75rem', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.06)', color: 'rgba(239,68,68,0.85)', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer', width: '100%', transition: 'all 0.2s' }}
+          >
+            <LogOut size={15} /> Cerrar sesión
           </motion.button>
         </div>
       </motion.nav>
@@ -4140,11 +4218,37 @@ const App: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1, flexWrap: 'wrap', gap: '1.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1, minWidth: isMobile ? '100%' : '300px' }}>
                     <div style={{ position: 'relative' }}>
-                      <div className="strict-avatar-container" style={{ width: '100px', height: '100px', borderRadius: '2.5rem', background: 'var(--panel-surface)', border: '2px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.05)' }}>
+                      <div
+                        className="strict-avatar-container"
+                        style={{ width: '100px', height: '100px', borderRadius: '2.5rem', background: 'var(--panel-surface)', border: '2px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', cursor: 'pointer' }}
+                        onClick={() => setPhotoLightboxStudent(selectedStudent)}
+                        title="Ver foto en grande"
+                      >
                         <img
                           src={selectedStudent.avatar ? (selectedStudent.avatar.startsWith('http') || selectedStudent.avatar.startsWith('data:') ? selectedStudent.avatar : `${API_URL}${selectedStudent.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedStudent.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`}
                         />
                       </div>
+                      {/* Admin-only photo action buttons */}
+                      {(role === 'superadmin' || role === 'admin') && (
+                        <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.5rem', justifyContent: 'center' }}>
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            title="Ver foto en grande"
+                            onClick={() => setPhotoLightboxStudent(selectedStudent)}
+                            style={{ background: 'rgba(5,168,106,0.12)', border: '1px solid rgba(5,168,106,0.3)', borderRadius: '0.5rem', padding: '0.25rem 0.5rem', color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem', whiteSpace: 'nowrap' }}
+                          >
+                            <ImageIcon size={10} /> Ver
+                          </motion.button>
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            title="Cambiar foto de perfil"
+                            onClick={() => handleAdminUploadAvatar(selectedStudent)}
+                            style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '0.5rem', padding: '0.25rem 0.5rem', color: '#6366f1', fontSize: '0.6rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem', whiteSpace: 'nowrap' }}
+                          >
+                            <Camera size={10} /> Cambiar
+                          </motion.button>
+                        </div>
+                      )}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '0.8rem' }}>{isEditingStudent ? 'Editando Perfil' : 'Ficha del Alumno'}</div>
@@ -4261,7 +4365,7 @@ const App: React.FC = () => {
                     ) : (
                       <>
                         <p style={{ fontWeight: 900, fontSize: '1.2rem', color: selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444', marginBottom: '0.4rem' }}>{selectedStudent.isPaid ? '✅ AL DÍA' : '⚠️ PENDIENTE'}</p>
-                        <p style={{ fontWeight: 700, fontSize: '0.75rem', color: selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444', opacity: 0.7 }}>Último pago: {selectedStudent.lastPaymentDate || 'N/A'}</p>
+                        <p style={{ fontWeight: 700, fontSize: '0.75rem', color: selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444', opacity: 0.7 }}>Último pago: {formatDate(selectedStudent.lastPaymentDate)}</p>
                       </>
                     )}
                   </div>
@@ -4353,7 +4457,7 @@ const App: React.FC = () => {
                     {isEditingStudent ? (
                       <input type="date" style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 700, fontSize: '0.85rem', width: '100%', textAlign: 'center' }} value={editedStudent?.joinDate || ''} onChange={e => setEditedStudent(prev => prev ? { ...prev, joinDate: e.target.value } : null)} title="Fecha de ingreso al Dojo" />
                     ) : (
-                      <p style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--panel-text)' }}>{selectedStudent.joinDate ? new Date(selectedStudent.joinDate + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</p>
+                      <p style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--panel-text)' }}>{formatDate(selectedStudent.joinDate, 'long')}</p>
                     )}
                   </div>
                   <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
@@ -4379,7 +4483,7 @@ const App: React.FC = () => {
                     {isEditingStudent ? (
                       <input type="date" style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 700, fontSize: '0.85rem', width: '100%', textAlign: 'center' }} value={editedStudent?.graduationDate || ''} onChange={e => setEditedStudent(prev => prev ? { ...prev, graduationDate: e.target.value } : null)} title="Fecha de graduación del último grado" />
                     ) : (
-                      <p style={{ fontWeight: 800, fontSize: '0.95rem', color: selectedStudent.graduationDate ? 'var(--logo-green)' : 'var(--panel-text)' }}>{selectedStudent.graduationDate ? new Date(selectedStudent.graduationDate + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</p>
+                      <p style={{ fontWeight: 800, fontSize: '0.95rem', color: selectedStudent.graduationDate ? 'var(--logo-green)' : 'var(--panel-text)' }}>{formatDate(selectedStudent.graduationDate, 'long')}</p>
                     )}
                   </div>
                 </div>
@@ -4418,7 +4522,7 @@ const App: React.FC = () => {
                         <tbody>
                           {selectedStudent.history.map((record, idx) => (
                             <tr key={idx} style={{ borderBottom: idx === selectedStudent.history.length - 1 ? 'none' : '1px solid var(--panel-border)' }}>
-                              <td style={{ padding: '1rem 1.5rem', fontSize: '0.9rem', fontWeight: 600 }}>{record.date}</td>
+                              <td style={{ padding: '1rem 1.5rem', fontSize: '0.9rem', fontWeight: 600 }}>{formatDate(record.date)}</td>
                               <td style={{ padding: '1rem 1.5rem', fontSize: '0.9rem', fontWeight: 800, color: 'var(--panel-text)' }}>{formatCLP(record.amount)}</td>
                               <td style={{ padding: '1rem 1.5rem' }}>
                                 <span style={{ display: 'inline-block', padding: '0.3rem 0.8rem', borderRadius: '100px', fontSize: '0.7rem', fontWeight: 800, background: record.status === 'Completado' ? 'rgba(37,211,102,0.1)' : 'rgba(239,68,68,0.1)', color: record.status === 'Completado' ? '#25D366' : '#ef4444' }}>
@@ -4886,6 +4990,73 @@ const App: React.FC = () => {
 
             </div>
           </div>
+        )}
+
+        {/* ── Photo Lightbox Modal (Admin) ── */}
+        {photoLightboxStudent && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPhotoLightboxStudent(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 99998, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', padding: '2rem' }}
+          >
+            {/* Close button */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setPhotoLightboxStudent(null)}
+              style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', backdropFilter: 'blur(10px)' }}
+            >
+              <X size={20} />
+            </motion.button>
+
+            {/* Student name tag */}
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              style={{ color: '#fff', fontWeight: 900, fontSize: isMobile ? '1.2rem' : '1.5rem', letterSpacing: '-0.03em', textAlign: 'center', textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              {photoLightboxStudent.name}
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: '0.3rem' }}>Foto de Perfil</div>
+            </motion.div>
+
+            {/* Photo */}
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+              onClick={e => e.stopPropagation()}
+              style={{ borderRadius: '50%', overflow: 'hidden', width: isMobile ? '260px' : '340px', height: isMobile ? '260px' : '340px', border: '4px solid rgba(5,168,106,0.7)', boxShadow: '0 0 60px rgba(5,168,106,0.25), 0 30px 80px rgba(0,0,0,0.6)', flexShrink: 0, background: '#1e293b' }}
+            >
+              <img
+                src={photoLightboxStudent.avatar
+                  ? (photoLightboxStudent.avatar.startsWith('http') || photoLightboxStudent.avatar.startsWith('data:')
+                    ? photoLightboxStudent.avatar
+                    : `${API_URL}${photoLightboxStudent.avatar}`)
+                  : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(photoLightboxStudent.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`}
+                alt={photoLightboxStudent.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            </motion.div>
+
+            {/* Change photo button (admin only) */}
+            {(role === 'superadmin' || role === 'admin') && (
+              <motion.button
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={e => { e.stopPropagation(); setPhotoLightboxStudent(null); handleAdminUploadAvatar(photoLightboxStudent); }}
+                style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '1rem', padding: '0.9rem 2rem', color: '#fff', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 10px 30px rgba(5,168,106,0.35)' }}
+              >
+                <Camera size={16} /> Cambiar Foto de Perfil
+              </motion.button>
+            )}
+          </motion.div>
         )}
         
       </AnimatePresence>
