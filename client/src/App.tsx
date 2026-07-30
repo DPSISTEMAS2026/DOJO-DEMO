@@ -1968,13 +1968,41 @@ const App: React.FC = () => {
                   <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Ranapp Logo" style={{ width: '80px', height: '80px', borderRadius: '50%', border: '2px solid var(--logo-green)', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }} />
                   
                   <h3 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#fff', letterSpacing: '-1px', textAlign: 'center', lineHeight: 1.1, marginBottom: '0.5rem', position: 'relative', zIndex: 1 }}>RANAPP</h3>
-                  <span style={{ color: 'var(--logo-green)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>{deferredPrompt ? '¡Lista para instalar!' : 'PWA App'}</span>
+                  <span style={{ color: 'var(--logo-green)', fontWeight: 800, fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>Aplicación Oficial</span>
                   
-                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', textAlign: 'center', lineHeight: 1.5, marginBottom: '1.5rem', position: 'relative', zIndex: 1, fontWeight: 500 }}>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', textAlign: 'center', lineHeight: 1.5, marginBottom: '1.2rem', position: 'relative', zIndex: 1, fontWeight: 500 }}>
                     La experiencia de tu dojo directamente en tu bolsillo. Exclusivo para alumnos.
                   </p>
 
-                  {deferredPrompt ? (
+                  {/* Android Play Store Link */}
+                  <a 
+                    href="https://play.google.com/store/apps/details?id=cl.ranasjiujitsu.ranapp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.8rem 1rem', 
+                      background: 'linear-gradient(135deg, #05a86a 0%, #038050 100%)', 
+                      borderRadius: '12px', 
+                      color: '#fff', 
+                      fontWeight: 900, 
+                      fontSize: '0.85rem',
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.8rem',
+                      boxShadow: '0 4px 15px rgba(5, 168, 106, 0.3)',
+                      position: 'relative',
+                      zIndex: 10
+                    }}
+                  >
+                    <span>🤖</span> DESCARGAR EN GOOGLE PLAY
+                  </a>
+
+                  {/* PWA Install Button if browser supports beforeinstallprompt */}
+                  {deferredPrompt && (
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1982,28 +2010,42 @@ const App: React.FC = () => {
                       }}
                       style={{ 
                         width: '100%', 
-                        padding: '0.8rem', 
-                        background: 'var(--logo-green)', 
-                        border: 'none', 
+                        padding: '0.7rem', 
+                        background: 'rgba(255,255,255,0.1)', 
+                        border: '1px solid rgba(255,255,255,0.2)', 
                         borderRadius: '12px', 
-                        color: '#000', 
-                        fontWeight: 900, 
-                        fontSize: '0.9rem',
-                        textTransform: 'uppercase',
+                        color: '#fff', 
+                        fontWeight: 800, 
+                        fontSize: '0.8rem',
                         cursor: 'pointer', 
-                        marginBottom: '1.5rem',
-                        boxShadow: '0 4px 15px rgba(74, 222, 128, 0.3)',
+                        marginBottom: '0.8rem',
                         position: 'relative',
                         zIndex: 10
                       }}
                     >
-                      Instalar Ahora
+                      Instalar en este navegador (PWA)
                     </button>
-                  ) : (
-                    <p style={{ color: '#38bdf8', fontSize: '0.8rem', textAlign: 'center', margin: '0 0 1.5rem', position: 'relative', zIndex: 1, fontWeight: 600 }}>
-                      En iPhone, toca el ícono de compartir ⬆️ y luego "Añadir a pantalla de inicio".
-                    </p>
                   )}
+
+                  {/* iOS App Store Notice (No bookmarks) */}
+                  <div style={{ 
+                    background: 'rgba(255,255,255,0.06)', 
+                    border: '1px solid rgba(255,255,255,0.12)', 
+                    borderRadius: '12px', 
+                    padding: '0.8rem', 
+                    textAlign: 'center', 
+                    width: '100%', 
+                    marginBottom: '1.2rem',
+                    position: 'relative',
+                    zIndex: 1
+                  }}>
+                    <span style={{ color: '#fbbf24', fontWeight: 800, fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                      🍎 App Store (iOS)
+                    </span>
+                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem', margin: '0.3rem 0 0', fontWeight: 600 }}>
+                      Próximamente disponible en App Store
+                    </p>
+                  </div>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', position: 'relative', zIndex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.1)' }}>
