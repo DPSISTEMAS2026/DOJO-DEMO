@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/browser": "^8.0.4",
     "@capacitor/camera": "^8.2.0",
     "@capacitor/core": "^8.4.1",
     "classnames": "^2.5.1",

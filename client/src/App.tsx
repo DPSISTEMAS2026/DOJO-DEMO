@@ -36,6 +36,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'react-qr-code';
+import { Browser } from '@capacitor/browser';
+import { App as CapApp } from '@capacitor/app';
 
 // Leaf, Mail, Smartphone, LogIn, Menu removed (not used in current design)
 const SocialVideoPlayer: React.FC<{ 
@@ -523,6 +525,7 @@ const App: React.FC = () => {
   const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalTarget, setPaymentModalTarget] = useState<Student | Student[] | null>(null);
+  const [generatedPaymentUrl, setGeneratedPaymentUrl] = useState<string | null>(null);
 
   
   const handleManualPayment = async (studentId: string, customDate?: string) => {
@@ -729,6 +732,26 @@ const App: React.FC = () => {
     fetchDataForSede(activeSedeId);
   }, [activeSedeId]);
 
+  // Fix 2: Detectar retorno desde Mercado Pago y refrescar datos
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    if (paymentStatus === 'success') {
+      // Limpiar URL sin recargar página
+      window.history.replaceState({}, '', window.location.pathname);
+      // Refrescar datos desde el servidor para que el estado de pago se actualice
+      fetchDataForSede(activeSedeId);
+      alert('✅ ¡Pago realizado con éxito! Tu estado ha sido actualizado.');
+    } else if (paymentStatus === 'failure') {
+      window.history.replaceState({}, '', window.location.pathname);
+      alert('❌ El pago no se pudo completar. Por favor intenta nuevamente.');
+    } else if (paymentStatus === 'pending') {
+      window.history.replaceState({}, '', window.location.pathname);
+      alert('⏳ Tu pago está pendiente de confirmación. Te notificaremos cuando se acredite.');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Sincronizar datos de la sede activa en localStorage para su uso en la carga (Splash Screen)
   useEffect(() => {
     if (sedes.length > 0) {
@@ -748,6 +771,25 @@ const App: React.FC = () => {
       setActiveTab('dashboard');
     }
   }, [activeSedeId, role, activeTab]);
+
+  // Detectar cuando el usuario vuelve a la app desde Mercado Pago (Capacitor in-app browser)
+  // Cierra el browser y refresca los datos automáticamente
+  useEffect(() => {
+    if (!_isCapacitor) return;
+    let listener: any;
+    CapApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) {
+        Browser.close().catch(() => {});
+        fetchDataForSede(activeSedeId);
+      }
+    }).then(l => { listener = l; });
+    return () => {
+      if (listener) listener.remove();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSedeId]);
+
+
 
   const syncWebsite = async (type: 'news' | 'gallery' | 'hero-videos', data: any) => {
     try {
@@ -841,24 +883,40 @@ const App: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleCreatePaymentLink = async (studentsOrStudent: Student | Student[]) => {
-    setIsGeneratingPayment(true);
-    try {
-      const isGroup = Array.isArray(studentsOrStudent);
-      const studentsToPay = isGroup ? studentsOrStudent : [studentsOrStudent];
-      const amount = studentsToPay.reduce((acc: number, s: Student) => acc + (s.monthlyFee || 40000), 0);
+  // Helper: saber si un alumno ya pagó en el mes actual
+  const hasAlreadyPaidThisMonth = (student: Student): boolean => {
+    const currentMonth = new Date().toISOString().substring(0, 7); // "2026-07"
+    // Bloquear si pagó este mes O si tiene pagos adelantados a meses futuros
+    return !!(student.isPaid && student.lastPaymentMonth &&
+      student.lastPaymentMonth.substring(0, 7) >= currentMonth);
+  };
 
+
+  // Paso 1: Genera UNA sola orden de pago y guarda la URL — NO abre nada todavía
+  const handleCreatePaymentLink = async (studentsOrStudent: Student | Student[]) => {
+    const isGroup = Array.isArray(studentsOrStudent);
+    const studentsToPay = isGroup ? studentsOrStudent : [studentsOrStudent];
+
+    // Guard: verificar si ya pagó este mes o tiene adelantos
+    const alreadyPaid = studentsToPay.filter(s => hasAlreadyPaidThisMonth(s));
+    if (alreadyPaid.length > 0) {
+      const s = alreadyPaid[0];
+      alert(`✅ ${s.name} ya tiene sus pagos al día hasta ${s.lastPaymentMonth}. No es necesario volver a pagar.`);
+      return;
+    }
+
+    setIsGeneratingPayment(true);
+    setGeneratedPaymentUrl(null);
+    try {
+      const amount = studentsToPay.reduce((acc: number, s: Student) => acc + (s.monthlyFee || 40000), 0);
       if (amount <= 0) {
         alert("⚠️ No hay mensualidades asignadas o el monto es cero.");
-        setIsGeneratingPayment(false);
         return;
       }
 
       const response = await fetch(`${API_URL}/api/checkout`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           student: !isGroup ? {
             id: (studentsOrStudent as Student).id,
@@ -881,22 +939,40 @@ const App: React.FC = () => {
       const data = await response.json();
 
       if (data.init_point) {
-        window.location.href = data.init_point;
+        // Guardar la URL — el usuario decidirá si abrir desde el modal (Paso 2)
+        setGeneratedPaymentUrl(data.init_point);
+      } else if (response.status === 400 && data.error) {
+        alert(`⚠️ ${data.error}`);
       } else {
-        console.error("Respuesta Error:", data);
         alert("❌ Error: No se pudo generar el link de pago. Verifica tu conexión.");
       }
     } catch (error) {
-      console.error("Error conectando al backend:", error);
       alert("❌ Error de red: No se pudo contactar al servidor de pagos.");
     } finally {
       setIsGeneratingPayment(false);
     }
   };
 
+  // Paso 2: Abrir el link generado — solo una vez, en un solo lugar
+  const handleOpenPaymentUrl = async (url: string) => {
+    if (_isCapacitor) {
+      await Browser.open({ url, presentationStyle: 'popover' });
+    } else {
+      window.open(url, '_blank');
+    }
+    // No limpiar la URL aquí — el modal permanece abierto hasta que el usuario confirme el pago
+  };
+
   const openPaymentModal = (target: Student | Student[]) => {
     setPaymentModalTarget(target);
+    setGeneratedPaymentUrl(null); // Limpiar link anterior al abrir modal
     setShowPaymentModal(true);
+  };
+
+  const closePaymentModal = () => {
+    setShowPaymentModal(false);
+    setGeneratedPaymentUrl(null); // Limpiar link al cerrar
+    setIsGeneratingPayment(false);
   };
 
   const MP_COMMISSION_RATE = 0.03212;
@@ -2750,7 +2826,7 @@ const App: React.FC = () => {
           return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
-              onClick={() => setShowPaymentModal(false)}>
+              onClick={closePaymentModal}>
               <motion.div initial={{ y: 40, opacity: 0, scale: 0.97 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: 'spring', damping: 25 }}
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
                 style={{ width: '100%', maxWidth: '480px', background: '#fff', borderRadius: '2.5rem', overflow: 'hidden', boxShadow: '0 50px 120px rgba(0,0,0,0.4)', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
@@ -2760,7 +2836,7 @@ const App: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div style={{ width: 36 }} />
                     <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111', letterSpacing: '-0.5px' }}>Pagar Mensualidad</h2>
-                    <button onClick={() => setShowPaymentModal(false)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}><X size={16} /></button>
+                    <button onClick={closePaymentModal} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}><X size={16} /></button>
                   </div>
                   
                   <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '1rem', padding: '0.8rem 1rem', marginBottom: '1rem' }}>
@@ -2816,16 +2892,43 @@ const App: React.FC = () => {
                       </p>
                     </div>
 
-                    <button 
-                      onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
-                      disabled={isGeneratingPayment}
-                      style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '1.5rem' }}>
-                      {isGeneratingPayment ? (
-                        <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Generando link seguro...</>
-                      ) : (
-                        <><CreditCard size={20} /> IR A MERCADO PAGO</>
-                      )}
-                    </button>
+
+                    {/* PASO 1: Generar link (solo si no hay URL generada aún) */}
+                    {!generatedPaymentUrl && (
+                      <button
+                        onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
+                        disabled={isGeneratingPayment}
+                        style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '0.5rem' }}>
+                        {isGeneratingPayment ? (
+                          <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Generando link seguro...</>
+                        ) : (
+                          <><CreditCard size={20} /> GENERAR LINK DE PAGO</>
+                        )}
+                      </button>
+                    )}
+
+                    {/* PASO 2: Confirmar apertura (solo cuando ya existe la URL) */}
+                    {generatedPaymentUrl && (
+                      <div style={{ background: '#f0fdf4', border: '2px solid #22c55e', borderRadius: '1.2rem', padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '1.2rem' }}>✅</span>
+                          <div>
+                            <p style={{ margin: 0, fontWeight: 900, fontSize: '0.9rem', color: '#166534' }}>¡Link de pago listo!</p>
+                            <p style={{ margin: 0, fontSize: '0.72rem', color: '#166534', opacity: 0.8 }}>Se generó UNA sola orden. Toca el botón para ir a pagar.</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleOpenPaymentUrl(generatedPaymentUrl)}
+                          style={{ width: '100%', padding: '1rem', borderRadius: '0.8rem', border: 'none', background: '#16a34a', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 8px 20px rgba(22,163,74,0.35)' }}>
+                          <CreditCard size={20} /> ABRIR MERCADO PAGO
+                        </button>
+                        <button
+                          onClick={() => { setGeneratedPaymentUrl(null); }}
+                          style={{ width: '100%', padding: '0.6rem', borderRadius: '0.8rem', border: '1px solid #bbf7d0', background: 'transparent', color: '#166534', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>
+                          ← Cancelar y volver
+                        </button>
+                      </div>
+                    )}
                   </motion.div>
 
                   <p style={{ fontSize: '0.6rem', color: '#94a3b8', textAlign: 'center', marginTop: '1rem', lineHeight: 1.4 }}>
@@ -4794,7 +4897,7 @@ const App: React.FC = () => {
           return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
-              onClick={() => setShowPaymentModal(false)}>
+              onClick={closePaymentModal}>
               <motion.div initial={{ y: 40, opacity: 0, scale: 0.97 }} animate={{ y: 0, opacity: 1, scale: 1 }} transition={{ type: 'spring', damping: 25 }}
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
                 style={{ width: '100%', maxWidth: '480px', background: '#fff', borderRadius: '2.5rem', overflow: 'hidden', boxShadow: '0 50px 120px rgba(0,0,0,0.4)', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
@@ -4804,7 +4907,7 @@ const App: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <div style={{ width: 36 }} />
                     <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111', letterSpacing: '-0.5px' }}>Pagar Mensualidad</h2>
-                    <button onClick={() => setShowPaymentModal(false)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}><X size={16} /></button>
+                    <button onClick={closePaymentModal} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}><X size={16} /></button>
                   </div>
                   
                   {/* Student(s) summary */}
@@ -4861,16 +4964,43 @@ const App: React.FC = () => {
                       </p>
                     </div>
 
-                    <button 
-                      onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
-                      disabled={isGeneratingPayment}
-                      style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '1.5rem' }}>
-                      {isGeneratingPayment ? (
-                        <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Generando link seguro...</>
-                      ) : (
-                        <><CreditCard size={20} /> IR A MERCADO PAGO</>
-                      )}
-                    </button>
+
+                    {/* PASO 1: Generar link (solo si no hay URL generada aún) */}
+                    {!generatedPaymentUrl && (
+                      <button
+                        onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
+                        disabled={isGeneratingPayment}
+                        style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '0.5rem' }}>
+                        {isGeneratingPayment ? (
+                          <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Generando link seguro...</>
+                        ) : (
+                          <><CreditCard size={20} /> GENERAR LINK DE PAGO</>
+                        )}
+                      </button>
+                    )}
+
+                    {/* PASO 2: Confirmar apertura (solo cuando ya existe la URL) */}
+                    {generatedPaymentUrl && (
+                      <div style={{ background: '#f0fdf4', border: '2px solid #22c55e', borderRadius: '1.2rem', padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '1.2rem' }}>✅</span>
+                          <div>
+                            <p style={{ margin: 0, fontWeight: 900, fontSize: '0.9rem', color: '#166534' }}>¡Link de pago listo!</p>
+                            <p style={{ margin: 0, fontSize: '0.72rem', color: '#166534', opacity: 0.8 }}>Se generó UNA sola orden. Toca el botón para ir a pagar.</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleOpenPaymentUrl(generatedPaymentUrl)}
+                          style={{ width: '100%', padding: '1rem', borderRadius: '0.8rem', border: 'none', background: '#16a34a', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 8px 20px rgba(22,163,74,0.35)' }}>
+                          <CreditCard size={20} /> ABRIR MERCADO PAGO
+                        </button>
+                        <button
+                          onClick={() => { setGeneratedPaymentUrl(null); }}
+                          style={{ width: '100%', padding: '0.6rem', borderRadius: '0.8rem', border: '1px solid #bbf7d0', background: 'transparent', color: '#166534', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>
+                          ← Cancelar y volver
+                        </button>
+                      </div>
+                    )}
                   </motion.div>
 
                   {/* Footer note */}

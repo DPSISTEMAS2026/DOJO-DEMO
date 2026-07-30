@@ -807,6 +807,38 @@ app.post('/api/checkout', async (req, res) => {
         const { student, students, amount, withSurcharge } = req.body;
         const isGroup = Array.isArray(students) && students.length > 0;
 
+        // ===== GUARD ANTI-DOBLE-COBRO =====
+        // Verificar que ningún alumno ya pagó este mes (o meses futuros adelantados)
+        const currentMonth = new Date().toISOString().substring(0, 7); // "2026-07"
+        const idsToCheck = isGroup
+            ? students.map(s => s.id)
+            : (student ? [student.id] : []);
+
+        if (idsToCheck.length > 0) {
+            const { data: studentRecords } = await supabase
+                .from('students')
+                .select('id, name, ispaid, lastpaymentmonth')
+                .in('id', idsToCheck)
+                .eq('ispaid', true);
+
+            // Bloquear si lastpaymentmonth >= mes actual (cubre este mes Y pagos adelantados)
+            const alreadyPaid = (studentRecords || []).filter(s =>
+                s.lastpaymentmonth && s.lastpaymentmonth >= currentMonth
+            );
+
+            if (alreadyPaid.length > 0) {
+                const names = alreadyPaid.map(s => s.name).join(', ');
+                const paidUntil = alreadyPaid.map(s => s.lastpaymentmonth).join(', ');
+                console.warn(`[CHECKOUT-GUARD] Bloqueado: ${names} — pagado hasta ${paidUntil}`);
+                return res.status(400).json({
+                    error: `Este alumno ya tiene sus pagos al día hasta ${alreadyPaid[0].lastpaymentmonth}. No es necesario volver a pagar.`,
+                    alreadyPaid: alreadyPaid.map(s => ({ name: s.name, paidUntil: s.lastpaymentmonth }))
+                });
+            }
+        }
+        // ===== FIN GUARD =====
+
+
         // If withSurcharge, inflate each item's price to cover MP commission
         const items = isGroup ? students.map(s => {
             const base = Number(s.monthlyFee || s.monthlyfee || (amount / students.length));
@@ -1659,14 +1691,23 @@ async function repairInconsistentProfiles() {
 async function expireOldPayments() {
     console.log('[EXPIRATION] Verificando vencimiento de 28 días...');
     try {
-        const { data: students, error } = await supabase.from('students').select('id, ispaid, lastpaymentdate, name');
+        const { data: students, error } = await supabase.from('students').select('id, ispaid, lastpaymentdate, lastpaymentmonth, name');
         if (error) throw error;
 
         const now = new Date();
+        const currentMonth = now.toISOString().substring(0, 7); // "2026-07"
         let expiredCount = 0;
 
         for (const s of students) {
             if (s.lastpaymentdate && s.ispaid === true) {
+
+                // Si el alumno tiene pagos adelantados (lastpaymentmonth > mes actual), NO expirar
+                if (s.lastpaymentmonth && s.lastpaymentmonth > currentMonth) {
+                    console.log(`[EXPIRATION] ✅ ${s.name} — Pago adelantado hasta ${s.lastpaymentmonth}. No se expira.`);
+                    continue;
+                }
+
+                // Expirar si han pasado más de 28 días desde el último pago
                 const pDate = new Date(s.lastpaymentdate);
                 pDate.setDate(pDate.getDate() + 28);
                 if (now > pDate) {
@@ -1683,6 +1724,7 @@ async function expireOldPayments() {
         console.error('[EXPIRATION ERROR]', e.message);
     }
 }
+
 
 // API endpoint for manual repair trigger
 app.post('/api/admin/repair-profiles', async (req, res) => {

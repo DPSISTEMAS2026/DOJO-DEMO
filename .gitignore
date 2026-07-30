@@ -35,3 +35,11 @@ Desktop.ini
 __pycache__/
 *.pyc
 .venv/
+
+# Large files / Backups (superan límite de 100MB de GitHub)
+backups/*.zip
+backups/*.gz
+backups/*.tar
+*.zip
+server/data/uploads/*.mp4
+server/data/uploads/*.mov
