@@ -525,7 +525,6 @@ const App: React.FC = () => {
   const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalTarget, setPaymentModalTarget] = useState<Student | Student[] | null>(null);
-  const [generatedPaymentUrl, setGeneratedPaymentUrl] = useState<string | null>(null);
 
   
   const handleManualPayment = async (studentId: string, customDate?: string) => {
@@ -892,7 +891,6 @@ const App: React.FC = () => {
   };
 
 
-  // Paso 1: Genera UNA sola orden de pago y guarda la URL — NO abre nada todavía
   const handleCreatePaymentLink = async (studentsOrStudent: Student | Student[]) => {
     const isGroup = Array.isArray(studentsOrStudent);
     const studentsToPay = isGroup ? studentsOrStudent : [studentsOrStudent];
@@ -906,7 +904,6 @@ const App: React.FC = () => {
     }
 
     setIsGeneratingPayment(true);
-    setGeneratedPaymentUrl(null);
     try {
       const amount = studentsToPay.reduce((acc: number, s: Student) => acc + (s.monthlyFee || 40000), 0);
       if (amount <= 0) {
@@ -939,8 +936,14 @@ const App: React.FC = () => {
       const data = await response.json();
 
       if (data.init_point) {
-        // Guardar la URL — el usuario decidirá si abrir desde el modal (Paso 2)
-        setGeneratedPaymentUrl(data.init_point);
+        // Redirigir de inmediato
+        if (_isCapacitor) {
+          await Browser.open({ url: data.init_point, presentationStyle: 'popover' });
+        } else {
+          // En Web y PWA, usar window.location.href directamente para evitar que Android abra múltiples apps
+          window.location.href = data.init_point;
+        }
+        setShowPaymentModal(false);
       } else if (response.status === 400 && data.error) {
         alert(`⚠️ ${data.error}`);
       } else {
@@ -953,25 +956,13 @@ const App: React.FC = () => {
     }
   };
 
-  // Paso 2: Abrir el link generado — solo una vez, en un solo lugar
-  const handleOpenPaymentUrl = async (url: string) => {
-    if (_isCapacitor) {
-      await Browser.open({ url, presentationStyle: 'popover' });
-    } else {
-      window.open(url, '_blank');
-    }
-    // No limpiar la URL aquí — el modal permanece abierto hasta que el usuario confirme el pago
-  };
-
   const openPaymentModal = (target: Student | Student[]) => {
     setPaymentModalTarget(target);
-    setGeneratedPaymentUrl(null); // Limpiar link anterior al abrir modal
     setShowPaymentModal(true);
   };
 
   const closePaymentModal = () => {
     setShowPaymentModal(false);
-    setGeneratedPaymentUrl(null); // Limpiar link al cerrar
     setIsGeneratingPayment(false);
   };
 
@@ -2893,42 +2884,16 @@ const App: React.FC = () => {
                     </div>
 
 
-                    {/* PASO 1: Generar link (solo si no hay URL generada aún) */}
-                    {!generatedPaymentUrl && (
-                      <button
-                        onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
-                        disabled={isGeneratingPayment}
-                        style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '0.5rem' }}>
-                        {isGeneratingPayment ? (
-                          <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Generando link seguro...</>
-                        ) : (
-                          <><CreditCard size={20} /> GENERAR LINK DE PAGO</>
-                        )}
-                      </button>
-                    )}
-
-                    {/* PASO 2: Confirmar apertura (solo cuando ya existe la URL) */}
-                    {generatedPaymentUrl && (
-                      <div style={{ background: '#f0fdf4', border: '2px solid #22c55e', borderRadius: '1.2rem', padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '1.2rem' }}>✅</span>
-                          <div>
-                            <p style={{ margin: 0, fontWeight: 900, fontSize: '0.9rem', color: '#166534' }}>¡Link de pago listo!</p>
-                            <p style={{ margin: 0, fontSize: '0.72rem', color: '#166534', opacity: 0.8 }}>Se generó UNA sola orden. Toca el botón para ir a pagar.</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleOpenPaymentUrl(generatedPaymentUrl)}
-                          style={{ width: '100%', padding: '1rem', borderRadius: '0.8rem', border: 'none', background: '#16a34a', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 8px 20px rgba(22,163,74,0.35)' }}>
-                          <CreditCard size={20} /> ABRIR MERCADO PAGO
-                        </button>
-                        <button
-                          onClick={() => { setGeneratedPaymentUrl(null); }}
-                          style={{ width: '100%', padding: '0.6rem', borderRadius: '0.8rem', border: '1px solid #bbf7d0', background: 'transparent', color: '#166534', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>
-                          ← Cancelar y volver
-                        </button>
-                      </div>
-                    )}
+                    <button 
+                      onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
+                      disabled={isGeneratingPayment}
+                      style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '1.5rem' }}>
+                      {isGeneratingPayment ? (
+                        <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Redirigiendo a portal seguro...</>
+                      ) : (
+                        <><CreditCard size={20} /> IR A MERCADO PAGO</>
+                      )}
+                    </button>
                   </motion.div>
 
                   <p style={{ fontSize: '0.6rem', color: '#94a3b8', textAlign: 'center', marginTop: '1rem', lineHeight: 1.4 }}>
@@ -4965,42 +4930,16 @@ const App: React.FC = () => {
                     </div>
 
 
-                    {/* PASO 1: Generar link (solo si no hay URL generada aún) */}
-                    {!generatedPaymentUrl && (
-                      <button
-                        onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
-                        disabled={isGeneratingPayment}
-                        style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '0.5rem' }}>
-                        {isGeneratingPayment ? (
-                          <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Generando link seguro...</>
-                        ) : (
-                          <><CreditCard size={20} /> GENERAR LINK DE PAGO</>
-                        )}
-                      </button>
-                    )}
-
-                    {/* PASO 2: Confirmar apertura (solo cuando ya existe la URL) */}
-                    {generatedPaymentUrl && (
-                      <div style={{ background: '#f0fdf4', border: '2px solid #22c55e', borderRadius: '1.2rem', padding: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.8rem', marginBottom: '0.5rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span style={{ fontSize: '1.2rem' }}>✅</span>
-                          <div>
-                            <p style={{ margin: 0, fontWeight: 900, fontSize: '0.9rem', color: '#166534' }}>¡Link de pago listo!</p>
-                            <p style={{ margin: 0, fontSize: '0.72rem', color: '#166534', opacity: 0.8 }}>Se generó UNA sola orden. Toca el botón para ir a pagar.</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleOpenPaymentUrl(generatedPaymentUrl)}
-                          style={{ width: '100%', padding: '1rem', borderRadius: '0.8rem', border: 'none', background: '#16a34a', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 8px 20px rgba(22,163,74,0.35)' }}>
-                          <CreditCard size={20} /> ABRIR MERCADO PAGO
-                        </button>
-                        <button
-                          onClick={() => { setGeneratedPaymentUrl(null); }}
-                          style={{ width: '100%', padding: '0.6rem', borderRadius: '0.8rem', border: '1px solid #bbf7d0', background: 'transparent', color: '#166534', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>
-                          ← Cancelar y volver
-                        </button>
-                      </div>
-                    )}
+                    <button 
+                      onClick={() => handleCreatePaymentLink(paymentModalTarget!)}
+                      disabled={isGeneratingPayment}
+                      style={{ width: '100%', padding: '1.1rem', borderRadius: '1rem', border: 'none', background: isGeneratingPayment ? '#93c5fd' : '#009ee3', color: '#fff', fontWeight: 900, fontSize: '0.95rem', cursor: isGeneratingPayment ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', boxShadow: '0 10px 25px rgba(0,158,227,0.25)', transition: 'all 0.2s', marginBottom: '1.5rem' }}>
+                      {isGeneratingPayment ? (
+                        <><span className="premium-spinner" style={{ width: '16px', height: '16px', borderTopColor: '#fff', borderRightColor: 'rgba(255,255,255,0.6)' }} /> Redirigiendo a portal seguro...</>
+                      ) : (
+                        <><CreditCard size={20} /> IR A MERCADO PAGO</>
+                      )}
+                    </button>
                   </motion.div>
 
                   {/* Footer note */}
