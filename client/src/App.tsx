@@ -1119,15 +1119,6 @@ const App: React.FC = () => {
     } catch { return dateStr; }
   };
 
-  // Formatea YYYY-MM (mes de pago) → MM/YYYY
-  const formatMonth = (monthStr: string | null | undefined): string => {
-    if (!monthStr) return 'N/A';
-    try {
-      const [y, m] = monthStr.split('-');
-      if (!y || !m) return monthStr;
-      return `${m}/${y}`;
-    } catch { return monthStr; }
-  };
 
   const handleLogin = async (studentToLogin?: Student) => {
     if (studentToLogin) {
