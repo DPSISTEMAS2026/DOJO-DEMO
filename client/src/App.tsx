@@ -1946,6 +1946,31 @@ const App: React.FC = () => {
           )}
         </AnimatePresence>
 
+        {/* iOS Standalone Bookmark Blocker */}
+        {isIOSStandalone && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 999999, background: '#070a12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center', color: '#fff' }}>
+            <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: 90, height: 90, borderRadius: '50%', border: '3px solid #05a86a', marginBottom: '1.5rem', boxShadow: '0 0 30px rgba(5,168,106,0.3)' }} />
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '0.8rem', color: '#fff', letterSpacing: '-0.5px' }}>Acceso desde Marcador no compatible</h2>
+            <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem', lineHeight: 1.6, maxWidth: '380px', marginBottom: '2rem', fontWeight: 500 }}>
+              Estás ingresando desde un marcador antiguo guardado en tu iPhone. Para garantizar el correcto funcionamiento de tus pagos y la navegación, abre Ranas Jiu Jitsu directamente en tu navegador Safari.
+            </p>
+            <a 
+              href="https://ranasjiujitsu.cl" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ background: '#05a86a', color: '#fff', padding: '1rem 2rem', borderRadius: '50px', fontWeight: 900, textDecoration: 'none', fontSize: '0.95rem', boxShadow: '0 10px 25px rgba(5,168,106,0.4)', marginBottom: '1.5rem', display: 'inline-block' }}>
+              🌐 ABRIR EN NAVEGADOR SAFARI
+            </a>
+            <a 
+              href="https://play.google.com/store/apps/details?id=cl.ranasjiujitsu.ranapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#38bdf8', fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none' }}>
+              🤖 O descarga Ranapp para Android
+            </a>
+          </div>
+        )}
+
         {/* Privacy Policy Modal */}
         <AnimatePresence>
           {showPrivacyModal && (
