@@ -3,7 +3,7 @@
   "short_name": "Ranapp",
   "description": "Portal oficial de alumnos de Ranas Jiu Jitsu. Consulta tu estado de cuenta, horarios, videos y más.",
   "start_url": "/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#020408",
   "theme_color": "#4ade80",
   "orientation": "portrait",

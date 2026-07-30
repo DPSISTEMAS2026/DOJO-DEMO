@@ -363,6 +363,16 @@ const App: React.FC = () => {
 
   // PWA States and Logic
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isIOSStandalone, setIsIOSStandalone] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Detect if running inside old iOS standalone Home Screen bookmark
+    const isStandalone = typeof window !== 'undefined' && 
+      (window.navigator as any).standalone === true;
+    if (isStandalone) {
+      setIsIOSStandalone(true);
+    }
+  }, []);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -940,7 +950,10 @@ const App: React.FC = () => {
         if (_isCapacitor) {
           await Browser.open({ url: data.init_point, presentationStyle: 'popover' });
         } else {
-          // En Web y PWA, usar window.location.href directamente para evitar que Android abra múltiples apps
+          if (isIOSStandalone) {
+            alert("💡 Estás ingresando desde un marcador de inicio de iPhone. Serás redirigido a Safari para procesar tu pago de forma segura.");
+          }
+          // En Web y PWA, usar window.location.href directamente para evitar que Android/iOS abra múltiples apps
           window.location.href = data.init_point;
         }
         setShowPaymentModal(false);
