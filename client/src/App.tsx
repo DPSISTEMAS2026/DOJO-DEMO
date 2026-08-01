@@ -630,9 +630,11 @@ const App: React.FC = () => {
   const clampOffset = (x: number, y: number, zoomVal: number) => {
     if (!cropImageObj) return { x: 0, y: 0 };
     const C = 250;
-    const s0 = C / Math.min(cropImageObj.width, cropImageObj.height);
-    const W = cropImageObj.width * s0 * zoomVal;
-    const H = cropImageObj.height * s0 * zoomVal;
+    const imgW = cropImageObj.naturalWidth || cropImageObj.width;
+    const imgH = cropImageObj.naturalHeight || cropImageObj.height;
+    const s0 = C / Math.min(imgW, imgH);
+    const W = imgW * s0 * zoomVal;
+    const H = imgH * s0 * zoomVal;
     
     const maxOffsetX = Math.max(0, (W - C) / 2);
     const maxOffsetY = Math.max(0, (H - C) / 2);
@@ -1122,7 +1124,27 @@ const App: React.FC = () => {
     if (!cropImageObj || !targetStudent) return;
     setIsCroppingSave(true);
     try {
-      const TARGET_SIZE = 600;
+      const imgW = cropImageObj.naturalWidth || cropImageObj.width;
+      const imgH = cropImageObj.naturalHeight || cropImageObj.height;
+      if (!imgW || !imgH) throw new Error('Invalid image dimensions');
+
+      const C = 250; // UI Cropper viewport size
+      const s0 = C / Math.min(imgW, imgH);
+      const scale = s0 * cropZoom;
+      
+      const W = imgW * scale;
+      const H = imgH * scale;
+      
+      const left = (C - W) / 2 + cropOffset.x;
+      const top = (C - H) / 2 + cropOffset.y;
+
+      // Source rectangle in original image coordinates
+      const sx = -left / scale;
+      const sy = -top / scale;
+      const sWidth = C / scale;
+      const sHeight = C / scale;
+
+      const TARGET_SIZE = 800;
       const canvas = document.createElement('canvas');
       canvas.width = TARGET_SIZE;
       canvas.height = TARGET_SIZE;
@@ -1132,19 +1154,11 @@ const App: React.FC = () => {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      const C = 250;
-      const scaleFactor = TARGET_SIZE / C;
+      // Draw exact cropped source box to 800x800 destination
+      ctx.drawImage(cropImageObj, sx, sy, sWidth, sHeight, 0, 0, TARGET_SIZE, TARGET_SIZE);
       
-      const canvasScale = (TARGET_SIZE / Math.min(cropImageObj.width, cropImageObj.height)) * cropZoom;
-      const destW = cropImageObj.width * canvasScale;
-      const destH = cropImageObj.height * canvasScale;
-      
-      const destX = (TARGET_SIZE - destW) / 2 + cropOffset.x * scaleFactor;
-      const destY = (TARGET_SIZE - destH) / 2 + cropOffset.y * scaleFactor;
-
-      ctx.drawImage(cropImageObj, destX, destY, destW, destH);
-      
-      const base64Image = canvas.toDataURL('image/jpeg', 0.88);
+      // Lossless PNG format for crisp 100% sharp text, logos and edges with 0 JPEG blur/pixelation
+      const base64Image = canvas.toDataURL('image/png');
       
       const updatedStudent = { ...targetStudent, avatar: base64Image } as Student;
       
@@ -3078,9 +3092,11 @@ const App: React.FC = () => {
               >
                 {cropImageObj && (() => {
                   const C = 250;
-                  const s0 = C / Math.min(cropImageObj.width, cropImageObj.height);
-                  const W = cropImageObj.width * s0 * cropZoom;
-                  const H = cropImageObj.height * s0 * cropZoom;
+                  const imgW = cropImageObj.naturalWidth || cropImageObj.width;
+                  const imgH = cropImageObj.naturalHeight || cropImageObj.height;
+                  const s0 = C / Math.min(imgW, imgH);
+                  const W = imgW * s0 * cropZoom;
+                  const H = imgH * s0 * cropZoom;
                   const left = (C - W) / 2 + cropOffset.x;
                   const top = (C - H) / 2 + cropOffset.y;
 
