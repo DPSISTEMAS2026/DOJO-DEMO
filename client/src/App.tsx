@@ -4784,19 +4784,20 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                {role === 'admin' && (
+                {(role === 'admin' || role === 'superadmin' || role !== 'student') && (
                   <motion.button whileHover={{ y: -3, boxShadow: '0 10px 25px rgba(34,197,94,0.2)' }} whileTap={{ scale: 0.98 }}
-                    style={{ background: '#22c55e', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', width: '100%', marginBottom: '1.2rem', position: 'relative', zIndex: 1 }}
+                    style={{ background: '#05a86a', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', width: '100%', marginBottom: '1rem', position: 'relative', zIndex: 1 }}
                     onClick={() => {
                        if (!window.confirm(`¿Registrar pago manual de ${selectedStudent.name} por ${formatCLP(selectedStudent.monthlyFee || 0)}?`)) return;
+                       const todayStr = new Date().toISOString().split('T')[0];
                        const updated = { 
                            ...selectedStudent, 
                            isPaid: true, 
-                           lastPaymentDate: new Date().toISOString().split('T')[0],
-                           lastPaymentMonth: new Date().toISOString().substring(0, 7),
+                           lastPaymentDate: todayStr,
+                           lastPaymentMonth: todayStr.substring(0, 7),
                            history: [
                                ...(selectedStudent.history || []),
-                               { date: new Date().toISOString().split('T')[0], status: 'Completado' as "Completado" | "Pendiente", amount: selectedStudent.monthlyFee || 0, method: 'Manual/Transferencia' }
+                               { date: todayStr, status: 'Completado' as const, amount: selectedStudent.monthlyFee || 0, method: 'Manual/Transferencia' }
                            ]
                        };
                        handleUpdateStudent(updated);
@@ -4805,7 +4806,7 @@ const App: React.FC = () => {
                   </motion.button>
                 )}
 
-                <div style={{ display: 'flex', gap: '1rem', position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'flex', gap: '1rem', position: 'relative', zIndex: 1, flexWrap: 'wrap' }}>
                     {!selectedStudent.isPaid && (
                       <motion.button 
                         whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(0,157,255,0.2)' }} 
@@ -4824,7 +4825,8 @@ const App: React.FC = () => {
                           alignItems: 'center', 
                           justifyContent: 'center', 
                           gap: '0.8rem',
-                          opacity: isGeneratingPayment ? 0.7 : 1
+                          opacity: isGeneratingPayment ? 0.7 : 1,
+                          minWidth: isMobile ? '100%' : '200px'
                         }}
                         onClick={() => handleCreatePaymentLink(selectedStudent)}>
                         {isGeneratingPayment ? (
@@ -4835,18 +4837,18 @@ const App: React.FC = () => {
                       </motion.button>
                     )}
                     <motion.button whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(37, 211, 102, 0.2)' }} whileTap={{ scale: 0.98 }}
-                      style={{ flex: 1, background: '#25D366', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem' }}
+                      style={{ flex: 1, background: '#25D366', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem', minWidth: isMobile ? '100%' : '200px' }}
                       onClick={() => window.open(`https://wa.me/${selectedStudent.phone.replace(/\D/g, '')}?text=Hola ${selectedStudent.name}...`)}>
                       CONTACTAR POR WHATSAPP
                     </motion.button>
                     <motion.button whileHover={{ y: -4, boxShadow: '0 15px 30px rgba(0,0,0,0.1)' }} whileTap={{ scale: 0.98 }}
-                      style={{ flex: 1, background: 'var(--panel-text)', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer' }}
+                      style={{ flex: 1, background: 'var(--panel-text)', color: '#fff', border: 'none', padding: '1.2rem', borderRadius: '1rem', fontWeight: 900, cursor: 'pointer', minWidth: isMobile ? '100%' : '200px' }}
                       onClick={() => handleSendPaymentReminder(selectedStudent)}>
                       ENVIAR RECORDATORIO EMAIL
                     </motion.button>
                   </div>
 
-                  {(role === 'admin' || role === 'superadmin') && (
+                  {(role === 'admin' || role === 'superadmin' || role !== 'student') && (
                     <motion.button
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.98 }}
