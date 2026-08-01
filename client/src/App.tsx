@@ -682,6 +682,43 @@ const App: React.FC = () => {
   const [editedStudent, setEditedStudent] = useState<Student | null>(null);
   const [studentNewPassword, setStudentNewPassword] = useState('');
 
+  // Body scroll lock effect for iOS / Web to prevent background scroll and WebKit crashes
+  useEffect(() => {
+    const isAnyModalOpen = !!(
+      selectedStudent ||
+      showPaymentModal ||
+      isAddingStudent ||
+      isSendingNotice ||
+      photoLightboxStudent ||
+      isAddingVideo ||
+      isAddingNews ||
+      isAddingGallery ||
+      rawImageForCrop ||
+      showQRModal
+    );
+    if (isAnyModalOpen) {
+      const origOverflow = document.body.style.overflow;
+      const origTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = origOverflow;
+        document.body.style.touchAction = origTouchAction;
+      };
+    }
+  }, [
+    selectedStudent,
+    showPaymentModal,
+    isAddingStudent,
+    isSendingNotice,
+    photoLightboxStudent,
+    isAddingVideo,
+    isAddingNews,
+    isAddingGallery,
+    rawImageForCrop,
+    showQRModal
+  ]);
+
   // Password recovery state
   const [showRecoveryModal, setShowRecoveryModal] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
@@ -4369,9 +4406,29 @@ const App: React.FC = () => {
         {
           selectedStudent && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.15)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '0.5rem' : '2rem', backdropFilter: 'blur(12px)' }}
+              style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                background: isMobile ? 'rgba(0,0,0,0.85)' : 'rgba(15,23,42,0.4)',
+                zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: isMobile ? '0.5rem' : '2rem',
+                backdropFilter: isMobile ? 'none' : 'blur(8px)',
+                WebkitBackdropFilter: isMobile ? 'none' : 'blur(8px)',
+                touchAction: 'none'
+              }}
               onClick={() => setSelectedStudent(null)}>
-              <motion.div style={{ width: '100%', maxWidth: '750px', maxHeight: isMobile ? '95vh' : '90vh', overflowY: 'auto', padding: isMobile ? '1.5rem' : '2.5rem', borderRadius: isMobile ? '1.5rem' : '3rem', background: '#fff', border: '1px solid var(--panel-border)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.15)', position: 'relative' }}
+              <motion.div style={{
+                width: '100%', maxWidth: '750px',
+                maxHeight: isMobile ? '92vh' : '90vh',
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain',
+                padding: isMobile ? '1.5rem' : '2.5rem',
+                borderRadius: isMobile ? '1.5rem' : '3rem',
+                background: '#fff',
+                border: '1px solid var(--panel-border)',
+                boxShadow: '0 40px 100px -20px rgba(0,0,0,0.25)',
+                position: 'relative'
+              }}
                 onClick={e => e.stopPropagation()}>
                 {/* Decorative Background Element */}
                 <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '300px', height: '300px', background: 'var(--logo-green-soft)', borderRadius: '50%', filter: 'blur(60px)', zIndex: 0 }} />
