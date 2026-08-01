@@ -262,6 +262,19 @@ if (_isCapacitor && API_URL.includes('localhost')) {
   API_URL = 'https://dojo-demo-server.onrender.com';
 }
 
+const getFallbackAvatarUrl = (name?: string) => {
+  const safeName = (name || 'Ranas Student').trim();
+  const parts = safeName.split(' ').filter(Boolean);
+  const initials = parts.length >= 2 
+    ? (parts[0][0] + parts[1][0]).toUpperCase() 
+    : (parts[0] ? parts[0].substring(0, 2).toUpperCase() : 'RJ');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <rect width="100" height="100" rx="50" fill="#05a86a"/>
+    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-weight="900" font-size="38">${initials}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
+
 const newsItems = [
   {
     title: "Frog Challenge Kids eleva el nivel y pone al sur en el mapa del Jiu Jitsu infantil",
@@ -1072,25 +1085,29 @@ const App: React.FC = () => {
     if (!cropImageObj || !targetStudent) return;
     setIsCroppingSave(true);
     try {
+      const TARGET_SIZE = 600;
       const canvas = document.createElement('canvas');
-      canvas.width = 200;
-      canvas.height = 200;
+      canvas.width = TARGET_SIZE;
+      canvas.height = TARGET_SIZE;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Canvas context error');
 
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
       const C = 250;
-      const scaleFactor = 200 / C;
+      const scaleFactor = TARGET_SIZE / C;
       
-      const canvasScale = (200 / Math.min(cropImageObj.width, cropImageObj.height)) * cropZoom;
+      const canvasScale = (TARGET_SIZE / Math.min(cropImageObj.width, cropImageObj.height)) * cropZoom;
       const destW = cropImageObj.width * canvasScale;
       const destH = cropImageObj.height * canvasScale;
       
-      const destX = (200 - destW) / 2 + cropOffset.x * scaleFactor;
-      const destY = (200 - destH) / 2 + cropOffset.y * scaleFactor;
+      const destX = (TARGET_SIZE - destW) / 2 + cropOffset.x * scaleFactor;
+      const destY = (TARGET_SIZE - destH) / 2 + cropOffset.y * scaleFactor;
 
       ctx.drawImage(cropImageObj, destX, destY, destW, destH);
       
-      const base64Image = canvas.toDataURL('image/jpeg', 0.6);
+      const base64Image = canvas.toDataURL('image/jpeg', 0.88);
       
       const updatedStudent = { ...targetStudent, avatar: base64Image } as Student;
       
@@ -2730,7 +2747,10 @@ const App: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem', padding: '1rem' }}>
                       <div style={{ position: 'relative' }}>
                         <div className="strict-avatar-container" style={{ width: '85px', height: '85px', border: '3px solid var(--logo-green)', background: 'var(--panel-surface)' }}>
-                          <img src={currentUser.avatar ? (currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('data:') ? currentUser.avatar : `${API_URL}${currentUser.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} />
+                          <img 
+                            src={currentUser.avatar ? (currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('data:') ? currentUser.avatar : `${API_URL}${currentUser.avatar}`) : getFallbackAvatarUrl(currentUser.name)} 
+                            onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(currentUser.name); }}
+                          />
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
@@ -3452,7 +3472,8 @@ const App: React.FC = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flex: 1, minWidth: 0 }}>
                           <div className="strict-avatar-container" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--panel-surface)', border: `1px solid var(--panel-border)` }}>
                             <img 
-                              src={student.avatar ? (student.avatar.startsWith('http') || student.avatar.startsWith('data:') ? student.avatar : `${API_URL}${student.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(student.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} 
+                              src={student.avatar ? (student.avatar.startsWith('http') || student.avatar.startsWith('data:') ? student.avatar : `${API_URL}${student.avatar}`) : getFallbackAvatarUrl(student.name)} 
+                              onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(student.name); }}
                             />
                           </div>
                           <div style={{ minWidth: 0 }}>
@@ -3531,7 +3552,8 @@ const App: React.FC = () => {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                                 <div className="strict-avatar-container" style={{ width: '38px', height: '38px', border: '2px solid var(--glass-border)', background: 'var(--panel-surface)' }}>
                                   <img 
-                                    src={student.avatar ? (student.avatar.startsWith('http') || student.avatar.startsWith('data:') ? student.avatar : `${API_URL}${student.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(student.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} 
+                                    src={student.avatar ? (student.avatar.startsWith('http') || student.avatar.startsWith('data:') ? student.avatar : `${API_URL}${student.avatar}`) : getFallbackAvatarUrl(student.name)} 
+                                    onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(student.name); }}
                                   />
                                 </div>
                                 <div>
@@ -4364,7 +4386,8 @@ const App: React.FC = () => {
                         title="Ver foto en grande"
                       >
                         <img
-                          src={selectedStudent.avatar ? (selectedStudent.avatar.startsWith('http') || selectedStudent.avatar.startsWith('data:') ? selectedStudent.avatar : `${API_URL}${selectedStudent.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(selectedStudent.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`}
+                          src={selectedStudent.avatar ? (selectedStudent.avatar.startsWith('http') || selectedStudent.avatar.startsWith('data:') ? selectedStudent.avatar : `${API_URL}${selectedStudent.avatar}`) : getFallbackAvatarUrl(selectedStudent.name)}
+                          onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(selectedStudent.name); }}
                         />
                       </div>
                       {/* Admin-only photo action buttons */}
@@ -4741,6 +4764,38 @@ const App: React.FC = () => {
                       ENVIAR RECORDATORIO EMAIL
                     </motion.button>
                   </div>
+
+                  {(role === 'admin' || role === 'superadmin') && (
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      style={{
+                        width: '100%',
+                        marginTop: '1.2rem',
+                        padding: '1.2rem',
+                        borderRadius: '1rem',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#ef4444',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        fontWeight: 900,
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.6rem',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        zIndex: 1
+                      }}
+                      onClick={() => {
+                        if (window.confirm(`⚠️ ¿Estás seguro de que deseas eliminar permanentemente a ${selectedStudent.name}?\n\nEsta acción borrará su perfil y todo su historial de pagos.`)) {
+                          handleDeleteStudent(selectedStudent.id);
+                        }
+                      }}
+                    >
+                      <Trash2 size={18} /> ELIMINAR ALUMNO PERMANENTEMENTE
+                    </motion.button>
+                  )}
               </motion.div>
             </motion.div>
           )
@@ -5176,7 +5231,8 @@ const App: React.FC = () => {
                   ? (photoLightboxStudent.avatar.startsWith('http') || photoLightboxStudent.avatar.startsWith('data:')
                     ? photoLightboxStudent.avatar
                     : `${API_URL}${photoLightboxStudent.avatar}`)
-                  : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(photoLightboxStudent.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`}
+                  : getFallbackAvatarUrl(photoLightboxStudent.name)}
+                onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(photoLightboxStudent.name); }}
                 alt={photoLightboxStudent.name}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />
