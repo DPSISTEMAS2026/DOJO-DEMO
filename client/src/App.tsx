@@ -913,9 +913,10 @@ const App: React.FC = () => {
       const cachedUser = localStorage.getItem('currentUser');
       if (cachedUser) {
         const cached = JSON.parse(cachedUser);
-        const fresh = (studentsData || []).find((s: Student) => s.id === cached.id);
+        const fresh = (studentsData || []).find((s: Student) => String(s.id) === String(cached.id));
         if (fresh) {
           setCurrentUser(fresh);
+          localStorage.setItem('currentUser', JSON.stringify(fresh));
         }
       }
     } catch (error) {
@@ -2635,13 +2636,12 @@ const App: React.FC = () => {
         {currentUser && !currentUser.terms_accepted && (
           <AcceptTermsModal student={currentUser} onAccept={async () => {
              const updated = { ...currentUser, terms_accepted: true };
-             // Sincronizar con el servidor inmediatamente
+             setCurrentUser(updated);
+             localStorage.setItem('currentUser', JSON.stringify(updated));
+             setStudents(prev => prev.map(s => String(s.id) === String(updated.id) ? updated : s));
              try {
                await fetch(`${API_URL}/api/students/${currentUser.id}/accept-terms`, { method: 'POST' });
              } catch(e) { console.error("Sync error:", e); }
-             
-             setCurrentUser(updated);
-             setStudents(prev => prev.map(s => s.id === updated.id ? updated : s));
           }} />
         )}
 

@@ -467,7 +467,7 @@ app.get('/api/students', async (req, res) => {
                 avatar: s.avatar,
                 birthDate: s.birthdate,
                 history: cleanHistory,
-                terms_accepted: s.terms_accepted === true,
+                terms_accepted: s.terms_accepted === true || s.terms_accepted === 'true' || s.terms_accepted === 1,
                 scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : [],
                 joinDate: s.joindate || null,
                 lastGrade: s.lastgrade || null,
@@ -669,6 +669,7 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.joinDate !== undefined) updateData.joindate = req.body.joinDate;
         if (req.body.lastGrade !== undefined) updateData.lastgrade = req.body.lastGrade;
         if (req.body.graduationDate !== undefined) updateData.graduationdate = req.body.graduationDate;
+        if (req.body.terms_accepted !== undefined) updateData.terms_accepted = req.body.terms_accepted === true || req.body.terms_accepted === 'true' || req.body.terms_accepted === 1;
         if (req.body.weight !== undefined) updateData.weight = req.body.weight ? Number(req.body.weight) : null;
         if (req.body.gender !== undefined) updateData.gender = req.body.gender;
         if (req.body.sedeId !== undefined) updateData.sede_id = req.body.sedeId ? Number(req.body.sedeId) : null;
