@@ -699,13 +699,11 @@ const App: React.FC = () => {
       showQRModal
     );
     if (isAnyModalOpen) {
-      const origOverflow = document.body.style.overflow;
-      const origTouchAction = document.body.style.touchAction;
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
+      document.documentElement.classList.add('modal-open');
+      document.body.classList.add('modal-open');
       return () => {
-        document.body.style.overflow = origOverflow;
-        document.body.style.touchAction = origTouchAction;
+        document.documentElement.classList.remove('modal-open');
+        document.body.classList.remove('modal-open');
       };
     }
   }, [
@@ -3520,12 +3518,14 @@ const App: React.FC = () => {
                       return !s.isPaid;
                     })
                     .map((student) => (
-                      <motion.div key={student.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      <div key={student.id}
                         style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', padding: '0.8rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flex: 1, minWidth: 0 }}>
                           <div className="strict-avatar-container" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--panel-surface)', border: `1px solid var(--panel-border)` }}>
                             <img 
                               src={student.avatar ? (student.avatar.startsWith('http') || student.avatar.startsWith('data:') ? student.avatar : `${API_URL}${student.avatar}`) : getFallbackAvatarUrl(student.name)} 
+                              loading="lazy"
+                              decoding="async"
                               onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(student.name); }}
                             />
                           </div>
@@ -3565,13 +3565,13 @@ const App: React.FC = () => {
                             Detalle
                           </motion.button>
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                 </div>
               ) : (
                 /* DESKTOP: Full table */
-                <div className="glass" style={{ borderRadius: '3.5rem', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
-                  <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <div style={{ borderRadius: '1.5rem', overflow: 'hidden', border: '1px solid var(--panel-border)', background: 'var(--panel-card)' }}>
+                  <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                       <tr style={{ background: 'rgba(5, 168, 106, 0.05)', borderBottom: '1px solid var(--glass-border)' }}>
                         <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ALUMNO</th>
@@ -3606,6 +3606,8 @@ const App: React.FC = () => {
                                 <div className="strict-avatar-container" style={{ width: '38px', height: '38px', border: '2px solid var(--glass-border)', background: 'var(--panel-surface)' }}>
                                   <img 
                                     src={student.avatar ? (student.avatar.startsWith('http') || student.avatar.startsWith('data:') ? student.avatar : `${API_URL}${student.avatar}`) : getFallbackAvatarUrl(student.name)} 
+                                    loading="lazy"
+                                    decoding="async"
                                     onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(student.name); }}
                                   />
                                 </div>
@@ -3647,7 +3649,7 @@ const App: React.FC = () => {
                           </tr>
                         ))}
                     </tbody>
-                  </table></div></div>
+                  </table></div>
                 </div>
               )}
             </motion.div>
