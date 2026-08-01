@@ -3536,7 +3536,7 @@ const App: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: '0.35rem', flexShrink: 0, alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, alignItems: 'center' }}>
                           <button
                             onClick={() => {
                               const todayStr = new Date().toISOString().split('T')[0];
@@ -3549,40 +3549,20 @@ const App: React.FC = () => {
                                 handleUpdateStudent({ ...student, isPaid: true, lastPaymentDate: todayStr, lastPaymentMonth: todayStr.substring(0, 7), history: [...(student.history || []), { date: todayStr, status: 'Completado' as const, amount: student.monthlyFee || 0 }] });
                               }
                             }}
-                            style={{ background: 'rgba(5,168,106,0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', color: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            style={{ background: 'rgba(5,168,106,0.1)', border: 'none', width: '34px', height: '34px', borderRadius: '8px', color: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                             title="Registrar pago manual">
                             <DollarSign size={15} />
                           </button>
                           <button
                             onClick={() => window.open(`https://wa.me/${student.phone?.replace(/\D/g, '')}?text=Hola ${student.name}...`)}
-                            style={{ background: 'rgba(37,211,102,0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', color: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                            title="Enviar WhatsApp">
+                            style={{ background: 'rgba(37,211,102,0.1)', border: 'none', width: '34px', height: '34px', borderRadius: '8px', color: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                            title="WhatsApp">
                             <Phone size={15} />
                           </button>
                           <button
-                            onClick={() => {
-                              if (confirm(`¿Enviar recordatorio de pago a ${student.name}?`)) {
-                                handleSendPaymentReminder(student);
-                              }
-                            }}
-                            style={{ background: 'rgba(234,179,8,0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', color: '#eab308', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                            title="Recordatorio de pago">
-                            <Bell size={15} />
-                          </button>
-                          <button
                             onClick={() => setSelectedStudent(student)}
-                            style={{ background: 'none', border: '1px solid var(--panel-border)', height: '32px', paddingInline: '0.6rem', borderRadius: '8px', color: 'var(--panel-text)', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            style={{ background: 'none', border: '1px solid var(--panel-border)', height: '34px', paddingInline: '0.8rem', borderRadius: '8px', color: 'var(--panel-text)', fontSize: '0.65rem', fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                             Detalle
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`¿Estás seguro de que deseas eliminar a ${student.name}?`)) {
-                                handleDeleteStudent(student.id);
-                              }
-                            }}
-                            style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', width: '32px', height: '32px', borderRadius: '8px', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                            title="Eliminar Alumno">
-                            <Trash2 size={15} />
                           </button>
                         </div>
                       </div>
@@ -3652,54 +3632,24 @@ const App: React.FC = () => {
                               <span style={{ color: student.isPaid ? 'var(--logo-green)' : '#ef4444', fontWeight: 900, fontSize: '0.75rem' }}>{student.isPaid ? 'AL DÍA' : 'PENDIENTE'}</span>
                             </td>
                             <td style={{ padding: '1.5rem', textAlign: 'right' }}>
-                              <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                <button
-                                  onClick={() => {
-                                    const todayStr = new Date().toISOString().split('T')[0];
-                                    const alreadyPaidToday = (student.history || []).some((h: any) => h.date === todayStr);
-                                    if (alreadyPaidToday) {
-                                      alert(`⚠️ Ya se registró un pago para ${student.name} el día de hoy.`);
-                                      return;
-                                    }
-                                    if (window.confirm(`¿Registrar pago manual de ${student.name} por ${formatCLP(student.monthlyFee || 0)}?`)) {
-                                      handleUpdateStudent({ ...student, isPaid: true, lastPaymentDate: todayStr, lastPaymentMonth: todayStr.substring(0, 7), history: [...(student.history || []), { date: todayStr, status: 'Completado' as const, amount: student.monthlyFee || 0 }] });
-                                    }
-                                  }}
-                                  style={{ background: 'rgba(5,168,106,0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                                  title="Registrar Pago Manual">
+                              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                <button onClick={() => {
+                                  const todayStr = new Date().toISOString().split('T')[0];
+                                  const alreadyPaidToday = (student.history || []).some((h: any) => h.date === todayStr);
+                                  if (alreadyPaidToday) {
+                                    alert(`⚠️ Ya se registró un pago para ${student.name} el día de hoy.`);
+                                    return;
+                                  }
+                                  if (window.confirm(`¿Registrar pago manual de ${student.name} por ${formatCLP(student.monthlyFee || 0)}?`)) {
+                                    handleUpdateStudent({ ...student, isPaid: true, lastPaymentDate: todayStr, lastPaymentMonth: todayStr.substring(0, 7), history: [...(student.history || []), { date: todayStr, status: 'Completado' as const, amount: student.monthlyFee || 0 }] });
+                                  }
+                                }} style={{ background: 'rgba(5,168,106,0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: 'var(--logo-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="Registrar Pago Manual">
                                   <DollarSign size={15} />
                                 </button>
-                                <button
-                                  onClick={() => window.open(`https://wa.me/${student.phone?.replace(/\D/g, '')}?text=Hola ${student.name}...`)}
-                                  style={{ background: 'rgba(37,211,102,0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                                  title="Enviar WhatsApp">
+                                <button onClick={() => window.open(`https://wa.me/${student.phone?.replace(/\D/g, '')}?text=Hola ${student.name}...`)} style={{ background: 'rgba(37,211,102,0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} title="WhatsApp">
                                   <Phone size={15} />
                                 </button>
-                                <button
-                                  onClick={() => {
-                                    if (confirm(`¿Enviar recordatorio de pago a ${student.name}?`)) {
-                                      handleSendPaymentReminder(student);
-                                    }
-                                  }}
-                                  style={{ background: 'rgba(234,179,8,0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: '#eab308', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                                  title="Recordatorio de Pago">
-                                  <Bell size={15} />
-                                </button>
-                                <button
-                                  onClick={() => setSelectedStudent(student)}
-                                  style={{ background: 'none', border: '1px solid var(--glass-border)', padding: '0.6rem 1.2rem', borderRadius: '0.8rem', color: 'var(--text-main)', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>
-                                  DETALLES
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    if (window.confirm(`¿Estás seguro de que deseas eliminar a ${student.name}?`)) {
-                                      handleDeleteStudent(student.id);
-                                    }
-                                  }}
-                                  style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', padding: '0.63rem', borderRadius: '0.8rem', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                                  title="Eliminar Alumno">
-                                  <Trash2 size={15} />
-                                </button>
+                                <button onClick={() => setSelectedStudent(student)} style={{ background: 'none', border: '1px solid var(--glass-border)', padding: '0.6rem 1.2rem', borderRadius: '0.8rem', color: 'var(--text-main)', fontSize: '0.7rem', fontWeight: 800, cursor: 'pointer' }}>DETALLES</button>
                               </div>
                             </td>
                           </tr>
