@@ -337,6 +337,140 @@ const ADULT_SCHEDULE = [
   { day: 'Sábado', classes: [{ time: '12:00', name: 'Open Mat' }] }
 ];
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IBJJF Category Calculator (Official IBJJF Weight & Age Divisions with Gi)
+// ─────────────────────────────────────────────────────────────────────────────
+function calculateIBJJFCategory(birthDate?: string | null, weightKg?: number | null, gender?: 'MALE' | 'FEMALE' | string | null, beltStr: string = 'WHITE') {
+  let age = 0;
+  if (birthDate) {
+    const birth = new Date(birthDate);
+    if (!isNaN(birth.getTime())) {
+      const now = new Date();
+      age = now.getFullYear() - birth.getFullYear();
+      const m = now.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+    }
+  }
+
+  const hasGender = gender === 'MALE' || gender === 'FEMALE';
+  const isFemale = gender === 'FEMALE';
+  const weight = weightKg && Number(weightKg) > 0 ? Number(weightKg) : 0;
+
+  // 1. IBJJF Age Categories
+  let ageCategory = age > 0 ? 'Adulto (18-29 años)' : 'Sin fecha nac.';
+  let isJuvenile = false;
+
+  if (age > 0 && age < 16) {
+    if (age < 7) ageCategory = 'Pre-Infantil (< 7 años)';
+    else if (age <= 9) ageCategory = 'Infantil A (7-9 años)';
+    else if (age <= 12) ageCategory = 'Infantil B (10-12 años)';
+    else ageCategory = 'Infanto-Juvenil (13-15 años)';
+  } else if (age >= 16 && age <= 17) {
+    isJuvenile = true;
+    ageCategory = 'Juvenil (16-17 años)';
+  } else if (age >= 18 && age <= 29) {
+    ageCategory = 'Adulto (18-29 años)';
+  } else if (age >= 30 && age <= 35) {
+    ageCategory = 'Master 1 (30-35 años)';
+  } else if (age >= 36 && age <= 40) {
+    ageCategory = 'Master 2 (36-40 años)';
+  } else if (age >= 41 && age <= 45) {
+    ageCategory = 'Master 3 (41-45 años)';
+  } else if (age >= 46 && age <= 50) {
+    ageCategory = 'Master 4 (46-50 años)';
+  } else if (age >= 51 && age <= 55) {
+    ageCategory = 'Master 5 (51-55 años)';
+  } else if (age >= 56) {
+    ageCategory = 'Master 6 (56+ años)';
+  }
+
+  // 2. IBJJF Weight Divisions (Official Table with Kimono / Gi)
+  let divisionName = 'Pendiente de peso';
+  let weightLimitText = '';
+
+  if (!hasGender) {
+    divisionName = 'Por definir género';
+  } else if (weight > 0) {
+    if (isJuvenile && !isFemale) {
+      // JUVENIL MASCULINO
+      if (weight <= 53.50) { divisionName = 'Rooster / Galo'; weightLimitText = '≤ 53.50 kg'; }
+      else if (weight <= 58.50) { divisionName = 'Light Feather / Pluma'; weightLimitText = '≤ 58.50 kg'; }
+      else if (weight <= 64.00) { divisionName = 'Feather / Pena'; weightLimitText = '≤ 64.00 kg'; }
+      else if (weight <= 69.00) { divisionName = 'Light / Leve'; weightLimitText = '≤ 69.00 kg'; }
+      else if (weight <= 74.00) { divisionName = 'Middle / Médio'; weightLimitText = '≤ 74.00 kg'; }
+      else if (weight <= 79.30) { divisionName = 'Medium Heavy / Meio-Pesado'; weightLimitText = '≤ 79.30 kg'; }
+      else if (weight <= 84.30) { divisionName = 'Heavy / Pesado'; weightLimitText = '≤ 84.30 kg'; }
+      else if (weight <= 89.30) { divisionName = 'Super Heavy / Super Pesado'; weightLimitText = '≤ 89.30 kg'; }
+      else { divisionName = 'Ultra Heavy / Pesadíssimo'; weightLimitText = '> 89.30 kg'; }
+    } else if (isJuvenile && isFemale) {
+      // JUVENIL FEMENINO
+      if (weight <= 44.30) { divisionName = 'Rooster / Galo'; weightLimitText = '≤ 44.30 kg'; }
+      else if (weight <= 48.30) { divisionName = 'Light Feather / Pluma'; weightLimitText = '≤ 48.30 kg'; }
+      else if (weight <= 52.50) { divisionName = 'Feather / Pena'; weightLimitText = '≤ 52.50 kg'; }
+      else if (weight <= 56.50) { divisionName = 'Light / Leve'; weightLimitText = '≤ 56.50 kg'; }
+      else if (weight <= 60.50) { divisionName = 'Middle / Médio'; weightLimitText = '≤ 60.50 kg'; }
+      else if (weight <= 65.00) { divisionName = 'Medium Heavy / Meio-Pesado'; weightLimitText = '≤ 65.00 kg'; }
+      else if (weight <= 69.00) { divisionName = 'Heavy / Pesado'; weightLimitText = '≤ 69.00 kg'; }
+      else { divisionName = 'Super Heavy / Super Pesado'; weightLimitText = '> 69.00 kg'; }
+    } else if (isFemale) {
+      // ADULTO & MASTERS FEMENINO
+      if (weight <= 48.50) { divisionName = 'Rooster / Galo'; weightLimitText = '≤ 48.50 kg'; }
+      else if (weight <= 53.50) { divisionName = 'Light Feather / Pluma'; weightLimitText = '≤ 53.50 kg'; }
+      else if (weight <= 58.50) { divisionName = 'Feather / Pena'; weightLimitText = '≤ 58.50 kg'; }
+      else if (weight <= 64.00) { divisionName = 'Light / Leve'; weightLimitText = '≤ 64.00 kg'; }
+      else if (weight <= 69.00) { divisionName = 'Middle / Médio'; weightLimitText = '≤ 69.00 kg'; }
+      else if (weight <= 74.00) { divisionName = 'Medium Heavy / Meio-Pesado'; weightLimitText = '≤ 74.00 kg'; }
+      else if (weight <= 79.30) { divisionName = 'Heavy / Pesado'; weightLimitText = '≤ 79.30 kg'; }
+      else { divisionName = 'Super Heavy / Super Pesado'; weightLimitText = '> 79.30 kg'; }
+    } else {
+      // ADULTO & MASTERS MASCULINO
+      if (weight <= 57.50) { divisionName = 'Rooster / Galo'; weightLimitText = '≤ 57.50 kg'; }
+      else if (weight <= 64.00) { divisionName = 'Light Feather / Pluma'; weightLimitText = '≤ 64.00 kg'; }
+      else if (weight <= 70.00) { divisionName = 'Feather / Pena'; weightLimitText = '≤ 70.00 kg'; }
+      else if (weight <= 76.00) { divisionName = 'Light / Leve'; weightLimitText = '≤ 76.00 kg'; }
+      else if (weight <= 82.30) { divisionName = 'Middle / Médio'; weightLimitText = '≤ 82.30 kg'; }
+      else if (weight <= 88.30) { divisionName = 'Medium Heavy / Meio-Pesado'; weightLimitText = '≤ 88.30 kg'; }
+      else if (weight <= 94.30) { divisionName = 'Heavy / Pesado'; weightLimitText = '≤ 94.30 kg'; }
+      else if (weight <= 100.50) { divisionName = 'Super Heavy / Super Pesado'; weightLimitText = '≤ 100.50 kg'; }
+      else { divisionName = 'Ultra Heavy / Pesadíssimo'; weightLimitText = '> 100.50 kg'; }
+    }
+  }
+
+  const beltLabels: Record<string, string> = {
+    WHITE: 'Cinturón Blanco',
+    BLUE: 'Cinturón Azul',
+    PURPLE: 'Cinturón Morado',
+    BROWN: 'Cinturón Marrón',
+    BLACK: 'Cinturón Negro',
+    GRAY: 'Cinturón Gris'
+  };
+
+  const beltName = beltLabels[beltStr] || beltStr;
+  const genderText = hasGender ? (isFemale ? 'Femenino' : 'Masculino') : 'Por definir';
+  const ageShort = ageCategory.split(' ')[0];
+
+  let fullCategoryString = `${ageShort} • ${beltName}`;
+  if (hasGender && weight > 0) {
+    fullCategoryString += ` • ${genderText} • ${divisionName}${weightLimitText ? ` (${weightLimitText})` : ''}`;
+  } else if (hasGender && weight === 0) {
+    fullCategoryString += ` • ${genderText} • (Ingresa tu peso en kg)`;
+  } else {
+    fullCategoryString += ` • (Selecciona género y peso para calcular)`;
+  }
+
+  return {
+    age,
+    ageCategory,
+    divisionName,
+    weightLimitText,
+    beltName,
+    genderText,
+    hasGender,
+    fullCategoryString
+  };
+}
+
 const VIDEO_CATEGORIES = [
   'Derribos',
   '100 kilos',
@@ -528,6 +662,7 @@ const App: React.FC = () => {
   const [studentFilterAge, setStudentFilterAge] = useState<'ALL' | 'KIDS' | 'ADULTS'>('ALL');
   const [studentFilterPayment, setStudentFilterPayment] = useState<'ALL' | 'PAID' | 'PENDING'>('ALL');
   const [studentFilterBelt, setStudentFilterBelt] = useState<Belt | 'ALL'>('ALL');
+  const [studentFilterIBJJFCategory, setStudentFilterIBJJFCategory] = useState<string>('ALL');
   const [liveGallery, setLiveGallery] = useState([
     { img: '/assets/WhatsApp Image 2026-03-04 at 3.39.08 PM.jpeg', size: 'large' },
     { img: '/assets/frog_challenge.jpeg', size: 'small' },
@@ -727,6 +862,7 @@ const App: React.FC = () => {
 
   const [isNoticeDismissed, setIsNoticeDismissed] = useState(false);
   const [isSendingBirthdays, setIsSendingBirthdays] = useState(false);
+  const [categorySavedSuccess, setCategorySavedSuccess] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -887,6 +1023,8 @@ const App: React.FC = () => {
       if (updatedStudent.joinDate !== undefined) payload.joinDate = updatedStudent.joinDate;
       if (updatedStudent.lastGrade !== undefined) payload.lastGrade = updatedStudent.lastGrade;
       if (updatedStudent.graduationDate !== undefined) payload.graduationDate = updatedStudent.graduationDate;
+      if (updatedStudent.weight !== undefined) payload.weight = updatedStudent.weight;
+      if (updatedStudent.gender !== undefined) payload.gender = updatedStudent.gender;
       if (updatedStudent.sedeId !== undefined) payload.sedeId = updatedStudent.sedeId;
       if (updatedStudent.sede_id !== undefined) payload.sedeId = updatedStudent.sede_id;
 
@@ -896,12 +1034,20 @@ const App: React.FC = () => {
         body: JSON.stringify(payload)
       });
       if (response.ok) {
-        const mergedStudent = { ...students.find(s => s.id === updatedStudent.id), ...updatedStudent };
-        setStudents(prev => prev.map(s => s.id === updatedStudent.id ? mergedStudent : s));
-        setSelectedStudent(mergedStudent);
+        const resData = await response.json().catch(() => ({}));
+        const mergedStudent = { 
+          ...students.find(s => String(s.id) === String(updatedStudent.id)), 
+          ...updatedStudent,
+          ...resData 
+        };
+        setStudents(prev => prev.map(s => String(s.id) === String(updatedStudent.id) ? mergedStudent : s));
+        if (selectedStudent && String(selectedStudent.id) === String(updatedStudent.id)) {
+          setSelectedStudent(mergedStudent);
+        }
         setIsEditingStudent(false);
-        if (currentUser?.id === updatedStudent.id) {
+        if (currentUser && String(currentUser.id) === String(updatedStudent.id)) {
           setCurrentUser(mergedStudent);
+          localStorage.setItem('currentUser', JSON.stringify(mergedStudent));
         }
       } else {
         const errData = await response.json().catch(() => ({}));
@@ -2833,24 +2979,156 @@ const App: React.FC = () => {
                     {/* Fecha de Ingreso */}
                     {currentUser.joinDate && (
                       <div style={{ marginBottom: '1.5rem', padding: '1.5rem', background: 'var(--panel-surface)', borderRadius: '1.2rem', border: '1px solid var(--panel-border)' }}>
-                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.1em', marginBottom: '0.8rem' }}>📅 FECHA DE INGRESO AL DOJO</div>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.1em', marginBottom: '0.8rem' }}>FECHA DE INGRESO AL DOJO</div>
                         <div style={{ fontWeight: 900, fontSize: '1.1rem', color: 'var(--panel-text)' }}>
                           {formatDate(currentUser.joinDate, 'long')}
                         </div>
                       </div>
                     )}
 
+                    {/* Categoría de Competición IBJJF */}
+                    {currentUser && (
+                      <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'var(--panel-surface)', borderRadius: '1.2rem', border: '1px solid var(--panel-border)' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.12em', marginBottom: '1.2rem', textTransform: 'uppercase' }}>
+                          CATEGORÍA DE COMPETICIÓN IBJJF
+                        </div>
 
+                        {/* Grid responsivo limpio */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.8rem', marginBottom: '1.2rem' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 800, color: 'var(--panel-muted)', marginBottom: '0.3rem', letterSpacing: '0.05em' }}>FECHA NACIMIENTO</label>
+                            <input type="date"
+                              style={{ width: '100%', boxSizing: 'border-box', padding: '0.65rem 0.6rem', background: 'var(--panel-input-bg)', border: '1px solid var(--panel-input-border)', borderRadius: '0.8rem', color: 'var(--panel-text)', fontSize: '0.85rem', fontWeight: 700, outline: 'none' }}
+                              value={currentUser.birthDate || ''}
+                              onChange={e => {
+                                const updated = { ...currentUser, birthDate: e.target.value };
+                                setCurrentUser(updated);
+                              }} />
+                          </div>
 
-                    <div style={{ marginBottom: '2.5rem', padding: '1.5rem', background: 'var(--panel-surface)', borderRadius: '1.2rem', border: '1px solid var(--panel-border)' }}>
-                      <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-muted)', letterSpacing: '0.1em', marginBottom: '1rem' }}>SEGURIDAD</div>
-                      <div style={{ display: 'flex', gap: '0.8rem' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 800, color: 'var(--panel-muted)', marginBottom: '0.3rem', letterSpacing: '0.05em' }}>PESO KIMONO (KG)</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <input type="number" step="0.1" min="20" max="200" placeholder="Ej: 75.5"
+                                style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '0.65rem 0.6rem', background: 'var(--panel-input-bg)', border: '1px solid var(--panel-input-border)', borderRadius: '0.8rem', color: 'var(--panel-text)', fontSize: '0.85rem', fontWeight: 700, outline: 'none' }}
+                                value={currentUser.weight || ''}
+                                onChange={e => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  const updated = { ...currentUser, weight: val };
+                                  setCurrentUser(updated);
+                                }} />
+                              <span style={{ fontWeight: 800, fontSize: '0.8rem', color: 'var(--panel-text)' }}>kg</span>
+                            </div>
+                          </div>
+
+                          <div style={{ minWidth: 0 }}>
+                            <label style={{ display: 'block', fontSize: '0.65rem', fontWeight: 800, color: 'var(--panel-muted)', marginBottom: '0.3rem', letterSpacing: '0.05em' }}>GÉNERO</label>
+                            <select
+                              style={{ width: '100%', boxSizing: 'border-box', padding: '0.65rem 0.5rem', background: 'var(--panel-input-bg)', border: '1px solid var(--panel-input-border)', borderRadius: '0.8rem', color: 'var(--panel-text)', fontSize: '0.85rem', fontWeight: 700, outline: 'none', cursor: 'pointer' }}
+                              value={currentUser.gender || ''}
+                              onChange={e => {
+                                const val = e.target.value as 'MALE' | 'FEMALE';
+                                const updated = { ...currentUser, gender: val };
+                                setCurrentUser(updated);
+                              }}>
+                              <option value="">Seleccionar...</option>
+                              <option value="MALE">Masculino</option>
+                              <option value="FEMALE">Femenino</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Tarjeta de visualización minimalista */}
+                        {(() => {
+                          const cat = calculateIBJJFCategory(currentUser.birthDate, currentUser.weight, currentUser.gender || null, currentUser.belt || 'WHITE');
+                          return (
+                            <div style={{ 
+                              background: 'linear-gradient(135deg, rgba(5,168,106,0.08), rgba(5,168,106,0.02))', 
+                              border: '1px solid rgba(5,168,106,0.2)', 
+                              borderRadius: '1rem', 
+                              padding: '1.2rem' 
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                                  CATEGORÍA OFICIAL IBJJF
+                                </span>
+                                <span style={{ fontSize: '0.6rem', fontWeight: 800, background: 'rgba(5,168,106,0.12)', color: 'var(--logo-green)', padding: '0.2rem 0.6rem', borderRadius: '100px', border: '1px solid rgba(5,168,106,0.25)' }}>
+                                  Reglamento Gi
+                                </span>
+                              </div>
+
+                              {cat.hasGender && cat.divisionName !== 'Pendiente de peso' && cat.divisionName !== 'Por definir género' ? (
+                                <div>
+                                  <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--panel-text)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                    <span>{cat.divisionName}</span>
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--logo-green)', background: 'rgba(5,168,106,0.12)', padding: '0.15rem 0.55rem', borderRadius: '0.5rem' }}>
+                                      {cat.weightLimitText}
+                                    </span>
+                                  </div>
+
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                    <span style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', padding: '0.3rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-text)' }}>
+                                      {cat.ageCategory}
+                                    </span>
+                                    <span style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', padding: '0.3rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-text)' }}>
+                                      {cat.genderText}
+                                    </span>
+
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ padding: '0.8rem 1rem', background: 'var(--panel-surface)', borderRadius: '0.8rem', border: '1px dashed var(--panel-border)', textAlign: 'center' }}>
+                                  <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: 'var(--panel-text)', marginBottom: '0.2rem' }}>
+                                    {!cat.hasGender ? 'Selecciona tu género en los campos superiores' : 'Ingresa tu peso en kg para calcular la división'}
+                                  </p>
+                                  <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--panel-muted)', fontWeight: 600 }}>
+                                    Determina tu categoría oficial para torneos (Galo, Pluma, Pena, Leve, Médio, etc.)
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {/* Botón explícito sin alertas bloqueantes */}
+                        <motion.button
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.96 }}
+                          onClick={async () => {
+                            await handleUpdateStudent(currentUser);
+                            setCategorySavedSuccess(true);
+                            setTimeout(() => setCategorySavedSuccess(false), 3000);
+                          }}
+                          style={{
+                            width: '100%',
+                            marginTop: '1rem',
+                            padding: '0.85rem',
+                            borderRadius: '0.8rem',
+                            background: categorySavedSuccess ? '#10b981' : 'var(--logo-green)',
+                            color: '#fff',
+                            border: 'none',
+                            fontWeight: 900,
+                            fontSize: '0.8rem',
+                            letterSpacing: '0.05em',
+                            textTransform: 'uppercase',
+                            cursor: 'pointer',
+                            transition: 'background 0.3s'
+                          }}>
+                          {categorySavedSuccess ? 'DATOS GUARDADOS CORRECTAMENTE' : 'GUARDAR DATOS DE COMPETICIÓN'}
+                        </motion.button>
+                      </div>
+                    )}
+
+                    {/* Sección Seguridad Limpia y Ajustada */}
+                    <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'var(--panel-surface)', borderRadius: '1.2rem', border: '1px solid var(--panel-border)' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--panel-muted)', letterSpacing: '0.12em', marginBottom: '1.2rem', textTransform: 'uppercase' }}>SEGURIDAD</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                         <input type="password" placeholder="Nueva contraseña"
-                          style={{ flex: 1, padding: '1rem', background: 'var(--panel-input-bg)', border: '1px solid var(--panel-input-border)', borderRadius: '0.9rem', color: 'var(--panel-text)', fontSize: '0.9rem', outline: 'none' }}
+                          style={{ width: '100%', boxSizing: 'border-box', padding: '0.85rem 1rem', background: 'var(--panel-input-bg)', border: '1px solid var(--panel-input-border)', borderRadius: '0.8rem', color: 'var(--panel-text)', fontSize: '0.9rem', fontWeight: 600, outline: 'none' }}
                           value={studentNewPassword} onChange={e => setStudentNewPassword(e.target.value)} />
-                        <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
-                          style={{ padding: '0 1.5rem', background: 'var(--logo-green)', border: 'none', borderRadius: '0.9rem', color: '#fff', fontWeight: 900, cursor: 'pointer', fontSize: '0.85rem' }}
-                          onClick={handleUpdateStudentPassword}>Actualizar</motion.button>
+                        <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.96 }}
+                          style={{ width: '100%', padding: '0.85rem', background: 'var(--logo-green)', border: 'none', borderRadius: '0.8rem', color: '#fff', fontWeight: 900, cursor: 'pointer', fontSize: '0.8rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}
+                          onClick={handleUpdateStudentPassword}>Actualizar Contraseña</motion.button>
                       </div>
                     </div>
 
@@ -3467,43 +3745,58 @@ const App: React.FC = () => {
           {activeTab === 'students' && (
             <motion.div key="students" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               {/* Filters + Search for Mobile */}
-              <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
                 {isMobile && (
                   <div style={{ width: '100%', position: 'relative', marginBottom: '0.3rem' }}>
                     <Search size={15} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--logo-green)', opacity: 0.7 }} />
                     <input type="text" placeholder="Buscar alumno..."
-                      style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700, fontSize: '0.85rem' }}
+                      style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.8rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700, fontSize: '0.85rem', boxSizing: 'border-box' }}
                       value={studentSearchTerm} onChange={e => setStudentSearchTerm(e.target.value)} />
                   </div>
                 )}
-                <select className="glass" style={{ padding: '0.7rem 1rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700, fontSize: isMobile ? '0.75rem' : '0.85rem', flex: isMobile ? 1 : 'none' }}
+                <select className="glass" style={{ padding: '0.7rem 1rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700, fontSize: isMobile ? '0.75rem' : '0.85rem', flex: isMobile ? '1 1 45%' : 'none', minWidth: 0 }}
                   value={studentFilterPayment} onChange={e => setStudentFilterPayment(e.target.value as any)}>
-                  <option value="ALL">Todos</option>
+                  <option value="ALL">Todos los estados</option>
                   <option value="PAID">Al Día</option>
                   <option value="PENDING">Pendiente</option>
                 </select>
+                
+                <select className="glass" style={{ padding: '0.7rem 1rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700, fontSize: isMobile ? '0.75rem' : '0.85rem', flex: isMobile ? '1 1 45%' : 'none', minWidth: 0 }}
+                  value={studentFilterBelt} onChange={e => setStudentFilterBelt(e.target.value as any)}>
+                  <option value="ALL">Todos los cinturones</option>
+                  {Object.keys(beltLabels).map(b => (
+                    <option key={b} value={b}>{beltLabels[b as Belt]}</option>
+                  ))}
+                </select>
+
+                <select className="glass" style={{ padding: '0.7rem 1rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700, fontSize: isMobile ? '0.75rem' : '0.85rem', flex: isMobile ? '1 1 100%' : 'none', minWidth: 0 }}
+                  value={studentFilterIBJJFCategory} onChange={e => setStudentFilterIBJJFCategory(e.target.value)}>
+                  <option value="ALL">Todas las Categorías IBJJF</option>
+                  <option value="GALO">Rooster / Galo</option>
+                  <option value="PLUMA">Light Feather / Pluma</option>
+                  <option value="PENA">Feather / Pena</option>
+                  <option value="LEVE">Light / Leve</option>
+                  <option value="MEDIO">Middle / Médio</option>
+                  <option value="MEIO_PESADO">Medium Heavy / Meio-Pesado</option>
+                  <option value="PESADO">Heavy / Pesado</option>
+                  <option value="SUPER_PESADO">Super Heavy / Super Pesado</option>
+                  <option value="PESADISSIMO">Ultra Heavy / Pesadíssimo</option>
+                </select>
+
+                {!isMobile && (
+                  <select className="glass" style={{ padding: '0.8rem 1.2rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700 }}
+                    value={studentFilterAge} onChange={e => setStudentFilterAge(e.target.value as any)}>
+                    <option value="ALL">Todas las edades</option>
+                    <option value="KIDS">Niños (Menores de 18)</option>
+                    <option value="ADULTS">Adultos (18+)</option>
+                  </select>
+                )}
+
                 {isMobile && (
                   <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleOpenAddStudent()}
-                    style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '1rem', padding: '0.7rem 1.2rem', color: '#fff', fontWeight: 900, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Plus size={14} /> Nuevo
+                    style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '1rem', padding: '0.75rem 1.2rem', color: '#fff', fontWeight: 900, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', width: '100%', marginTop: '0.2rem' }}>
+                    <Plus size={15} /> Nuevo Alumno
                   </motion.button>
-                )}
-                {!isMobile && (
-                  <>
-                    <select className="glass" style={{ padding: '0.8rem 1.2rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700 }}
-                      value={studentFilterAge} onChange={e => setStudentFilterAge(e.target.value as any)}>
-                      <option value="ALL">Todas las edades</option>
-                      <option value="KIDS">Niños (Menores de 18)</option>
-                      <option value="ADULTS">Adultos (18+)</option>
-                    </select>
-                    <select className="glass" style={{ padding: '0.8rem 1.2rem', borderRadius: '1rem', background: 'var(--panel-surface)', color: 'var(--panel-text)', border: '1px solid var(--panel-border)', outline: 'none', fontWeight: 700 }}
-                      value={studentFilterBelt} onChange={e => setStudentFilterBelt(e.target.value as any)}>
-                      <option value="ALL">Todos los cinturones</option>
-                      {Object.keys(beltLabels).map(b => (
-                        <option key={b} value={b}>{beltLabels[b as Belt]}</option>
-                      ))}
-                    </select>
-                  </>
                 )}
               </div>
 
@@ -3517,6 +3810,21 @@ const App: React.FC = () => {
                       if (studentFilterPayment === 'PAID') return s.isPaid;
                       return !s.isPaid;
                     })
+                        .filter(s => {
+                          if (studentFilterIBJJFCategory === 'ALL') return true;
+                          const cat = calculateIBJJFCategory(s.birthDate, s.weight, s.gender, s.belt);
+                          const div = (cat.divisionName || '').toLowerCase();
+                          if (studentFilterIBJJFCategory === 'GALO') return div.includes('galo') || div.includes('rooster');
+                          if (studentFilterIBJJFCategory === 'PLUMA') return div.includes('pluma') || div.includes('light feather');
+                          if (studentFilterIBJJFCategory === 'PENA') return div.includes('pena') || div.includes('feather');
+                          if (studentFilterIBJJFCategory === 'LEVE') return div.includes('leve') || (div.includes('light') && !div.includes('feather'));
+                          if (studentFilterIBJJFCategory === 'MEDIO') return (div.includes('médio') || div.includes('middle')) && !div.includes('meio') && !div.includes('medium');
+                          if (studentFilterIBJJFCategory === 'MEIO_PESADO') return div.includes('meio-pesado') || div.includes('medium heavy');
+                          if (studentFilterIBJJFCategory === 'PESADO') return (div.includes('pesado') || div.includes('heavy')) && !div.includes('super') && !div.includes('meio') && !div.includes('medium');
+                          if (studentFilterIBJJFCategory === 'SUPER_PESADO') return div.includes('super pesado') || div.includes('super heavy');
+                          if (studentFilterIBJJFCategory === 'PESADISSIMO') return div.includes('pesadíssimo') || div.includes('ultra heavy');
+                          return true;
+                        })
                     .map((student) => (
                       <div key={student.id}
                         style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', padding: '0.8rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -3531,8 +3839,21 @@ const App: React.FC = () => {
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--panel-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{student.name}</div>
-                            <div style={{ fontSize: '0.65rem', fontWeight: 700, color: student.isPaid ? 'var(--logo-green)' : '#ef4444' }}>
-                              {student.isPaid ? '✅ Al día' : '⚠️ Pendiente'}
+                            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '2px' }}>
+                              <span style={{ fontSize: '0.65rem', fontWeight: 700, color: student.isPaid ? 'var(--logo-green)' : '#ef4444' }}>
+                                {student.isPaid ? '✅ Al día' : '⚠️ Pendiente'}
+                              </span>
+                              {(() => {
+                                const cat = calculateIBJJFCategory(student.birthDate, student.weight, student.gender, student.belt);
+                                if (cat.hasGender && !cat.divisionName.includes('Pendiente') && !cat.divisionName.includes('definir')) {
+                                  return (
+                                    <span style={{ fontSize: '0.6rem', fontWeight: 800, background: 'rgba(5,168,106,0.12)', color: 'var(--logo-green)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                                      {cat.divisionName.split('/')[0].trim()}
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
                             </div>
                           </div>
                         </div>
@@ -3576,6 +3897,7 @@ const App: React.FC = () => {
                       <tr style={{ background: 'rgba(5, 168, 106, 0.05)', borderBottom: '1px solid var(--glass-border)' }}>
                         <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ALUMNO</th>
                         <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>CINTURÓN</th>
+                        <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>CATEGORÍA IBJJF</th>
                         <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ASISTENCIAS</th>
                         <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em' }}>ESTADO</th>
                         <th style={{ padding: '1.5rem', fontSize: '0.7rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.1em', textAlign: 'right' }}>ACCIONES</th>
@@ -3599,6 +3921,21 @@ const App: React.FC = () => {
                             if (studentFilterAge === 'ADULTS') return age >= 18;
                             return true;
                         })
+                        .filter(s => {
+                          if (studentFilterIBJJFCategory === 'ALL') return true;
+                          const cat = calculateIBJJFCategory(s.birthDate, s.weight, s.gender, s.belt);
+                          const div = (cat.divisionName || '').toLowerCase();
+                          if (studentFilterIBJJFCategory === 'GALO') return div.includes('galo') || div.includes('rooster');
+                          if (studentFilterIBJJFCategory === 'PLUMA') return div.includes('pluma') || div.includes('light feather');
+                          if (studentFilterIBJJFCategory === 'PENA') return div.includes('pena') || div.includes('feather');
+                          if (studentFilterIBJJFCategory === 'LEVE') return div.includes('leve') || (div.includes('light') && !div.includes('feather'));
+                          if (studentFilterIBJJFCategory === 'MEDIO') return (div.includes('médio') || div.includes('middle')) && !div.includes('meio') && !div.includes('medium');
+                          if (studentFilterIBJJFCategory === 'MEIO_PESADO') return div.includes('meio-pesado') || div.includes('medium heavy');
+                          if (studentFilterIBJJFCategory === 'PESADO') return (div.includes('pesado') || div.includes('heavy')) && !div.includes('super') && !div.includes('meio') && !div.includes('medium');
+                          if (studentFilterIBJJFCategory === 'SUPER_PESADO') return div.includes('super pesado') || div.includes('super heavy');
+                          if (studentFilterIBJJFCategory === 'PESADISSIMO') return div.includes('pesadíssimo') || div.includes('ultra heavy');
+                          return true;
+                        })
                         .map((student) => (
                           <tr key={student.id} style={{ borderBottom: '1px solid var(--glass-border)', transition: 'all 0.3s' }} className="hover-light">
                             <td style={{ padding: '1.5rem' }}>
@@ -3619,6 +3956,20 @@ const App: React.FC = () => {
                             </td>
                             <td style={{ padding: '1.5rem' }}>
                               <div className={`belt-badge belt-${student.belt}`} style={{ display: 'inline-block', padding: '0.5rem 1rem', fontSize: '0.65rem' }}>{beltLabels[student.belt]}</div>
+                            </td>
+                            <td style={{ padding: '1.5rem' }}>
+                              {(() => {
+                                const cat = calculateIBJJFCategory(student.birthDate, student.weight, student.gender, student.belt);
+                                if (!cat.hasGender || cat.divisionName.includes('Pendiente') || cat.divisionName.includes('definir')) {
+                                  return <span style={{ fontSize: '0.7rem', color: 'var(--panel-muted)', fontWeight: 600 }}>Sin registrar</span>;
+                                }
+                                return (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                    <span style={{ fontWeight: 800, fontSize: '0.8rem', color: 'var(--panel-text)' }}>{cat.divisionName}</span>
+                                    <span style={{ fontSize: '0.65rem', color: 'var(--logo-green)', fontWeight: 700 }}>{cat.ageCategory} • {student.weight} kg</span>
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td style={{ padding: '1.5rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
@@ -4730,6 +5081,124 @@ const App: React.FC = () => {
                     )}
                   </div>
                 </div>
+
+                {/* ── DATOS DE COMPETICIÓN Y CATEGORÍA IBJJF ── */}
+                {(() => {
+                  const currentStudentData = isEditingStudent ? editedStudent : selectedStudent;
+                  const cat = calculateIBJJFCategory(
+                    currentStudentData?.birthDate, 
+                    currentStudentData?.weight, 
+                    currentStudentData?.gender || null, 
+                    currentStudentData?.belt || 'WHITE'
+                  );
+
+                  return (
+                    <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+                      <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>
+                        🏆 INFORMACIÓN DE COMPETICIÓN (CATEGORÍA IBJJF)
+                      </p>
+
+                      {/* Grid responsivo con minmax */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.8rem', marginBottom: '1rem' }}>
+                        <div style={{ padding: '0.9rem 1rem', borderRadius: '1.2rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                          <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.4rem', letterSpacing: '0.1em' }}>FECHA NAC. / EDAD</p>
+                          {isEditingStudent ? (
+                            <input type="date" style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.4rem', fontWeight: 700, fontSize: '0.85rem', width: '100%', textAlign: 'center', boxSizing: 'border-box' }}
+                              value={editedStudent?.birthDate || ''}
+                              onChange={e => setEditedStudent(prev => prev ? { ...prev, birthDate: e.target.value } : null)} />
+                          ) : (
+                            <p style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--panel-text)' }}>
+                              {selectedStudent.birthDate ? `${formatDate(selectedStudent.birthDate)} (${cat.age} años)` : 'Sin registrar'}
+                            </p>
+                          )}
+                        </div>
+
+                        <div style={{ padding: '0.9rem 1rem', borderRadius: '1.2rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                          <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.4rem', letterSpacing: '0.1em' }}>PESO CON KIMONO</p>
+                          {isEditingStudent ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', justifyContent: 'center', width: '100%' }}>
+                              <input type="number" step="0.1" min="20" max="200" placeholder="Ej: 75.5"
+                                style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.4rem', fontWeight: 700, fontSize: '0.85rem', width: '70px', textAlign: 'center', boxSizing: 'border-box' }}
+                                value={editedStudent?.weight || ''}
+                                onChange={e => setEditedStudent(prev => prev ? { ...prev, weight: parseFloat(e.target.value) || 0 } : null)} />
+                              <span style={{ fontWeight: 800, fontSize: '0.8rem', color: 'var(--panel-text)' }}>kg</span>
+                            </div>
+                          ) : (
+                            <p style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--panel-text)' }}>
+                              {selectedStudent.weight ? `${selectedStudent.weight} kg` : 'Sin registrar'}
+                            </p>
+                          )}
+                        </div>
+
+                        <div style={{ padding: '0.9rem 1rem', borderRadius: '1.2rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                          <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.4rem', letterSpacing: '0.1em' }}>GÉNERO</p>
+                          {isEditingStudent ? (
+                            <select style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.4rem', fontWeight: 700, fontSize: '0.85rem', width: '100%', textAlign: 'center', outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}
+                              value={editedStudent?.gender || ''}
+                              onChange={e => setEditedStudent(prev => prev ? { ...prev, gender: e.target.value as 'MALE' | 'FEMALE' } : null)}>
+                              <option value="">Seleccionar...</option>
+                              <option value="MALE">Masculino</option>
+                              <option value="FEMALE">Femenino</option>
+                            </select>
+                          ) : (
+                            <p style={{ fontWeight: 800, fontSize: '0.85rem', color: selectedStudent.gender ? 'var(--panel-text)' : 'var(--panel-muted)' }}>
+                              {selectedStudent.gender === 'FEMALE' ? 'Femenino' : selectedStudent.gender === 'MALE' ? 'Masculino' : 'Sin registrar'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Tarjeta de Categoría Oficial IBJJF */}
+                      <div style={{ 
+                        background: 'linear-gradient(135deg, rgba(5,168,106,0.1), rgba(5,168,106,0.03))', 
+                        border: '1.5px solid rgba(5,168,106,0.25)', 
+                        borderRadius: '1.2rem', 
+                        padding: '1.2rem' 
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 900, color: 'var(--logo-green)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                            🏆 CATEGORÍA OFICIAL IBJJF (CON KIMONO)
+                          </span>
+                          <span style={{ fontSize: '0.6rem', fontWeight: 800, background: 'rgba(5,168,106,0.15)', color: 'var(--logo-green)', padding: '0.2rem 0.6rem', borderRadius: '100px', border: '1px solid rgba(5,168,106,0.3)' }}>
+                            Estándar Gi
+                          </span>
+                        </div>
+
+                        {cat.hasGender && cat.divisionName !== 'Pendiente de peso' && cat.divisionName !== 'Por definir género' ? (
+                          <div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--panel-text)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              <span>{cat.divisionName}</span>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--logo-green)', background: 'rgba(5,168,106,0.12)', padding: '0.15rem 0.55rem', borderRadius: '0.5rem' }}>
+                                {cat.weightLimitText}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                              <span style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', padding: '0.3rem 0.6rem', borderRadius: '0.6rem', fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-text)' }}>
+                                👤 {cat.ageCategory}
+                              </span>
+                              <span style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', padding: '0.3rem 0.6rem', borderRadius: '0.6rem', fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-text)' }}>
+                                🚻 {cat.genderText}
+                              </span>
+                              <span style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', padding: '0.3rem 0.6rem', borderRadius: '0.6rem', fontSize: '0.7rem', fontWeight: 800, color: 'var(--panel-text)' }}>
+                                🥋 {cat.beltName}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ padding: '0.8rem 1rem', background: 'var(--panel-surface)', borderRadius: '0.8rem', border: '1px dashed var(--panel-border)', textAlign: 'center' }}>
+                            <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: 'var(--panel-text)', marginBottom: '0.2rem' }}>
+                              {!cat.hasGender ? '⚠️ Por favor selecciona el Género del alumno' : '⚠️ Por favor ingresa el Peso en kg del alumno'}
+                            </p>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--panel-muted)', fontWeight: 600 }}>
+                              Para calcular su categoría de torneo (Galo, Pluma, Pena, Leve, Médio, etc.)
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
                   <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>CLASES SELECCIONADAS ESTA SEMANA</p>

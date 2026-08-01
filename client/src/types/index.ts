@@ -48,6 +48,8 @@ export interface Student {
         name: string;
         timestamp: number;
     }[];
+    weight?: number;
+    gender?: 'MALE' | 'FEMALE';
     terms_accepted?: boolean;
     sedeId?: number;
     sede_id?: number;

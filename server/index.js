@@ -444,31 +444,40 @@ app.get('/api/students', async (req, res) => {
             }
         }
 
-        const formatted = updatedData.map(s => ({
-            id: s.id,
-            name: s.name,
-            email: s.email,
-            password: s.password,
-            phone: s.phone,
-            belt: s.belt || 'WHITE',
-            classesAttended: s.classesattended,
-            classesToNextBelt: s.classestonextbelt,
-            lastPaymentMonth: s.lastpaymentmonth,
-            lastPaymentDate: s.lastpaymentdate,
-            isPaid: s.ispaid === true,
-            plan: s.plan,
-            monthlyFee: s.monthlyfee,
-            avatar: s.avatar,
-            birthDate: s.birthdate,
-            history: Array.isArray(s.history) ? s.history : [],
-            terms_accepted: s.terms_accepted === true,
-            scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : [],
-            joinDate: s.joindate || null,
-            lastGrade: s.lastgrade || null,
-            graduationDate: s.graduationdate || null,
-            sedeId: s.sede_id || 1,
-            sede_id: s.sede_id || 1
-        }));
+        const formatted = updatedData.map(s => {
+            const compEntry = Array.isArray(s.history) ? s.history.find(h => h && h._competition_info) : null;
+            const cleanHistory = Array.isArray(s.history) ? s.history.filter(h => h && !h._competition_info) : [];
+            const weightVal = (s.weight !== undefined && s.weight !== null) ? s.weight : (compEntry ? compEntry.weight : null);
+            const genderVal = s.gender ? s.gender : (compEntry ? compEntry.gender : null);
+
+            return {
+                id: s.id,
+                name: s.name,
+                email: s.email,
+                password: s.password,
+                phone: s.phone,
+                belt: s.belt || 'WHITE',
+                classesAttended: s.classesattended,
+                classesToNextBelt: s.classestonextbelt,
+                lastPaymentMonth: s.lastpaymentmonth,
+                lastPaymentDate: s.lastpaymentdate,
+                isPaid: s.ispaid === true,
+                plan: s.plan,
+                monthlyFee: s.monthlyfee,
+                avatar: s.avatar,
+                birthDate: s.birthdate,
+                history: cleanHistory,
+                terms_accepted: s.terms_accepted === true,
+                scheduledClasses: Array.isArray(s.scheduledclasses) ? s.scheduledclasses : [],
+                joinDate: s.joindate || null,
+                lastGrade: s.lastgrade || null,
+                graduationDate: s.graduationdate || null,
+                weight: weightVal,
+                gender: genderVal,
+                sedeId: s.sede_id || 1,
+                sede_id: s.sede_id || 1
+            };
+        });
 
         res.json(formatted);
         // syncStudentsBackground desactivado - sobreescribía cambios manuales del admin
@@ -654,23 +663,58 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.monthlyFee !== undefined) updateData.monthlyfee = Number(req.body.monthlyFee);
         if (req.body.birthDate !== undefined) updateData.birthdate = req.body.birthDate;
         if (req.body.avatar !== undefined) updateData.avatar = req.body.avatar;
-        if (req.body.history !== undefined) updateData.history = req.body.history;
         if (req.body.lastPaymentDate !== undefined) updateData.lastpaymentdate = req.body.lastPaymentDate;
         if (req.body.lastPaymentMonth !== undefined) updateData.lastpaymentmonth = req.body.lastPaymentMonth;
         if (req.body.scheduledClasses !== undefined) updateData.scheduledclasses = req.body.scheduledClasses;
         if (req.body.joinDate !== undefined) updateData.joindate = req.body.joinDate;
         if (req.body.lastGrade !== undefined) updateData.lastgrade = req.body.lastGrade;
         if (req.body.graduationDate !== undefined) updateData.graduationdate = req.body.graduationDate;
+        if (req.body.weight !== undefined) updateData.weight = req.body.weight ? Number(req.body.weight) : null;
+        if (req.body.gender !== undefined) updateData.gender = req.body.gender;
         if (req.body.sedeId !== undefined) updateData.sede_id = req.body.sedeId ? Number(req.body.sedeId) : null;
         if (req.body.sede_id !== undefined) updateData.sede_id = req.body.sede_id ? Number(req.body.sede_id) : null;
 
+        // Recuperar registro previo para preservar competition_info de forma indestructible en history JSONB
+        const { data: currentSt } = await supabase.from('students').select('history, weight, gender').eq('id', req.params.id).maybeSingle();
+        
+        let currentHist = Array.isArray(req.body.history) ? [...req.body.history] : (currentSt && Array.isArray(currentSt.history) ? [...currentSt.history] : []);
+        let existingComp = (currentSt && Array.isArray(currentSt.history)) ? currentSt.history.find(h => h && h._competition_info) : null;
+        let compEntry = Array.isArray(req.body.history) ? req.body.history.find(h => h && h._competition_info) : null;
+
+        const finalWeight = req.body.weight !== undefined ? (req.body.weight ? Number(req.body.weight) : null) : (compEntry ? compEntry.weight : (existingComp ? existingComp.weight : null));
+        const finalGender = req.body.gender !== undefined ? req.body.gender : (compEntry ? compEntry.gender : (existingComp ? existingComp.gender : null));
+
+        currentHist = currentHist.filter(h => h && !h._competition_info);
+        if (finalWeight !== null || finalGender !== null) {
+            currentHist.push({
+                _competition_info: true,
+                weight: finalWeight,
+                gender: finalGender
+            });
+        }
+        updateData.history = currentHist;
+
         console.log(`PUT /api/students/${req.params.id}`, JSON.stringify(updateData));
-        const { error } = await supabase.from('students').update(updateData).eq('id', req.params.id);
+        let { error } = await supabase.from('students').update(updateData).eq('id', req.params.id);
+        if (error && (error.message.includes('weight') || error.message.includes('gender') || error.code === 'PGRST204')) {
+            console.warn('Supabase update warning (stripping weight/gender columns if not yet in DB schema):', error.message);
+            const fallbackData = { ...updateData };
+            delete fallbackData.weight;
+            delete fallbackData.gender;
+            const retryRes = await supabase.from('students').update(fallbackData).eq('id', req.params.id);
+            error = retryRes.error;
+        }
         if (error) {
             console.error('Supabase update error:', error);
             throw error;
         }
-        res.json({ ...req.body, id: req.params.id });
+        res.json({ 
+            ...req.body, 
+            id: req.params.id, 
+            weight: finalWeight, 
+            gender: finalGender, 
+            history: currentHist.filter(h => h && !h._competition_info) 
+        });
     } catch (error) {
         console.error('PUT student error:', error.message);
         res.status(500).json({ error: error.message });
