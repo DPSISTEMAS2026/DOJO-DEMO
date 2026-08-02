@@ -875,44 +875,55 @@ const App: React.FC = () => {
 
   // API Data Loading (Scoped by Sede)
   const fetchDataForSede = async (sedeId: number | null) => {
+    const queryParams = sedeId ? `?sedeId=${sedeId}` : '';
+
+    // Carga ultrarrápida e independiente de videos (< 1 seg)
+    fetch(`${API_URL}/api/videos${queryParams}`)
+      .then(res => res.json())
+      .then(videosData => { if (Array.isArray(videosData)) setVideos(videosData); })
+      .catch(e => console.error("Error cargando videos:", e));
+
+    // Carga independiente de notificaciones
+    fetch(`${API_URL}/api/global-notice${queryParams}`)
+      .then(res => res.json())
+      .then(noticeDataResult => {
+        if (noticeDataResult && noticeDataResult.subject) {
+          setNoticeData(noticeDataResult);
+          setIsNoticeDismissed(false);
+        } else {
+          setNoticeData({ subject: '', message: '' });
+        }
+      })
+      .catch(() => setNoticeData({ subject: '', message: '' }));
+
+    // Carga paralela de resto de datos del sistema
     try {
-      const queryParams = sedeId ? `?sedeId=${sedeId}` : '';
-      const [studentsRes, videosRes, newsRes, galleryRes, heroVideosRes, noticeRes, feesRes, automationRes, discountCatRes, sedesRes] = await Promise.all([
+      const [studentsRes, newsRes, galleryRes, heroVideosRes, feesRes, automationRes, discountCatRes, sedesRes] = await Promise.all([
         fetch(`${API_URL}/api/students${queryParams}`),
-        fetch(`${API_URL}/api/videos${queryParams}`),
         fetch(`${API_URL}/api/news${queryParams}`),
         fetch(`${API_URL}/api/gallery${queryParams}`),
         fetch(`${API_URL}/api/hero-videos`),
-        fetch(`${API_URL}/api/global-notice${queryParams}`),
         fetch(`${API_URL}/api/fees${queryParams}`),
         fetch(`${API_URL}/api/automation${queryParams}`),
         fetch(`${API_URL}/api/discount-categories${queryParams}`),
         fetch(`${API_URL}/api/sedes`)
       ]);
-      const studentsData = await studentsRes.json();
-      const videosData = await videosRes.json();
-      const newsData = await newsRes.json();
-      const galleryData = await galleryRes.json();
-      const heroVideosData = await heroVideosRes.json();
-      const noticeDataResult = await noticeRes.json();
-      const feesData = await feesRes.json();
-      const automationData = await automationRes.json();
+
+      const studentsData = await studentsRes.json().catch(() => []);
+      const newsData = await newsRes.json().catch(() => null);
+      const galleryData = await galleryRes.json().catch(() => null);
+      const heroVideosData = await heroVideosRes.json().catch(() => null);
+      const feesData = await feesRes.json().catch(() => null);
+      const automationData = await automationRes.json().catch(() => null);
       const discountCatData = await discountCatRes.json().catch(() => null);
       const sedesData = await sedesRes.json().catch(() => []);
 
       setStudents(studentsData || []);
-      setVideos(videosData || []);
       setSedes(sedesData || []);
       if (newsData !== null) setLiveNews(newsData);
       if (galleryData !== null) setLiveGallery(galleryData);
       if (heroVideosData !== null) setLiveHeroVideos(heroVideosData);
       if (feesData !== null) setFees(feesData);
-      if (noticeDataResult && noticeDataResult.subject) {
-        setNoticeData(noticeDataResult);
-        setIsNoticeDismissed(false);
-      } else {
-        setNoticeData({ subject: '', message: '' });
-      }
       if (automationData !== null) setAutomation(automationData);
       if (discountCatData !== null) setDiscountCategories(discountCatData);
 
