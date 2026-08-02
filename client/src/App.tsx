@@ -623,6 +623,8 @@ const App: React.FC = () => {
     setViewMode('landing');
     setRole('guest');
     setCurrentUser(null);
+    setNoticeData({ subject: '', message: '' });
+    setIsNoticeDismissed(false);
   };
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
@@ -877,7 +879,7 @@ const App: React.FC = () => {
       const queryParams = sedeId ? `?sedeId=${sedeId}` : '';
       const [studentsRes, videosRes, newsRes, galleryRes, heroVideosRes, noticeRes, feesRes, automationRes, discountCatRes, sedesRes] = await Promise.all([
         fetch(`${API_URL}/api/students${queryParams}`),
-        fetch(`${API_URL}/api/videos`),
+        fetch(`${API_URL}/api/videos${queryParams}`),
         fetch(`${API_URL}/api/news${queryParams}`),
         fetch(`${API_URL}/api/gallery${queryParams}`),
         fetch(`${API_URL}/api/hero-videos`),
@@ -903,9 +905,12 @@ const App: React.FC = () => {
       setSedes(sedesData || []);
       if (newsData !== null) setLiveNews(newsData);
       if (galleryData !== null) setLiveGallery(galleryData);
-      if (heroVideosData !== null) setLiveHeroVideos(heroVideosData);
-      if (noticeDataResult !== null) setNoticeData(noticeDataResult);
-      if (feesData !== null) setFees(feesData);
+      if (noticeDataResult && noticeDataResult.subject) {
+        setNoticeData(noticeDataResult);
+        setIsNoticeDismissed(false);
+      } else {
+        setNoticeData({ subject: '', message: '' });
+      }
       if (automationData !== null) setAutomation(automationData);
       if (discountCatData !== null) setDiscountCategories(discountCatData);
 
@@ -1696,7 +1701,8 @@ const App: React.FC = () => {
 
       const payload = { ...newVideoData, thumbnail: videoThumbnail };
 
-      const response = await fetch(`${API_URL}/api/videos`, {
+      const queryParams = activeSedeId ? `?sedeId=${activeSedeId}` : '';
+      const response = await fetch(`${API_URL}/api/videos${queryParams}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -2680,30 +2686,83 @@ const App: React.FC = () => {
             {activeTab === 'dashboard' && (
               <motion.div key="dashboard" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
                 {noticeData.subject && !isNoticeDismissed && (
-                  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                    style={{ background: 'linear-gradient(135deg, rgba(5,168,106,0.1) 0%, rgba(16,244,156,0.1) 100%)', border: '1px solid rgba(5,168,106,0.2)', padding: '1.5rem', borderRadius: '1.5rem', marginBottom: '1.5rem', position: 'relative', overflow: 'hidden' }}>
-                    <button 
-                      onClick={() => setIsNoticeDismissed(true)}
-                      style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(0,0,0,0.05)', border: 'none', color: 'var(--text-main)', padding: '5px', borderRadius: '50%', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <X size={16} />
-                    </button>
-                    <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '80px', height: '80px', background: 'var(--logo-green)', filter: 'blur(40px)', opacity: 0.2 }} />
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'start', position: 'relative', zIndex: 1 }}>
-                      <div style={{ background: 'var(--logo-green)', padding: '0.6rem', borderRadius: '12px', color: '#fff' }}>
-                        <Bell size={18} />
+                  <motion.div 
+                    initial={{ opacity: 0, y: -15, scale: 0.98 }} 
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    style={{ 
+                      background: 'linear-gradient(135deg, rgba(167,139,250,0.12) 0%, rgba(139,92,246,0.18) 100%)', 
+                      backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
+                      border: '1.5px solid rgba(167,139,250,0.35)', 
+                      boxShadow: '0 12px 28px -8px rgba(139,92,246,0.25), 0 0 15px rgba(167,139,250,0.15)',
+                      padding: '1.1rem 1.4rem', 
+                      borderRadius: '1.4rem', 
+                      marginBottom: '1.8rem', 
+                      position: 'relative', 
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '1rem'
+                    }}
+                  >
+                    {/* Glowing ambient background */}
+                    <div style={{ position: 'absolute', top: '-40px', left: '-20px', width: '120px', height: '120px', background: '#a78bfa', filter: 'blur(45px)', opacity: 0.25, pointerEvents: 'none' }} />
+
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flex: 1, minWidth: 0, position: 'relative', zIndex: 1 }}>
+                      <div style={{ 
+                        background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', 
+                        padding: '0.7rem', 
+                        borderRadius: '14px', 
+                        color: '#fff',
+                        boxShadow: '0 4px 14px rgba(124,58,237,0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        <Bell size={20} fill="#fff" />
                       </div>
-                      <div>
-                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '0.3rem' }}>{noticeData.subject}</h4>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                            📢 AVISO OFICIAL
+                          </span>
+                        </div>
+                        <h4 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 900, color: 'var(--text-main)', lineHeight: 1.3 }}>
+                          {noticeData.subject}
+                        </h4>
+                        <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.45, wordBreak: 'break-word' }}>
                           {(noticeData.message ?? '').split(/(\*\*.*?\*\*)/g).map((part: string, index: number) => 
                             part.startsWith('**') && part.endsWith('**') ? 
-                              <strong key={index} style={{ color: 'var(--logo-green)', fontWeight: 900 }}>{part.slice(2, -2)}</strong> : 
+                              <strong key={index} style={{ color: '#a78bfa', fontWeight: 900 }}>{part.slice(2, -2)}</strong> : 
                               part
                           )}
                         </p>
                       </div>
                     </div>
+
+                    <button 
+                      onClick={() => setIsNoticeDismissed(true)}
+                      title="Cerrar aviso"
+                      style={{ 
+                        background: 'rgba(255,255,255,0.08)', 
+                        border: '1px solid rgba(255,255,255,0.15)', 
+                        color: 'var(--text-main)', 
+                        padding: '7px', 
+                        borderRadius: '50%', 
+                        cursor: 'pointer', 
+                        zIndex: 10, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <X size={16} />
+                    </button>
                   </motion.div>
                 )}
                 {(() => {

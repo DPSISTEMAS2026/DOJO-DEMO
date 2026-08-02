@@ -232,16 +232,22 @@ app.get('/api/admin/payments', async (req, res) => {
 // Videos
 app.get('/api/videos', async (req, res) => {
     try {
-        const { data, error } = await supabase.from('videos').select('*');
+        const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
+        let query = supabase.from('videos').select('*');
+        if (targetSedeId) {
+            query = query.or(`sede_id.eq.${targetSedeId},sede_id.is.null`);
+        }
+        const { data, error } = await query;
         if (error) throw error;
-        const formatted = data.map(v => ({
+        const formatted = (data || []).map(v => ({
             id: v.id,
             title: v.title,
             description: v.description,
             url: v.url,
             thumbnail: v.thumbnail,
             beltLevel: v.beltlevel,
-            category: v.category
+            category: v.category,
+            sedeId: v.sede_id
         }));
         res.json(formatted);
     } catch (error) {
@@ -251,6 +257,7 @@ app.get('/api/videos', async (req, res) => {
 
 app.post('/api/videos', async (req, res) => {
     try {
+        const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : (req.body.sedeId ? Number(req.body.sedeId) : null);
         const newId = Date.now().toString();
         const newVideo = { 
             id: newId,
@@ -259,11 +266,12 @@ app.post('/api/videos', async (req, res) => {
             url: req.body.url,
             thumbnail: req.body.thumbnail,
             beltlevel: req.body.beltLevel,
-            category: req.body.category
+            category: req.body.category,
+            sede_id: targetSedeId
         };
         const { error } = await supabase.from('videos').insert(newVideo);
         if (error) throw error;
-        res.status(201).json({ ...req.body, id: newId });
+        res.status(201).json({ ...req.body, id: newId, sedeId: targetSedeId });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -1398,8 +1406,14 @@ app.post('/api/admin/check-birthdays', async (req, res) => {
                 sede_id: targetSedeId
             });
 
-            // Also save to noticeFile since GET /api/global-notice reads it
-            writeData(noticeFile, { subject, message, date: now.toISOString() });
+            // Also save to noticeFile per sede
+            const key = targetSedeId ? String(targetSedeId) : 'global';
+            let allNotices = {};
+            if (fs.existsSync(noticeFile)) {
+                try { allNotices = JSON.parse(fs.readFileSync(noticeFile, 'utf-8')) || {}; } catch(e){}
+            }
+            allNotices[key] = { subject, message, date: now.toISOString() };
+            writeData(noticeFile, allNotices);
 
             res.json({ success: true, message: `Aviso global publicado para: ${names}` });
         } else {
@@ -1442,7 +1456,13 @@ app.post('/api/admin/broadcast', async (req, res) => {
             console.error('Error saving notice to Supabase:', supaErr);
         }
 
-        writeData(noticeFile, noticeData);
+        const key = targetSedeId ? String(targetSedeId) : 'global';
+        let allNotices = {};
+        if (fs.existsSync(noticeFile)) {
+            try { allNotices = JSON.parse(fs.readFileSync(noticeFile, 'utf-8')) || {}; } catch(e){}
+        }
+        allNotices[key] = noticeData;
+        writeData(noticeFile, allNotices);
         res.json({ success: true, message: `Aviso publicado en los portales de los alumnos de esta sede.` });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -1452,6 +1472,7 @@ app.post('/api/admin/broadcast', async (req, res) => {
 app.get('/api/global-notice', async (req, res) => {
     try {
         const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
+        const key = targetSedeId ? String(targetSedeId) : 'global';
         const noticeId = 999900 + (targetSedeId || 99);
         const { data: supaNotice, error } = await supabase.from('news').select('*').eq('id', noticeId).maybeSingle();
         if (supaNotice) {
@@ -1476,23 +1497,24 @@ app.get('/api/global-notice', async (req, res) => {
             try {
                 const raw = fs.readFileSync(noticeFile, 'utf-8');
                 const parsed = JSON.parse(raw);
-                if (parsed && Object.keys(parsed).length > 0) {
-                    if (parsed.subject && parsed.subject.includes('Cumpleaños') && parsed.date) {
-                        const noticeDate = new Date(parsed.date);
+                const localNotice = parsed ? (parsed[key] || (parsed.subject ? (targetSedeId ? null : parsed) : null)) : null;
+                if (localNotice && localNotice.subject) {
+                    if (localNotice.subject.includes('Cumpleaños') && localNotice.date) {
+                        const noticeDate = new Date(localNotice.date);
                         const nowChile = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
                         const noticeDateChile = new Date(noticeDate.toLocaleString('en-US', { timeZone: 'America/Santiago' }));
                         if (nowChile.getFullYear() !== noticeDateChile.getFullYear() ||
                             nowChile.getMonth() !== noticeDateChile.getMonth() ||
                             nowChile.getDate() !== noticeDateChile.getDate()) {
-                            // Local fallback notice expired — clear it and return null
-                            fs.writeFileSync(noticeFile, '{}', 'utf-8');
+                            delete parsed[key];
+                            writeData(noticeFile, parsed);
                             return res.json(null);
                         }
                     }
-                    return res.json(parsed);
+                    return res.json(localNotice);
                 }
             } catch (e) {
-                // Ignore parse errors on empty local files
+                // Ignore parse errors
             }
         }
         res.json(null);
@@ -2114,7 +2136,8 @@ app.post('/api/auth/login', async (req, res) => {
                         avatar: student.avatar,
                         birthDate: student.birthdate,
                         history: student.history || [],
-                        sedeId: student.sede_id || 1 // Fallback a sede 1 si es nulo
+                        sedeId: student.sede_id || 1, // Fallback a sede 1 si es nulo
+                        terms_accepted: student.terms_accepted === true
                     }
                 });
             }
@@ -2127,6 +2150,126 @@ app.post('/api/auth/login', async (req, res) => {
     } catch (error) {
         console.error("Login Error:", error);
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// --- WHATSAPP API INTEGRATION ENDPOINTS ---
+
+// Auxiliary helper to format Chilean/International phone numbers
+function formatWhatsAppPhone(phone) {
+    if (!phone) return '';
+    let cleaned = phone.replace(/\D/g, '');
+    // If Chilean number starting with 9 (9 digits), append 56
+    if (cleaned.length === 9 && cleaned.startsWith('9')) {
+        cleaned = '56' + cleaned;
+    }
+    return cleaned;
+}
+
+// Check WhatsApp API status
+app.get('/api/whatsapp/status', (req, res) => {
+    const isConfigured = !!(process.env.WHATSAPP_API_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID);
+    res.json({
+        configured: isConfigured,
+        phoneId: process.env.WHATSAPP_PHONE_NUMBER_ID || 'Sin configurar',
+        defaultPhone: process.env.WHATSAPP_DEFAULT_PHONE || '56939601560',
+        mode: isConfigured ? 'PRODUCTION_API' : 'SIMULATION_MODE'
+    });
+});
+
+// Send single WhatsApp message or template
+app.post('/api/whatsapp/send', async (req, res) => {
+    try {
+        const { phone, message, studentName, amount, category } = req.body;
+        if (!phone) {
+            return res.status(400).json({ error: 'Número de teléfono es requerido' });
+        }
+
+        const formattedPhone = formatWhatsAppPhone(phone);
+        const finalMessage = (message || 'Hola {nombre}, te saludamos desde Dojo Ranas Jiu Jitsu.')
+            .replace(/{nombre}/g, studentName || 'Alumno')
+            .replace(/{monto}/g, amount ? `$${Number(amount).toLocaleString('es-CL')}` : '$40.000')
+            .replace(/{categoria}/g, category || 'Oficial IBJJF')
+            .replace(/{dojo}/g, 'Ranas Jiu Jitsu')
+            .replace(/{link_pago}/g, 'https://ranasjiujitsu.cl');
+
+        const token = process.env.WHATSAPP_API_TOKEN;
+        const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+        const apiUrl = process.env.WHATSAPP_API_URL || 'https://graph.facebook.com/v18.0';
+
+        // Direct WhatsApp API Call (Meta Cloud API Standard)
+        if (token && phoneId && !token.startsWith('EAAG...')) {
+            const apiRes = await fetch(`${apiUrl}/${phoneId}/messages`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    messaging_product: 'whatsapp',
+                    recipient_type: 'individual',
+                    to: formattedPhone,
+                    type: 'text',
+                    text: { preview_url: true, body: finalMessage }
+                })
+            });
+            const responseData = await apiRes.json();
+            if (!apiRes.ok) {
+                console.error("❌ WhatsApp API error response:", responseData);
+                return res.status(apiRes.status).json({ error: 'Error enviando mensaje vía WhatsApp API', details: responseData });
+            }
+            console.log(`✅ Mensaje de WhatsApp enviado con éxito a +${formattedPhone}`);
+            return res.json({ success: true, mode: 'LIVE_API', recipient: formattedPhone, message: finalMessage, responseData });
+        } else {
+            // Simulation Mode for local dev / testing without live Meta token
+            console.log(`📱 [WHATSAPP SIMULATOR] Mensaje enviado a +${formattedPhone}:\n"${finalMessage}"`);
+            return res.json({
+                success: true,
+                mode: 'SIMULATION_MODE',
+                recipient: formattedPhone,
+                message: finalMessage,
+                whatsappWebUrl: `https://wa.me/${formattedPhone}?text=${encodeURIComponent(finalMessage)}`
+            });
+        }
+    } catch (error) {
+        console.error("❌ Error enviando WhatsApp:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Broadcast WhatsApp message to multiple students
+app.post('/api/whatsapp/broadcast', async (req, res) => {
+    try {
+        const { studentsList, template } = req.body;
+        if (!Array.isArray(studentsList) || studentsList.length === 0) {
+            return res.status(400).json({ error: 'Lista de alumnos no válida' });
+        }
+
+        const results = [];
+        for (const st of studentsList) {
+            const formattedPhone = formatWhatsAppPhone(st.phone);
+            if (!formattedPhone) continue;
+
+            const finalMessage = (template || 'Hola {nombre}, recordatorio de mensualidad Dojo Ranas.')
+                .replace(/{nombre}/g, st.name || 'Alumno')
+                .replace(/{monto}/g, st.monthlyFee ? `$${Number(st.monthlyFee).toLocaleString('es-CL')}` : '$40.000')
+                .replace(/{link_pago}/g, 'https://ranasjiujitsu.cl');
+
+            results.push({
+                studentId: st.id,
+                name: st.name,
+                phone: formattedPhone,
+                whatsappWebUrl: `https://wa.me/${formattedPhone}?text=${encodeURIComponent(finalMessage)}`
+            });
+        }
+
+        res.json({
+            success: true,
+            totalRecipients: results.length,
+            recipients: results
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
