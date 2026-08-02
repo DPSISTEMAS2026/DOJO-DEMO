@@ -905,6 +905,8 @@ const App: React.FC = () => {
       setSedes(sedesData || []);
       if (newsData !== null) setLiveNews(newsData);
       if (galleryData !== null) setLiveGallery(galleryData);
+      if (heroVideosData !== null) setLiveHeroVideos(heroVideosData);
+      if (feesData !== null) setFees(feesData);
       if (noticeDataResult && noticeDataResult.subject) {
         setNoticeData(noticeDataResult);
         setIsNoticeDismissed(false);
