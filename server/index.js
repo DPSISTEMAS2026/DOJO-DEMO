@@ -389,9 +389,22 @@ app.post('/api/hero-videos', (req, res) => {
     res.status(200).json(req.body);
 });
 
-// Students with automatic background sync
+// Students cache in memory (15 seconds TTL) to prevent API exhaustion
+const studentsCache = new Map();
+const STUDENTS_CACHE_TTL_MS = 15000;
+
+export function clearStudentsCache() {
+    studentsCache.clear();
+}
+
 app.get('/api/students', async (req, res) => {
     try {
+        const cacheKey = req.query.sedeId ? `sede_${req.query.sedeId}` : 'all';
+        const cached = studentsCache.get(cacheKey);
+        if (cached && (Date.now() - cached.timestamp < STUDENTS_CACHE_TTL_MS)) {
+            return res.json(cached.data);
+        }
+
         let query = supabase.from('students').select('*');
         if (req.query.sedeId) {
             query = query.eq('sede_id', Number(req.query.sedeId));
@@ -399,24 +412,19 @@ app.get('/api/students', async (req, res) => {
         const { data, error } = await query;
         if (error) throw error;
 
-        // Logic: if lastpaymentdate + 28 days < today, set as unpaid
+        // Pure in-memory status computation (No DB writes during GET)
         const now = new Date();
-        const updatedData = [];
-        let anyStatusChanged = false;
-
-        for (const s of data) {
+        const updatedData = data.map(s => {
             let currentStatus = s.ispaid;
             if (s.lastpaymentdate) {
                 const pDate = new Date(s.lastpaymentdate);
                 pDate.setDate(pDate.getDate() + 28);
-                if (now > pDate && currentStatus === true) {
+                if (now > pDate) {
                     currentStatus = false;
-                    await supabase.from('students').update({ ispaid: false }).eq('id', s.id);
-                    anyStatusChanged = true;
                 }
             }
-            updatedData.push({ ...s, ispaid: currentStatus });
-        }
+            return { ...s, ispaid: currentStatus };
+        });
 
         // Logic: Birthdays auto-broadcast (using Chile timezone)
         const chileDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Santiago' }));
@@ -433,7 +441,6 @@ app.get('/api/students', async (req, res) => {
             const subject = '🎂 ¡Felices Cumpleaños de Hoy!';
             const message = `Hoy saludamos especialmente a: **${names}**. ¡Que tengan un excelente día de parte de su Dojo Ranas! 🥋🐸`;
             
-            // Verificamos si el aviso ya existe para hoy para evitar actualizaciones innecesarias
             const { data: currentNotice } = await supabase.from('news').select('*').eq('id', noticeId).maybeSingle();
             if (!currentNotice || currentNotice.title !== subject || !currentNotice.date.includes(now.toISOString().split('T')[0])) {
                 await supabase.from('news').upsert({
@@ -443,12 +450,6 @@ app.get('/api/students', async (req, res) => {
                     date: now.toISOString(),
                     sede_id: targetSedeId
                 });
-            }
-        } else {
-            // Eliminar si no hay cumpleaños
-            const { data: currentNotice } = await supabase.from('news').select('*').eq('id', noticeId).maybeSingle();
-            if (currentNotice && currentNotice.title.includes('Cumpleaños')) {
-                await supabase.from('news').delete().eq('id', noticeId);
             }
         }
 
@@ -487,8 +488,9 @@ app.get('/api/students', async (req, res) => {
             };
         });
 
+        // Store in cache
+        studentsCache.set(cacheKey, { timestamp: Date.now(), data: formatted });
         res.json(formatted);
-        // syncStudentsBackground desactivado - sobreescribía cambios manuales del admin
 
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -596,6 +598,7 @@ app.post('/api/students', async (req, res) => {
         };
         const { error } = await supabase.from('students').insert(newStudent);
         if (error) throw error;
+        studentsCache.clear();
         
         // --- EVNIO AUTOMÁTICO AL REGISTRAR ---
         if (newStudent.email && newStudent.password && process.env.SMTP_HOST) {
@@ -717,6 +720,7 @@ app.put('/api/students/:id', async (req, res) => {
             console.error('Supabase update error:', error);
             throw error;
         }
+        studentsCache.clear();
         res.json({ 
             ...req.body, 
             id: req.params.id, 
@@ -734,6 +738,7 @@ app.delete('/api/students/:id', async (req, res) => {
     try {
         const { error } = await supabase.from('students').delete().eq('id', req.params.id);
         if (error) throw error;
+        studentsCache.clear();
         res.json({ success: true, message: 'Alumno eliminado correctamente' });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -744,6 +749,7 @@ app.post('/api/students/:id/accept-terms', async (req, res) => {
     try {
         const { error } = await supabase.from('students').update({ terms_accepted: true }).eq('id', req.params.id);
         if (error) throw error;
+        studentsCache.clear();
         res.json({ success: true, message: 'Términos aceptados correctamente' });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -2114,14 +2120,19 @@ app.post('/api/auth/login', async (req, res) => {
         }
 
         // 3. Intentar buscar en la tabla de alumnos (students)
-        const { data: student, error: studentErr } = await supabase
+        // Usamos select normal (no maybeSingle) porque en cuentas familiares
+        // varios alumnos comparten el mismo email (padre + hijos).
+        const { data: matchingStudents, error: studentErr } = await supabase
             .from('students')
             .select('*')
-            .ilike('email', lowerEmail)
-            .maybeSingle();
+            .ilike('email', lowerEmail);
 
-        if (!studentErr && student) {
-            if (student.password && student.password.trim().toLowerCase() === trimmedPass.toLowerCase()) {
+        if (!studentErr && matchingStudents && matchingStudents.length > 0) {
+            // Buscar el alumno cuya contraseña coincida (normalmente el apoderado/padre)
+            const student = matchingStudents.find(s => 
+                s.password && s.password.trim().toLowerCase() === trimmedPass.toLowerCase()
+            );
+            if (student) {
                 return res.json({
                     success: true,
                     role: 'student',
