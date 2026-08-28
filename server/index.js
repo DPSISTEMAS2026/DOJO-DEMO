@@ -47,12 +47,8 @@ async function getMPClientForSede(sedeId) {
             console.error(`[MP-CLIENT] Error fetching token for Sede ${sedeId}:`, e.message);
         }
     }
-    // Si es la Sede 1 (Concepción), permitimos el fallback a las credenciales globales (Manuel)
-    if (Number(sedeId) === 1) {
-        return client;
-    }
-    // Para cualquier otra sede, si no tiene tokens configurados, NO permitimos pagar (retornamos null)
-    return null;
+    // Fallback a las credenciales globales por defecto
+    return client;
 }
 
 app.use(cors());

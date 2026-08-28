@@ -1,5 +1,6 @@
 // Version: 1.0.1 - Automatic Sync Implemented
 import React, { useState, useEffect, useRef } from 'react';
+import { uploadImageToCloudinary } from './services/cloudinary';
 import {
   Users,
   CreditCard,
@@ -1099,13 +1100,20 @@ const App: React.FC = () => {
   };
 
 
-  const handleGenericImageUpload = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
+  const handleGenericImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, callback: (url: string) => void) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => callback(reader.result as string);
-    reader.readAsDataURL(file);
+    try {
+      const imageUrl = await uploadImageToCloudinary(file, 'dojo_media');
+      callback(imageUrl);
+    } catch (err) {
+      console.error("Error uploading image to Cloudinary:", err);
+      const reader = new FileReader();
+      reader.onloadend = () => callback(reader.result as string);
+      reader.readAsDataURL(file);
+    }
   };
+
 
   // Helper: saber si un alumno ya pagó en el mes actual
   const hasAlreadyPaidThisMonth = (student: Student): boolean => {
@@ -1129,10 +1137,12 @@ const App: React.FC = () => {
     }
 
     setIsGeneratingPayment(true);
+
     try {
       const amount = studentsToPay.reduce((acc: number, s: Student) => acc + (s.monthlyFee || 40000), 0);
       if (amount <= 0) {
         alert("⚠️ No hay mensualidades asignadas o el monto es cero.");
+        setIsGeneratingPayment(false);
         return;
       }
 
@@ -1161,25 +1171,24 @@ const App: React.FC = () => {
       const data = await response.json();
 
       if (data.init_point) {
-        // Redirigir de inmediato
         if (_isCapacitor) {
           await Browser.open({ url: data.init_point, presentationStyle: 'popover' });
+          setShowPaymentModal(false);
+          setIsGeneratingPayment(false);
         } else {
-          if (isIOSStandalone) {
-            alert("💡 Estás ingresando desde un marcador de inicio de iPhone. Serás redirigido a Safari para procesar tu pago de forma segura.");
-          }
-          // En Web y PWA, usar window.location.href directamente para evitar que Android/iOS abra múltiples apps
+          // Redirección directa universal: funciona en Safari iOS, Chrome Android, Desktop y PWA sin ser bloqueada por popups
           window.location.href = data.init_point;
         }
-        setShowPaymentModal(false);
       } else if (response.status === 400 && data.error) {
         alert(`⚠️ ${data.error}`);
+        setIsGeneratingPayment(false);
       } else {
         alert("❌ Error: No se pudo generar el link de pago. Verifica tu conexión.");
+        setIsGeneratingPayment(false);
       }
     } catch (error) {
+      console.error("Error al contactar el servidor de pagos:", error);
       alert("❌ Error de red: No se pudo contactar al servidor de pagos.");
-    } finally {
       setIsGeneratingPayment(false);
     }
   };
@@ -1323,13 +1332,17 @@ const App: React.FC = () => {
       // Lossless PNG format for crisp 100% sharp text, logos and edges with 0 JPEG blur/pixelation
       const base64Image = canvas.toDataURL('image/png');
       
-      const updatedStudent = { ...targetStudent, avatar: base64Image } as Student;
+      // Upload avatar to Cloudinary to keep Supabase DB lightweight
+      const avatarUrl = await uploadImageToCloudinary(base64Image, 'dojo_avatars');
+      
+      const updatedStudent = { ...targetStudent, avatar: avatarUrl } as Student;
       
       const saveResponse = await fetch(`${API_URL}/api/students/${targetStudent.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ avatar: base64Image })
+        body: JSON.stringify({ avatar: avatarUrl })
       });
+
 
       if (saveResponse.ok) {
         // Update students list
