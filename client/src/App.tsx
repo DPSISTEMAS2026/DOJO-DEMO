@@ -1048,6 +1048,7 @@ const App: React.FC = () => {
       if (updatedStudent.gender !== undefined) payload.gender = updatedStudent.gender;
       if (updatedStudent.sedeId !== undefined) payload.sedeId = updatedStudent.sedeId;
       if (updatedStudent.sede_id !== undefined) payload.sedeId = updatedStudent.sede_id;
+      if (updatedStudent.is_scholarship !== undefined) payload.is_scholarship = updatedStudent.is_scholarship;
 
       const response = await fetch(`${API_URL}/api/students/${updatedStudent.id}`, {
         method: 'PUT',
@@ -5139,15 +5140,26 @@ const App: React.FC = () => {
                     </div>
                     <motion.button
                       whileTap={{ scale: 0.92 }}
-                      onClick={() => {
+                      onClick={async () => {
+                        const currentScholarship = isEditingStudent ? Boolean(editedStudent?.is_scholarship) : Boolean(selectedStudent.is_scholarship);
+                        const nextScholarship = !currentScholarship;
+                        const baseStudent = isEditingStudent ? (editedStudent || selectedStudent) : selectedStudent;
+                        
+                        const updated: Student = {
+                          ...baseStudent,
+                          is_scholarship: nextScholarship,
+                          monthlyFee: nextScholarship ? 0 : (baseStudent.monthlyFee || 40000),
+                          isPaid: nextScholarship ? true : baseStudent.isPaid
+                        };
+
+                        // Actualización inmediata del estado visual
                         if (isEditingStudent) {
-                          setEditedStudent(prev => prev ? { ...prev, is_scholarship: !prev.is_scholarship, monthlyFee: !prev.is_scholarship ? 0 : prev.monthlyFee } : null);
-                        } else {
-                          // Toggle rápido sin entrar en modo edición
-                          const updated = { ...selectedStudent, is_scholarship: !selectedStudent.is_scholarship, monthlyFee: !selectedStudent.is_scholarship ? 0 : selectedStudent.monthlyFee };
-                          handleUpdateStudent(updated);
-                          setSelectedStudent(updated);
+                          setEditedStudent(updated);
                         }
+                        setSelectedStudent(updated);
+
+                        // Guardado inmediato en base de datos para no depender de presionar "Guardar" ni de cerrar el modal
+                        await handleUpdateStudent(updated);
                       }}
                       style={{
                         background: (isEditingStudent ? editedStudent?.is_scholarship : selectedStudent.is_scholarship) ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'var(--panel-surface)',

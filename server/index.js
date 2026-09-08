@@ -687,7 +687,13 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.gender !== undefined) updateData.gender = req.body.gender;
         if (req.body.sedeId !== undefined) updateData.sede_id = req.body.sedeId ? Number(req.body.sedeId) : null;
         if (req.body.sede_id !== undefined) updateData.sede_id = req.body.sede_id ? Number(req.body.sede_id) : null;
-        if (req.body.is_scholarship !== undefined) updateData.is_scholarship = req.body.is_scholarship === true || req.body.is_scholarship === 'true';
+        if (req.body.is_scholarship !== undefined) {
+            const isSch = req.body.is_scholarship === true || req.body.is_scholarship === 'true';
+            updateData.is_scholarship = isSch;
+            if (isSch) {
+                updateData.ispaid = true;
+            }
+        }
 
         // Recuperar registro previo para preservar competition_info de forma indestructible en history JSONB
         const { data: currentSt } = await supabase.from('students').select('history, weight, gender').eq('id', req.params.id).maybeSingle();
