@@ -53,6 +53,7 @@ export interface Student {
     terms_accepted?: boolean;
     sedeId?: number;
     sede_id?: number;
+    is_scholarship?: boolean;
 }
 
 export type PlanFees = {

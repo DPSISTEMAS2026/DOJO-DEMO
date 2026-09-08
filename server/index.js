@@ -455,6 +455,10 @@ app.get('/api/students', async (req, res) => {
             const weightVal = (s.weight !== undefined && s.weight !== null) ? s.weight : (compEntry ? compEntry.weight : null);
             const genderVal = s.gender ? s.gender : (compEntry ? compEntry.gender : null);
 
+            // Becados/Monitores: siempre al día, independiente del motor de pagos
+            const isScholarship = s.is_scholarship === true || s.is_scholarship === 'true' || s.is_scholarship === 1;
+            const effectivePaid = isScholarship ? true : (s.ispaid === true);
+
             return {
                 id: s.id,
                 name: s.name,
@@ -466,7 +470,7 @@ app.get('/api/students', async (req, res) => {
                 classesToNextBelt: s.classestonextbelt,
                 lastPaymentMonth: s.lastpaymentmonth,
                 lastPaymentDate: s.lastpaymentdate,
-                isPaid: s.ispaid === true,
+                isPaid: effectivePaid,
                 plan: s.plan,
                 monthlyFee: s.monthlyfee,
                 avatar: s.avatar,
@@ -480,7 +484,8 @@ app.get('/api/students', async (req, res) => {
                 weight: weightVal,
                 gender: genderVal,
                 sedeId: s.sede_id || 1,
-                sede_id: s.sede_id || 1
+                sede_id: s.sede_id || 1,
+                is_scholarship: isScholarship
             };
         });
 
@@ -590,7 +595,8 @@ app.post('/api/students', async (req, res) => {
             joindate: req.body.joinDate || null,
             lastgrade: req.body.lastGrade || null,
             graduationdate: req.body.graduationDate || null,
-            sede_id: req.body.sedeId ? Number(req.body.sedeId) : 1
+            sede_id: req.body.sedeId ? Number(req.body.sedeId) : 1,
+            is_scholarship: req.body.is_scholarship === true || req.body.is_scholarship === 'true' ? true : false
         };
         const { error } = await supabase.from('students').insert(newStudent);
         if (error) throw error;
@@ -681,6 +687,7 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.gender !== undefined) updateData.gender = req.body.gender;
         if (req.body.sedeId !== undefined) updateData.sede_id = req.body.sedeId ? Number(req.body.sedeId) : null;
         if (req.body.sede_id !== undefined) updateData.sede_id = req.body.sede_id ? Number(req.body.sede_id) : null;
+        if (req.body.is_scholarship !== undefined) updateData.is_scholarship = req.body.is_scholarship === true || req.body.is_scholarship === 'true';
 
         // Recuperar registro previo para preservar competition_info de forma indestructible en history JSONB
         const { data: currentSt } = await supabase.from('students').select('history, weight, gender').eq('id', req.params.id).maybeSingle();
@@ -1760,7 +1767,7 @@ async function repairInconsistentProfiles() {
 async function expireOldPayments() {
     console.log('[EXPIRATION] Verificando vencimiento de 28 días...');
     try {
-        const { data: students, error } = await supabase.from('students').select('id, ispaid, lastpaymentdate, lastpaymentmonth, name');
+        const { data: students, error } = await supabase.from('students').select('id, ispaid, lastpaymentdate, lastpaymentmonth, name, is_scholarship');
         if (error) throw error;
 
         const now = new Date();
@@ -1768,6 +1775,12 @@ async function expireOldPayments() {
         let expiredCount = 0;
 
         for (const s of students) {
+            // Becados/Monitores: NUNCA se les expira el pago
+            if (s.is_scholarship === true) {
+                console.log(`[EXPIRATION] 🏅 ${s.name} — Becado/Monitor. Se omite la expiración.`);
+                continue;
+            }
+
             if (s.lastpaymentdate && s.ispaid === true) {
 
                 // Si el alumno tiene pagos adelantados (lastpaymentmonth > mes actual), NO expirar
@@ -1815,11 +1828,90 @@ app.post('/api/admin/sync-transfers', async (req, res) => {
     }
 });
 
+// ======================================
+// BECADOS: Función para marcar becados al día cada mes
+// ======================================
+async function markScholarshipStudentsPaid() {
+    console.log('[BECADOS] Marcando becados/monitores como pagados para el mes...');
+    try {
+        const { data: scholars, error } = await supabase
+            .from('students')
+            .select('*')
+            .eq('is_scholarship', true);
+        if (error) throw error;
+        if (!scholars || scholars.length === 0) {
+            console.log('[BECADOS] No hay alumnos becados registrados.');
+            return 0;
+        }
+
+        const now = DateTime.now().setZone('America/Santiago');
+        const currentMonth = now.toFormat('yyyy-MM');
+        const todayStr = now.toFormat('yyyy-MM-dd');
+        let marked = 0;
+
+        for (const s of scholars) {
+            const history = Array.isArray(s.history) ? [...s.history] : [];
+            // Verificar si ya tiene entrada de beca este mes
+            const alreadyMarked = history.some(h =>
+                h.method === 'Beca' && h.date && h.date.startsWith(currentMonth)
+            );
+            if (alreadyMarked) {
+                console.log(`[BECADOS] ✅ ${s.name} — Ya tiene registro de beca en ${currentMonth}.`);
+                continue;
+            }
+
+            // Agregar entrada de beca $0 en el historial
+            history.push({
+                date: todayStr,
+                status: 'Completado',
+                amount: 0,
+                method: 'Beca'
+            });
+
+            const { error: updErr } = await supabase.from('students').update({
+                ispaid: true,
+                history: history,
+                lastpaymentdate: todayStr,
+                lastpaymentmonth: currentMonth
+            }).eq('id', s.id);
+
+            if (!updErr) {
+                marked++;
+                console.log(`[BECADOS] 🏅 ${s.name} marcado como pagado (Beca $0) para ${currentMonth}.`);
+            }
+        }
+        console.log(`[BECADOS] Completado. ${marked} becados actualizados.`);
+        return marked;
+    } catch (e) {
+        console.error('[BECADOS ERROR]', e.message);
+        return 0;
+    }
+}
+
+// Endpoint manual para forzar el marcado de becados
+app.post('/api/admin/mark-scholarships', async (req, res) => {
+    try {
+        const marked = await markScholarshipStudentsPaid();
+        res.json({ success: true, marked });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // CRON: Auto-sync transfers every 10 minutes + Repair
 cron.schedule('*/10 * * * *', async () => {
     console.log('[CRON] Auto-sync y Repair (10 min)...');
     await syncTransferPayments();
     await repairInconsistentProfiles();
+}, {
+    scheduled: true,
+    timezone: "America/Santiago"
+});
+
+// CRON: Becados — Día 1 de cada mes a las 00:05 (Hora Chile)
+cron.schedule('5 0 1 * *', async () => {
+    console.log('[CRON] Marcando becados/monitores como pagados (inicio de mes)...');
+    await markScholarshipStudentsPaid();
 }, {
     scheduled: true,
     timezone: "America/Santiago"

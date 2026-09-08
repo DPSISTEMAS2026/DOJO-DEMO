@@ -666,6 +666,7 @@ const App: React.FC = () => {
   const [studentFilterPayment, setStudentFilterPayment] = useState<'ALL' | 'PAID' | 'PENDING'>('ALL');
   const [studentFilterBelt, setStudentFilterBelt] = useState<Belt | 'ALL'>('ALL');
   const [studentFilterIBJJFCategory, setStudentFilterIBJJFCategory] = useState<string>('ALL');
+  const [studentFilterScholarship, setStudentFilterScholarship] = useState<boolean>(false);
   const [liveGallery, setLiveGallery] = useState([
     { img: '/assets/WhatsApp Image 2026-03-04 at 3.39.08 PM.jpeg', size: 'large' },
     { img: '/assets/frog_challenge.jpeg', size: 'small' },
@@ -3877,6 +3878,33 @@ const App: React.FC = () => {
                   </select>
                 )}
 
+                {/* Filtro Becados/Monitores */}
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setStudentFilterScholarship(prev => !prev)}
+                  style={{
+                    background: studentFilterScholarship ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'var(--panel-surface)',
+                    border: studentFilterScholarship ? '1.5px solid #f59e0b' : '1px solid var(--panel-border)',
+                    borderRadius: '1rem',
+                    padding: '0.7rem 1.1rem',
+                    color: studentFilterScholarship ? '#fff' : 'var(--panel-text)',
+                    fontWeight: 900,
+                    fontSize: isMobile ? '0.75rem' : '0.82rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    whiteSpace: 'nowrap',
+                    boxShadow: studentFilterScholarship ? '0 4px 14px rgba(245,158,11,0.3)' : 'none',
+                    transition: 'all 0.2s ease',
+                    flex: isMobile ? '1 1 100%' : 'none',
+                    justifyContent: 'center'
+                  }}
+                  title="Mostrar solo becados/monitores"
+                >
+                  🏅 {studentFilterScholarship ? 'Solo Becados' : 'Ver Becados'}
+                </motion.button>
+
                 {isMobile && (
                   <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleOpenAddStudent()}
                     style={{ background: 'var(--logo-green)', border: 'none', borderRadius: '1rem', padding: '0.75rem 1.2rem', color: '#fff', fontWeight: 900, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', width: '100%', marginTop: '0.2rem' }}>
@@ -3890,6 +3918,7 @@ const App: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {students
                     .filter(s => s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()))
+                    .filter(s => !studentFilterScholarship || s.is_scholarship === true)
                     .filter(s => {
                       if (studentFilterPayment === 'ALL') return true;
                       if (studentFilterPayment === 'PAID') return s.isPaid;
@@ -3923,10 +3952,13 @@ const App: React.FC = () => {
                             />
                           </div>
                           <div style={{ minWidth: 0 }}>
-                            <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--panel-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{student.name}</div>
+                            <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--panel-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              {student.is_scholarship && <span title="Becado/Monitor" style={{ fontSize: '0.75rem' }}>🏅</span>}
+                              {student.name}
+                            </div>
                             <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '2px' }}>
                               <span style={{ fontSize: '0.65rem', fontWeight: 700, color: student.isPaid ? 'var(--logo-green)' : '#ef4444' }}>
-                                {student.isPaid ? '✅ Al día' : '⚠️ Pendiente'}
+                                {student.is_scholarship ? '🏅 Becado' : student.isPaid ? '✅ Al día' : '⚠️ Pendiente'}
                               </span>
                               {(() => {
                                 const cat = calculateIBJJFCategory(student.birthDate, student.weight, student.gender, student.belt);
@@ -3991,6 +4023,7 @@ const App: React.FC = () => {
                     <tbody>
                       {students
                         .filter(s => s.name.toLowerCase().includes(studentSearchTerm.toLowerCase()))
+                        .filter(s => !studentFilterScholarship || s.is_scholarship === true)
                         .filter(s => studentFilterBelt === 'ALL' || s.belt === studentFilterBelt)
                         .filter(s => {
                           if (studentFilterPayment === 'ALL') return true;
@@ -4034,7 +4067,10 @@ const App: React.FC = () => {
                                   />
                                 </div>
                                 <div>
-                                  <p style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--text-main)', margin: 0 }}>{student.name}</p>
+                                  <p style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    {student.is_scholarship && <span title="Becado/Monitor" style={{ fontSize: '0.85rem' }}>🏅</span>}
+                                    {student.name}
+                                  </p>
                                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>{student.email}</p>
                                 </div>
                               </div>
@@ -4065,7 +4101,13 @@ const App: React.FC = () => {
                               </div>
                             </td>
                             <td style={{ padding: '1.5rem' }}>
-                              <span style={{ color: student.isPaid ? 'var(--logo-green)' : '#ef4444', fontWeight: 900, fontSize: '0.75rem' }}>{student.isPaid ? 'AL DÍA' : 'PENDIENTE'}</span>
+                              {student.is_scholarship ? (
+                                <span style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', fontWeight: 900, fontSize: '0.7rem', padding: '0.3rem 0.75rem', borderRadius: '100px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                                  🏅 BECADO
+                                </span>
+                              ) : (
+                                <span style={{ color: student.isPaid ? 'var(--logo-green)' : '#ef4444', fontWeight: 900, fontSize: '0.75rem' }}>{student.isPaid ? 'AL DÍA' : 'PENDIENTE'}</span>
+                              )}
                             </td>
                             <td style={{ padding: '1.5rem', textAlign: 'right' }}>
                               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -5027,24 +5069,41 @@ const App: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
-                  <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: selectedStudent.isPaid ? 'var(--panel-green-bg)' : 'var(--panel-red-bg)', border: `1px solid ${selectedStudent.isPaid ? 'var(--panel-green-border)' : 'var(--panel-red-border)'}`, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
-                    <p style={{ color: selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>ESTADO COMERCIAL</p>
+                  <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: selectedStudent.is_scholarship ? 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(217,119,6,0.06))' : (selectedStudent.isPaid ? 'var(--panel-green-bg)' : 'var(--panel-red-bg)'), border: `1px solid ${selectedStudent.is_scholarship ? 'rgba(245,158,11,0.4)' : (selectedStudent.isPaid ? 'var(--panel-green-border)' : 'var(--panel-red-border)')}`, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
+                    <p style={{ color: selectedStudent.is_scholarship ? '#d97706' : (selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444'), fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>ESTADO COMERCIAL</p>
                     {isEditingStudent ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', width: '100%', alignItems: 'center' }}>
-                        <select
-                          style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 900, fontSize: '1rem', color: editedStudent?.isPaid ? 'var(--logo-green)' : '#ef4444', width: '100%', textAlign: 'center' }}
-                          value={editedStudent?.isPaid ? 'true' : 'false'}
-                          onChange={e => setEditedStudent(prev => prev ? { ...prev, isPaid: e.target.value === 'true' } : null)}
-                        >
-                          <option value="true">✅ AL DÍA</option>
-                          <option value="false">⚠️ PENDIENTE</option>
-                        </select>
-                        <input style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 700, fontSize: '0.75rem', width: '100%', textAlign: 'center' }} value={editedStudent?.lastPaymentDate || ''} onChange={e => setEditedStudent(prev => prev ? { ...prev, lastPaymentDate: e.target.value } : null)} placeholder="Último Pago" />
+                        {editedStudent?.is_scholarship ? (
+                          <div style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#fff', fontWeight: 900, fontSize: '1rem', padding: '0.6rem 1.2rem', borderRadius: '0.6rem', width: '100%', textAlign: 'center' }}>
+                            🏅 BECADO/MONITOR
+                          </div>
+                        ) : (
+                          <>
+                            <select
+                              style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 900, fontSize: '1rem', color: editedStudent?.isPaid ? 'var(--logo-green)' : '#ef4444', width: '100%', textAlign: 'center' }}
+                              value={editedStudent?.isPaid ? 'true' : 'false'}
+                              onChange={e => setEditedStudent(prev => prev ? { ...prev, isPaid: e.target.value === 'true' } : null)}
+                            >
+                              <option value="true">✅ AL DÍA</option>
+                              <option value="false">⚠️ PENDIENTE</option>
+                            </select>
+                            <input style={{ background: '#fff', border: '1px solid var(--panel-border)', borderRadius: '0.5rem', padding: '0.5rem', fontWeight: 700, fontSize: '0.75rem', width: '100%', textAlign: 'center' }} value={editedStudent?.lastPaymentDate || ''} onChange={e => setEditedStudent(prev => prev ? { ...prev, lastPaymentDate: e.target.value } : null)} placeholder="Último Pago" />
+                          </>
+                        )}
                       </div>
                     ) : (
                       <>
-                        <p style={{ fontWeight: 900, fontSize: '1.2rem', color: selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444', marginBottom: '0.4rem' }}>{selectedStudent.isPaid ? '✅ AL DÍA' : '⚠️ PENDIENTE'}</p>
-                        <p style={{ fontWeight: 700, fontSize: '0.75rem', color: selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444', opacity: 0.7 }}>Último pago: {formatDate(selectedStudent.lastPaymentDate)}</p>
+                        {selectedStudent.is_scholarship ? (
+                          <>
+                            <p style={{ fontWeight: 900, fontSize: '1.2rem', color: '#d97706', marginBottom: '0.4rem' }}>🏅 BECADO/MONITOR</p>
+                            <p style={{ fontWeight: 700, fontSize: '0.7rem', color: '#d97706', opacity: 0.8 }}>Mensualidad $0 — Exento de pago</p>
+                          </>
+                        ) : (
+                          <>
+                            <p style={{ fontWeight: 900, fontSize: '1.2rem', color: selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444', marginBottom: '0.4rem' }}>{selectedStudent.isPaid ? '✅ AL DÍA' : '⚠️ PENDIENTE'}</p>
+                            <p style={{ fontWeight: 700, fontSize: '0.75rem', color: selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444', opacity: 0.7 }}>Último pago: {formatDate(selectedStudent.lastPaymentDate)}</p>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
@@ -5066,6 +5125,51 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* ── BECADO / MONITOR (Solo Admin/SuperAdmin) ── */}
+                {(role === 'admin' || role === 'superadmin') && (
+                  <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: (isEditingStudent ? editedStudent?.is_scholarship : selectedStudent.is_scholarship) ? 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(217,119,6,0.05))' : 'var(--panel-surface)', border: `1px solid ${ (isEditingStudent ? editedStudent?.is_scholarship : selectedStudent.is_scholarship) ? 'rgba(245,158,11,0.45)' : 'var(--panel-border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1, flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                      <p style={{ color: (isEditingStudent ? editedStudent?.is_scholarship : selectedStudent.is_scholarship) ? '#d97706' : 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, letterSpacing: '0.15em', margin: 0 }}>🏅 BECADO / MONITOR</p>
+                      <p style={{ color: 'var(--panel-muted)', fontSize: '0.75rem', fontWeight: 600, margin: 0 }}>
+                        {(isEditingStudent ? editedStudent?.is_scholarship : selectedStudent.is_scholarship) 
+                          ? 'Este alumno está exento de mensualidad. Se registra $0 en historial cada mes.' 
+                          : 'Activar para marcar como becado/monitor. Se marca al día automáticamente.'}
+                      </p>
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => {
+                        if (isEditingStudent) {
+                          setEditedStudent(prev => prev ? { ...prev, is_scholarship: !prev.is_scholarship, monthlyFee: !prev.is_scholarship ? 0 : prev.monthlyFee } : null);
+                        } else {
+                          // Toggle rápido sin entrar en modo edición
+                          const updated = { ...selectedStudent, is_scholarship: !selectedStudent.is_scholarship, monthlyFee: !selectedStudent.is_scholarship ? 0 : selectedStudent.monthlyFee };
+                          handleUpdateStudent(updated);
+                          setSelectedStudent(updated);
+                        }
+                      }}
+                      style={{
+                        background: (isEditingStudent ? editedStudent?.is_scholarship : selectedStudent.is_scholarship) ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'var(--panel-surface)',
+                        border: (isEditingStudent ? editedStudent?.is_scholarship : selectedStudent.is_scholarship) ? '1.5px solid #f59e0b' : '1.5px solid var(--panel-border)',
+                        borderRadius: '2rem',
+                        padding: '0.6rem 1.5rem',
+                        color: (isEditingStudent ? editedStudent?.is_scholarship : selectedStudent.is_scholarship) ? '#fff' : 'var(--panel-muted)',
+                        fontWeight: 900,
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        boxShadow: (isEditingStudent ? editedStudent?.is_scholarship : selectedStudent.is_scholarship) ? '0 4px 14px rgba(245,158,11,0.35)' : 'none',
+                        transition: 'all 0.2s ease',
+                        flexShrink: 0
+                      }}
+                    >
+                      {(isEditingStudent ? editedStudent?.is_scholarship : selectedStudent.is_scholarship) ? '🏅 Becado Activo' : 'Activar Beca'}
+                    </motion.button>
+                  </div>
+                )}
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
                   <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
                     <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>PLAN ACTUAL</p>
@@ -5318,13 +5422,21 @@ const App: React.FC = () => {
                         </thead>
                         <tbody>
                           {selectedStudent.history.map((record, idx) => (
-                            <tr key={idx} style={{ borderBottom: idx === selectedStudent.history.length - 1 ? 'none' : '1px solid var(--panel-border)' }}>
+                            <tr key={idx} style={{ borderBottom: idx === selectedStudent.history.length - 1 ? 'none' : '1px solid var(--panel-border)', background: (record as any).method === 'Beca' ? 'rgba(245,158,11,0.04)' : 'transparent' }}>
                               <td style={{ padding: '1rem 1.5rem', fontSize: '0.9rem', fontWeight: 600 }}>{formatDate(record.date)}</td>
-                              <td style={{ padding: '1rem 1.5rem', fontSize: '0.9rem', fontWeight: 800, color: 'var(--panel-text)' }}>{formatCLP(record.amount)}</td>
+                              <td style={{ padding: '1rem 1.5rem', fontSize: '0.9rem', fontWeight: 800, color: (record as any).method === 'Beca' ? '#d97706' : 'var(--panel-text)' }}>
+                                {(record as any).method === 'Beca' ? <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><span>🏅</span> $0 (Beca)</span> : formatCLP(record.amount)}
+                              </td>
                               <td style={{ padding: '1rem 1.5rem' }}>
-                                <span style={{ display: 'inline-block', padding: '0.3rem 0.8rem', borderRadius: '100px', fontSize: '0.7rem', fontWeight: 800, background: record.status === 'Completado' ? 'rgba(37,211,102,0.1)' : 'rgba(239,68,68,0.1)', color: record.status === 'Completado' ? '#25D366' : '#ef4444' }}>
-                                  {record.status}
-                                </span>
+                                {(record as any).method === 'Beca' ? (
+                                  <span style={{ display: 'inline-block', padding: '0.3rem 0.8rem', borderRadius: '100px', fontSize: '0.7rem', fontWeight: 800, background: 'rgba(245,158,11,0.12)', color: '#d97706', border: '1px solid rgba(245,158,11,0.3)' }}>
+                                    🏅 Beca
+                                  </span>
+                                ) : (
+                                  <span style={{ display: 'inline-block', padding: '0.3rem 0.8rem', borderRadius: '100px', fontSize: '0.7rem', fontWeight: 800, background: record.status === 'Completado' ? 'rgba(37,211,102,0.1)' : 'rgba(239,68,68,0.1)', color: record.status === 'Completado' ? '#25D366' : '#ef4444' }}>
+                                    {record.status}
+                                  </span>
+                                )}
                               </td>
                             </tr>
                           ))}
