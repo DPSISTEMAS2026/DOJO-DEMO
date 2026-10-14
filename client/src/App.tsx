@@ -920,8 +920,9 @@ const App: React.FC = () => {
       const discountCatData = await discountCatRes.json().catch(() => null);
       const sedesData = await sedesRes.json().catch(() => []);
 
-      setStudents(studentsData || []);
-      setSedes(sedesData || []);
+      const studentList = Array.isArray(studentsData) ? studentsData : [];
+      setStudents(studentList);
+      setSedes(Array.isArray(sedesData) ? sedesData : []);
       if (newsData !== null) setLiveNews(newsData);
       if (galleryData !== null) setLiveGallery(galleryData);
       if (heroVideosData !== null) setLiveHeroVideos(heroVideosData);
@@ -933,7 +934,7 @@ const App: React.FC = () => {
       const cachedUser = localStorage.getItem('currentUser');
       if (cachedUser) {
         const cached = JSON.parse(cachedUser);
-        const fresh = (studentsData || []).find((s: Student) => String(s.id) === String(cached.id));
+        const fresh = studentList.find((s: Student) => String(s.id) === String(cached.id));
         if (fresh) {
           setCurrentUser(fresh);
           localStorage.setItem('currentUser', JSON.stringify(fresh));

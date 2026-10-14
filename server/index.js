@@ -401,7 +401,11 @@ app.get('/api/students', async (req, res) => {
             return res.json(cached.data);
         }
 
-        let query = supabase.from('students').select('*');
+        // La columna avatar no entra en el listado: si todavía hay fotos pesadas,
+        // Supabase cancela la consulta y el panel de admin queda en blanco.
+        let query = supabase.from('students').select(
+            'id,name,email,password,phone,belt,classesattended,classestonextbelt,lastpaymentmonth,lastpaymentdate,ispaid,plan,monthlyfee,birthdate,history,terms_accepted,scheduledclasses,joindate,lastgrade,graduationdate,weight,gender,sede_id,is_scholarship'
+        );
         if (req.query.sedeId) {
             query = query.eq('sede_id', Number(req.query.sedeId));
         }
@@ -427,13 +431,13 @@ app.get('/api/students', async (req, res) => {
         const mm = String(chileDate.getMonth() + 1).padStart(2, '0');
         const dd = String(chileDate.getDate()).padStart(2, '0');
         const searchDate = `-${mm}-${dd}`;
-        const birthdayStudents = updatedData.filter(s => s.birthdate && s.birthdate.includes(searchDate));
+        const birthdayStudents = updatedData.filter(s => typeof s.birthdate === 'string' && s.birthdate.includes(searchDate));
         
         const targetSedeId = req.query.sedeId ? Number(req.query.sedeId) : null;
         const noticeId = 999900 + (targetSedeId || 99);
 
         if (birthdayStudents.length > 0) {
-            const names = birthdayStudents.map(s => s.name.split(' ')[0]).join(', ');
+            const names = birthdayStudents.map(s => (s.name || '').split(' ')[0]).filter(Boolean).join(', ');
             const subject = '🎂 ¡Felices Cumpleaños de Hoy!';
             const message = `Hoy saludamos especialmente a: **${names}**. ¡Que tengan un excelente día de parte de su Dojo Ranas! 🥋🐸`;
             
