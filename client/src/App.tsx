@@ -40,6 +40,25 @@ import QRCode from 'react-qr-code';
 import { Browser } from '@capacitor/browser';
 import { App as CapApp } from '@capacitor/app';
 
+function ModuleTabs({ name, items, value, onChange }: { name: string; items: { id: string; label: string }[]; value: string; onChange: (id: string) => void }) {
+  return (
+    <div role="tablist" aria-label={name} className="module-tabs" style={{ display: 'flex', gap: '0.15rem', borderBottom: '1px solid var(--panel-border)', marginBottom: '1.2rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      {items.map(item => (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={value === item.id}
+          onClick={() => onChange(item.id)}
+          style={{ border: 'none', background: 'none', padding: '0.7rem 0.7rem', fontWeight: 800, fontSize: '0.74rem', color: value === item.id ? 'var(--logo-green)' : 'var(--panel-muted)', cursor: 'pointer', whiteSpace: 'nowrap', borderBottom: value === item.id ? '2px solid var(--logo-green)' : '2px solid transparent', marginBottom: '-1px', flexShrink: 0 }}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // Leaf, Mail, Smartphone, LogIn, Menu removed (not used in current design)
 const SocialVideoPlayer: React.FC<{ 
   src: string, 
@@ -619,6 +638,16 @@ const App: React.FC = () => {
     handleUpdateStudent({ ...currentUser, scheduledClasses: newScheduled as any[] });
   };
 
+  const toggleStudentClass = (student: Student, day: string, time: string, name: string) => {
+    const weekStart = getWeekStart(new Date());
+    const scheduled = student.scheduledClasses || [];
+    const isBooked = scheduled.some(c => c.day === day && c.time === time && c.timestamp >= weekStart);
+    const next = isBooked
+      ? scheduled.filter(c => !(c.day === day && c.time === time && c.timestamp >= weekStart))
+      : [...scheduled, { timestamp: Date.now(), day, time, name }];
+    handleUpdateStudent({ ...student, scheduledClasses: next });
+  };
+
   const handleLogout = () => {
     localStorage.clear();
     setViewMode('landing');
@@ -639,6 +668,9 @@ const App: React.FC = () => {
   const [activeNews, setActiveNews] = useState(0);
   const [playingVideo, setPlayingVideo] = useState<Video | null>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'attendance' | 'students' | 'payments' | 'settings' | 'videos' | 'website' | 'communications'>(() => localStorage.getItem('activeTab') as any || 'dashboard');
+  const [sectionTab, setSectionTab] = useState({ dashboard: 'numeros', communications: 'aviso', website: 'hero', settings: 'cuotas', payments: 'caja', videos: 'carpetas' });
+  const [fichaTab, setFichaTab] = useState<'datos' | 'pagos' | 'agenda' | 'progreso'>('datos');
+  const pickSection = (module: keyof typeof sectionTab, id: string) => setSectionTab(prev => ({ ...prev, [module]: id }));
 
   useEffect(() => {
     localStorage.setItem('viewMode', viewMode);
@@ -1006,7 +1038,9 @@ const App: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSedeId]);
 
-
+  useEffect(() => {
+    setFichaTab('datos');
+  }, [selectedStudent?.id]);
 
   const syncWebsite = async (type: 'news' | 'gallery' | 'hero-videos', data: any) => {
     try {
@@ -2859,7 +2893,7 @@ const App: React.FC = () => {
                       )}
 
                       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                        style={{ display: 'grid', gridTemplateColumns: shouldShowIndividualPayment ? '1fr 1fr' : '1fr', gap: '0.9rem', marginBottom: '1.2rem' }}>
+                        style={{ display: 'grid', gridTemplateColumns: isMobile || !shouldShowIndividualPayment ? '1fr' : '1fr 1fr', gap: '0.9rem', marginBottom: '1.2rem' }}>
                         
                         {shouldShowIndividualPayment && (
                           <motion.div 
@@ -3628,7 +3662,6 @@ const App: React.FC = () => {
           ].filter(item => {
             const isSecondarySede = role === 'admin' && activeSedeId !== 1;
             if (isSecondarySede && ['videos', 'website'].includes(item.id)) return false;
-            if (isMobile) return ['dashboard', 'attendance', 'students', 'payments', 'videos', 'communications'].includes(item.id);
             return true;
           }).map(item => (
             <motion.button
@@ -3667,23 +3700,23 @@ const App: React.FC = () => {
       <main className="main-content" style={{ flex: 1, padding: isMobile ? '1.5rem 1rem' : '2.5rem 3rem', position: 'relative', zIndex: 1, overflowY: 'auto' }}>
         {/* Header */}
         <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '1.2rem' : '2.5rem', gap: '0.6rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flex: 1, minWidth: 0 }}>
             {isMobile && (
               <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
                 style={{ background: 'var(--panel-card)', border: '1px solid var(--panel-border)', borderRadius: '12px', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
                 {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             )}
-            <div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: isMobile ? '0.55rem' : '0.65rem', fontWeight: 800, color: 'var(--logo-green)', letterSpacing: isMobile ? '0.04em' : '0.3em', textTransform: 'uppercase', marginBottom: '0.3rem', lineHeight: 1.35 }}>
                 {(() => {
                   const currentSedeId = activeSedeId || 1;
                   const activeSede = sedes.find(s => s.id === Number(currentSedeId));
                   return activeSede ? `Ranas · ${activeSede.name} · ${activeSede.address}` : 'Ranas · Orompello 1421';
                 })()}
               </div>
-              <h1 style={{ fontSize: '2rem', fontWeight: 900, letterSpacing: '-1px', color: 'var(--logo-green)' }}>{tabLabels[activeTab]}</h1>
+              <h1 style={{ fontSize: isMobile ? '1.7rem' : '2rem', fontWeight: 900, letterSpacing: '-1px', color: 'var(--logo-green)', lineHeight: 1.05 }}>{tabLabels[activeTab]}</h1>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }} className="mobile-hide">
@@ -3711,7 +3744,20 @@ const App: React.FC = () => {
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
             <motion.div key="dashboard" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
-              style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.2rem' }}>
+              style={{ display: 'flex', flexDirection: 'column' }}>
+              <ModuleTabs
+                name="Resumen"
+                value={sectionTab.dashboard}
+                onChange={id => pickSection('dashboard', id)}
+                items={[
+                  { id: 'numeros', label: 'Números' },
+                  { id: 'cumpleanos', label: 'Cumpleaños' },
+                  { id: 'pendientes', label: 'Pendientes' },
+                  { id: 'grados', label: 'Cinturones' },
+                ]}
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.2rem' }}>
+              {sectionTab.dashboard === 'numeros' && (<>
               {/* Mobile Quick Actions on Dashboard (Moved to top) */}
               {isMobile && (
                 <motion.div key="mobile-quick-actions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -3742,8 +3788,9 @@ const App: React.FC = () => {
                   <div style={{ fontSize: '0.75rem', color: 'var(--panel-muted)', fontWeight: 600 }}>{card.title}</div>
                 </motion.div>
               ))}
+              </>)}
 
-              {/* Upcoming Birthdays */}
+              {sectionTab.dashboard === 'cumpleanos' && (
               <div style={{ gridColumn: isMobile ? 'span 1' : 'span 3', marginTop: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--logo-green)' }}>Próximos Cumpleaños 🎂</h3>
@@ -3777,8 +3824,9 @@ const App: React.FC = () => {
                   })}
                 </div>
               </div>
+              )}
 
-              {/* Pending Payments */}
+              {sectionTab.dashboard === 'pendientes' && (
               <section style={{ gridColumn: isMobile ? 'span 1' : 'span 2', marginTop: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
                   <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--logo-green)' }}>Pagos Pendientes ⚠️</h3>
@@ -3807,8 +3855,9 @@ const App: React.FC = () => {
                   )}
                 </div>
               </section>
+              )}
 
-              {/* Belt distribution */}
+              {sectionTab.dashboard === 'grados' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
                 <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--logo-green)', marginBottom: '0.2rem' }}>Distribución</h3>
                 <div style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1.2rem', padding: '1.5rem', display: 'flex', alignItems: 'flex-end', gap: '0.6rem', height: '220px' }}>
@@ -3824,6 +3873,8 @@ const App: React.FC = () => {
                     );
                   })}
                 </div>
+              </div>
+              )}
               </div>
             </motion.div>
           )}
@@ -4143,6 +4194,42 @@ const App: React.FC = () => {
 
           {activeTab === 'videos' && (
             <motion.div key="videos" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <ModuleTabs
+                name="Biblioteca"
+                value={sectionTab.videos}
+                onChange={id => pickSection('videos', id)}
+                items={[
+                  { id: 'carpetas', label: 'Material' },
+                  { id: 'publicar', label: 'Publicar' },
+                ]}
+              />
+              {sectionTab.videos === 'publicar' && (
+                <div className="glass" style={{ padding: '1.5rem', borderRadius: '1.5rem', marginBottom: '1.5rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                    <div>
+                      <p style={{ margin: 0, fontWeight: 900, color: 'var(--text-main)' }}>Publicar técnica</p>
+                      <p style={{ margin: '0.3rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>El video queda en la carpeta de su categoría, visible para los alumnos.</p>
+                    </div>
+                    <button type="button" className="btn-primary" onClick={() => setIsAddingVideo(true)} style={{ padding: '0.8rem 1.2rem', fontWeight: 900 }}>Nuevo video</button>
+                  </div>
+                  {videos.length === 0 ? (
+                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>Todavía no hay técnicas publicadas.</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                      {videos.map(video => (
+                        <div key={video.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.8rem', padding: '0.8rem 1rem', borderRadius: '1rem', border: '1px solid var(--glass-border)', flexWrap: 'wrap' }}>
+                          <div>
+                            <p style={{ margin: 0, fontWeight: 800, color: 'var(--text-main)' }}>{video.title}</p>
+                            <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{video.category || 'General'} · {video.targetAudience === 'KIDS' ? 'Niños' : video.targetAudience === 'ADULTS' ? 'Adultos' : 'Ambos'}</p>
+                          </div>
+                          <button type="button" onClick={() => setPlayingVideo(video)} style={{ background: 'none', border: '1px solid var(--glass-border)', borderRadius: '0.7rem', padding: '0.45rem 0.8rem', fontWeight: 800, cursor: 'pointer', color: 'var(--text-main)' }}>Ver</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {sectionTab.videos === 'carpetas' && (
               <div className="grid-layout" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
                 {videos.length === 0 && (
                   <div style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '5rem 2rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -4180,6 +4267,7 @@ const App: React.FC = () => {
                   );
                 })}
               </div>
+              )}
 
               {/* Group Modal for selected category */}
               {selectedCategory && (
@@ -4303,10 +4391,19 @@ const App: React.FC = () => {
 
           {activeTab === 'communications' && (
             <motion.div key="communications" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
-              style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '2.5rem' }}>
-              
-              {/* Notification Editor */}
-              <div className="glass" style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              style={{ display: 'flex', flexDirection: 'column', maxWidth: '760px' }}>
+              <ModuleTabs
+                name="Comunicaciones"
+                value={sectionTab.communications}
+                onChange={id => pickSection('communications', id)}
+                items={[
+                  { id: 'aviso', label: 'Aviso' },
+                  { id: 'cumpleanos', label: 'Cumpleaños' },
+                  { id: 'previa', label: 'Vista previa' },
+                ]}
+              />
+              {sectionTab.communications === 'aviso' && (
+              <div className="glass" style={{ padding: isMobile ? '1.2rem' : '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'rgba(167,139,250,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
                     <Bell size={22} />
@@ -4356,9 +4453,10 @@ const App: React.FC = () => {
                   {isSendingNotice ? 'Enviando...' : '🚀 LANZAR NOTIFICACIÓN'}
                 </button>
               </div>
+              )}
 
-              {/* Birthday Greetings Panel */}
-              <div className="glass" style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {sectionTab.communications === 'cumpleanos' && (
+              <div className="glass" style={{ padding: isMobile ? '1.2rem' : '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'rgba(5,168,106,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}>
                     <Calendar size={22} />
@@ -4391,9 +4489,10 @@ const App: React.FC = () => {
                   </motion.div>
                 </button>
               </div>
+              )}
 
-              {/* Live Preview Card */}
-              <div className="glass" style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {sectionTab.communications === 'previa' && (
+              <div className="glass" style={{ padding: isMobile ? '1.2rem' : '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
                     <Monitor size={22} />
@@ -4445,17 +4544,18 @@ const App: React.FC = () => {
                     </div>
                 </div>
               </div>
+              )}
             </motion.div>
           )}
 
           {activeTab === 'attendance' && (
             <motion.div key="attendance" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: '2rem', flexDirection: isMobile ? 'column' : 'row', gap: '0.8rem' }}>
                 <div>
                    <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--logo-green)' }}>Agenda de Clases Semanal 🥋</h3>
                    <p style={{ fontSize: '0.8rem', color: 'var(--panel-muted)' }}>Lista de alumnos inscritos para cada entrenamiento esta semana.</p>
                 </div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--logo-green)', background: 'var(--panel-green-bg)', padding: '0.5rem 1rem', borderRadius: '100px', border: '1px solid var(--panel-green-border)' }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--logo-green)', background: 'var(--panel-green-bg)', padding: '0.5rem 0.8rem', borderRadius: '100px', border: '1px solid var(--panel-green-border)', lineHeight: 1.4 }}>
                    SEMANA ACTUAL: {new Date(getWeekStart(new Date())).toLocaleDateString('es-CL')} AL {new Date(getWeekStart(new Date()) + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('es-CL')}
                 </div>
               </div>
@@ -4512,9 +4612,18 @@ const App: React.FC = () => {
 
 
           {activeTab === 'payments' && (
-            <motion.div key="payments" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: isMobile ? '1.5rem' : '2.5rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <motion.div key="payments" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} style={{ display: 'flex', flexDirection: 'column' }}>
+              <ModuleTabs
+                name="Finanzas"
+                value={sectionTab.payments}
+                onChange={id => pickSection('payments', id)}
+                items={[
+                  { id: 'caja', label: 'Caja' },
+                  { id: 'deudores', label: 'Deudores' },
+                ]}
+              />
+              {sectionTab.payments === 'caja' && (
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1.2rem', maxWidth: '760px' }}>
                   <div className="glass" style={{ padding: '2rem', borderRadius: '1.5rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', position: 'relative', overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', top: 0, right: 0, width: '100px', height: '100px', background: 'radial-gradient(circle, rgba(5,168,106,0.1) 0%, transparent 70%)', filter: 'blur(20px)' }} />
                     <p style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-muted)', marginBottom: '0.5rem' }}>RECAUDACIÓN MES</p>
@@ -4527,8 +4636,10 @@ const App: React.FC = () => {
                     <p style={{ fontSize: '2rem', fontWeight: 900, color: '#ef4444' }}>{formatCLP(students.filter(s => !s.isPaid).reduce((acc, curr) => acc + (Number(curr.monthlyFee) || 0), 0))}</p>
                     <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Sobre {students.filter(s => !s.isPaid).length} alumnos pendientes</p>
                   </div>
-                </div>
+              </div>
+              )}
 
+              {sectionTab.payments === 'deudores' && (
                 <div className="glass" style={{ borderRadius: '1.5rem', border: '1px solid var(--glass-border)', overflow: 'hidden', background: 'var(--panel-card)', padding: '1.5rem' }}>
                   <h3 style={{ fontSize: '1.1rem', fontWeight: 900, marginBottom: '1.5rem', color: 'var(--text-main)' }}>Lista de Deudores</h3>
                   <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
@@ -4566,15 +4677,25 @@ const App: React.FC = () => {
                     </table></div>
                   </div>
                 </div>
-              </div>
+              )}
             </motion.div>
           )}
 
           {activeTab === 'website' && (
-            <motion.div key="website" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(350px, 1fr) 2fr', gap: '2.5rem' }}>
-              {/* Manage Hero Videos */}
-              <div className="glass" style={{ padding: '2.5rem', borderRadius: '2.5rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <motion.div key="website" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column' }}>
+              <ModuleTabs
+                name="Sitio web"
+                value={sectionTab.website}
+                onChange={id => pickSection('website', id)}
+                items={[
+                  { id: 'hero', label: 'Videos de inicio' },
+                  { id: 'noticias', label: 'Noticias' },
+                  { id: 'galeria', label: 'Galería' },
+                ]}
+              />
+              {sectionTab.website === 'hero' && (
+              <div className="glass" style={{ padding: isMobile ? '1.2rem' : '2.5rem', borderRadius: '2.5rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', gap: '0.8rem', flexWrap: 'wrap' }}>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: 900 }}>Hero Videos <br/><span style={{ fontSize: '0.7rem', opacity: 0.5 }}>(Slider Principal)</span></h3>
                   <button className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.7rem' }} onClick={() => {
                     const input = document.createElement('input');
@@ -4620,8 +4741,9 @@ const App: React.FC = () => {
                   ))}
                 </div>
               </div>
+              )}
 
-              {/* Manage News */}
+              {sectionTab.website === 'noticias' && (
               <div className="glass" style={{ padding: '2.5rem', borderRadius: '2.5rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: 900 }}>Noticias <br/><span style={{ fontSize: '0.7rem', opacity: 0.5 }}>(Slider Diario)</span></h3>
@@ -4656,9 +4778,10 @@ const App: React.FC = () => {
                   ))}
                 </div>
               </div>
+              )}
 
-              {/* Manage Gallery */}
-              <div className="glass" style={{ gridColumn: 'span 2', padding: '2.5rem', borderRadius: '2.5rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)', marginTop: '2rem' }}>
+              {sectionTab.website === 'galeria' && (
+              <div className="glass" style={{ padding: '2.5rem', borderRadius: '2.5rem', background: 'var(--panel-card)', border: '1px solid var(--panel-border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: 900 }}>Galería de Fotos <br/><span style={{ fontSize: '0.7rem', opacity: 0.5 }}>(Mosaico de Inicio)</span></h3>
                   <button className="btn-primary" style={{ padding: '0.5rem 1.2rem', fontSize: '0.7rem', background: 'var(--logo-green)' }} onClick={() => {
@@ -4682,17 +4805,28 @@ const App: React.FC = () => {
                   ))}
                 </div>
               </div>
+              )}
             </motion.div>
           )}
 
           {activeTab === 'settings' && (
-            <motion.div key="settings" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="grid-layout" style={{ gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '3rem' }}>
-              <section className="glass" style={{ padding: '3.5rem', borderRadius: '3.5rem', border: '1px solid var(--glass-border)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.5rem' }}>
+            <motion.div key="settings" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} style={{ display: 'flex', flexDirection: 'column', maxWidth: '920px' }}>
+              <ModuleTabs
+                name="Ajustes"
+                value={sectionTab.settings}
+                onChange={id => pickSection('settings', id)}
+                items={[
+                  { id: 'cuotas', label: 'Mensualidades' },
+                  { id: 'avisos', label: 'Avisos y claves' },
+                ]}
+              />
+              {sectionTab.settings === 'cuotas' && (
+              <section className="glass" style={{ padding: isMobile ? '1.2rem' : '3.5rem', borderRadius: isMobile ? '1.5rem' : '3.5rem', border: '1px solid var(--glass-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: isMobile ? '1.2rem' : '2.5rem' }}>
                   <DollarSign size={24} color="var(--logo-green)" />
-                  <h3 style={{ fontSize: '1.8rem', fontWeight: 900 }}>Mensualidades</h3>
+                  <h3 style={{ fontSize: isMobile ? '1.2rem' : '1.8rem', fontWeight: 900 }}>Mensualidades</h3>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '1.5rem' : '2rem' }}>
                   <div>
                     <h4 style={{ fontWeight: 900, marginBottom: '1.5rem', color: 'var(--logo-green)', letterSpacing: '0.1em', fontSize: '0.85rem' }}>NIÑOS (Sub 18)</h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -4741,11 +4875,13 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </section>
+              )}
 
-              <section className="glass" style={{ padding: '3.5rem', borderRadius: '3.5rem', border: '1px solid var(--glass-border)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2.5rem' }}>
+              {sectionTab.settings === 'avisos' && (
+              <section className="glass" style={{ padding: isMobile ? '1.2rem' : '3.5rem', borderRadius: isMobile ? '1.5rem' : '3.5rem', border: '1px solid var(--glass-border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: isMobile ? '1.2rem' : '2.5rem' }}>
                   <Bell size={24} color="var(--logo-green)" />
-                  <h3 style={{ fontSize: '1.8rem', fontWeight: 900 }}>Comunicación</h3>
+                  <h3 style={{ fontSize: isMobile ? '1.2rem' : '1.8rem', fontWeight: 900 }}>Comunicación</h3>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
                   <div>
@@ -4762,6 +4898,7 @@ const App: React.FC = () => {
                   <button className="btn-primary" style={{ width: '100%', background: '#111', color: '#fff', border: '1px solid #333', justifyContent: 'center', padding: '1.2rem', borderRadius: '2rem' }} onClick={() => handleSendCredentialsByEmail('ALL')}>SOLO ENVIAR CREDENCIALES POR EMAIL (SIN NOTIFICACIÓN)</button>
                 </div>
               </section>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -4924,6 +5061,7 @@ const App: React.FC = () => {
                 width: '100%', maxWidth: '750px',
                 maxHeight: isMobile ? '92vh' : '90vh',
                 overflowY: 'auto',
+                overflowX: 'hidden',
                 WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain',
                 padding: isMobile ? '1.5rem' : '2.5rem',
@@ -4942,7 +5080,7 @@ const App: React.FC = () => {
                     <div style={{ position: 'relative' }}>
                       <div
                         className="strict-avatar-container"
-                        style={{ width: '100px', height: '100px', borderRadius: '2.5rem', background: 'var(--panel-surface)', border: '2px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', cursor: 'pointer' }}
+                        style={{ width: isMobile ? '72px' : '100px', height: isMobile ? '72px' : '100px', borderRadius: isMobile ? '1.4rem' : '2.5rem', background: 'var(--panel-surface)', border: '2px solid var(--panel-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.05)', cursor: 'pointer' }}
                         onClick={() => setPhotoLightboxStudent(selectedStudent)}
                         title="Ver foto en grande"
                       >
@@ -4982,7 +5120,7 @@ const App: React.FC = () => {
                           onChange={e => setEditedStudent(prev => prev ? { ...prev, name: e.target.value } : null)}
                         />
                       ) : (
-                        <h1 style={{ fontSize: '3rem', fontWeight: 900, color: 'var(--panel-text)', letterSpacing: '-2px', textTransform: 'capitalize', lineHeight: 1.1 }}>{selectedStudent.name}</h1>
+                        <div style={{ fontSize: isMobile ? '1.45rem' : '2.6rem', fontWeight: 900, color: 'var(--panel-text)', letterSpacing: '-1px', textTransform: 'capitalize', lineHeight: 1.1, overflowWrap: 'anywhere' }}>{selectedStudent.name}</div>
                       )}
                     </div>
                   </div>
@@ -5031,6 +5169,19 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
+                <ModuleTabs
+                  name="Ficha del alumno"
+                  value={fichaTab}
+                  onChange={id => setFichaTab(id as typeof fichaTab)}
+                  items={[
+                    { id: 'datos', label: 'Datos' },
+                    { id: 'pagos', label: 'Pagos' },
+                    { id: 'agenda', label: 'Agenda' },
+                    { id: 'progreso', label: 'Progreso' },
+                  ]}
+                />
+
+                {fichaTab === 'datos' && (
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
                   <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                     <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>CONTACTO PERSONAL</p>
@@ -5069,7 +5220,10 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                )}
 
+                {fichaTab === 'pagos' && (
+                <>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
                   <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: selectedStudent.is_scholarship ? 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(217,119,6,0.06))' : (selectedStudent.isPaid ? 'var(--panel-green-bg)' : 'var(--panel-red-bg)'), border: `1px solid ${selectedStudent.is_scholarship ? 'rgba(245,158,11,0.4)' : (selectedStudent.isPaid ? 'var(--panel-green-border)' : 'var(--panel-red-border)')}`, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
                     <p style={{ color: selectedStudent.is_scholarship ? '#d97706' : (selectedStudent.isPaid ? 'var(--logo-green)' : '#ef4444'), fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>ESTADO COMERCIAL</p>
@@ -5224,9 +5378,10 @@ const App: React.FC = () => {
                     )}
                   </div>
                 </div>
+                </>
+                )}
 
-                {/* ── Sede (Solo Super-Admin) ── */}
-                {role === 'superadmin' && sedes.length > 0 && (
+                {fichaTab === 'datos' && role === 'superadmin' && sedes.length > 0 && (
                   <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
                     <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>SEDE</p>
                     {isEditingStudent ? (
@@ -5246,7 +5401,29 @@ const App: React.FC = () => {
                   </div>
                 )}
 
-                {/* ── Fecha de Ingreso / Último Grado / Graduación ── */}
+                {fichaTab === 'progreso' && (
+                <>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
+                  <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
+                    <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>CINTURÓN</p>
+                    {isEditingStudent ? (
+                      <select
+                        className={`belt-badge belt-${editedStudent?.belt || 'WHITE'}`}
+                        style={{ padding: '0.6rem 1.8rem', fontSize: '0.8rem', background: '#fff', textAlign: 'center' }}
+                        value={editedStudent?.belt}
+                        onChange={e => setEditedStudent(prev => prev ? { ...prev, belt: e.target.value as Belt } : null)}
+                      >
+                        {Object.keys(beltLabels).map(b => <option key={b} value={b}>{beltLabels[b as Belt]}</option>)}
+                      </select>
+                    ) : (
+                      <div className={`belt-badge belt-${selectedStudent.belt}`} style={{ padding: '0.6rem 1.8rem', fontSize: '0.8rem' }}>{beltLabels[selectedStudent.belt]}</div>
+                    )}
+                  </div>
+                  <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
+                    <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>CLASES AL GRADO</p>
+                    <p style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--panel-text)' }}>{selectedStudent.classesAttended || 0} / {selectedStudent.classesToNextBelt || 0}</p>
+                  </div>
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '1rem', marginBottom: '1rem', position: 'relative', zIndex: 1 }}>
                   <div style={{ padding: '1.2rem', borderRadius: '1.5rem', background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', justifyContent: 'center' }}>
                     <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>FECHA DE INGRESO</p>
@@ -5401,7 +5578,45 @@ const App: React.FC = () => {
                     </div>
                   );
                 })()}
+                </>
+                )}
 
+                {fichaTab === 'agenda' && (
+                <>
+                {(() => {
+                  const age = calculateAge(selectedStudent.birthDate || null);
+                  const schedule = age < 18 ? KIDS_SCHEDULE : ADULT_SCHEDULE;
+                  const weekStart = getWeekStart(new Date());
+                  const booked = selectedStudent.scheduledClasses || [];
+                  return (
+                    <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
+                      <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.4rem', letterSpacing: '0.15em' }}>OTORGAR HORARIO DE ESTA SEMANA</p>
+                      <p style={{ color: 'var(--panel-muted)', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.8rem' }}>{!selectedStudent.birthDate ? 'Sin fecha de nacimiento: se usa el horario infantil' : (age < 18 ? 'Horario infantil' : 'Horario adulto')}. Toca un bloque para asignarlo o quitarlo.</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+                        {schedule.map(dayItem => (
+                          <div key={dayItem.day}>
+                            <p style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--panel-text)', marginBottom: '0.35rem' }}>{dayItem.day}</p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+                              {dayItem.classes.map(cls => {
+                                const active = booked.some(c => c.day === dayItem.day && c.time === cls.time && c.name === cls.name && c.timestamp >= weekStart);
+                                return (
+                                  <button
+                                    key={`${dayItem.day}-${cls.time}-${cls.name}`}
+                                    type="button"
+                                    onClick={() => toggleStudentClass(selectedStudent, dayItem.day, cls.time, cls.name)}
+                                    style={{ border: active ? '1px solid var(--logo-green)' : '1px solid var(--panel-border)', background: active ? 'var(--panel-green-bg)' : 'var(--panel-surface)', color: 'var(--panel-text)', borderRadius: '0.8rem', padding: '0.55rem 0.8rem', fontWeight: 800, fontSize: '0.75rem', cursor: 'pointer' }}
+                                  >
+                                    {cls.time} · {cls.name}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
                   <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>CLASES SELECCIONADAS ESTA SEMANA</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
@@ -5420,7 +5635,11 @@ const App: React.FC = () => {
                     )}
                   </div>
                 </div>
+                </>
+                )}
 
+                {fichaTab === 'pagos' && (
+                <>
                 <div style={{ marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
                   <p style={{ color: 'var(--logo-green)', fontSize: '0.6rem', fontWeight: 900, marginBottom: '0.8rem', letterSpacing: '0.15em' }}>HISTORIAL DE PAGOS</p>
                   <div style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1.5rem', overflow: 'hidden' }}>
@@ -5483,6 +5702,8 @@ const App: React.FC = () => {
                     }}>
                     <DollarSign size={18} /> REGISTRAR PAGO MANUAL (EFECTIVO / TRANSFERENCIA)
                   </motion.button>
+                )}
+                </>
                 )}
 
                 <div style={{ display: 'flex', gap: '1rem', position: 'relative', zIndex: 1, flexWrap: 'wrap' }}>
