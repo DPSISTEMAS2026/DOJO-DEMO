@@ -93,6 +93,7 @@ const SocialVideoPlayer: React.FC<{
         muted={localMute}
         onEnded={onEnded}
         playsInline
+        preload={isActive ? 'metadata' : 'none'}
         style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isActive ? 1 : 0.6, transition: 'opacity 0.5s' }}
       >
         <source src={src} type="video/mp4" />
@@ -1921,16 +1922,17 @@ const App: React.FC = () => {
                   {liveHeroVideos.map((src, idx) => {
                     const offset = (idx - activeHeroVideo + 3) % 3;
                     const isCenter = offset === 0;
+                    if (isMobile && !isCenter) return null;
                     return (
                       <motion.div 
                         key={src}
                         animate={{ 
-                          scale: isCenter ? 1.05 : 0.8,
-                          x: offset === 0 ? 0 : offset === 1 ? 300 : -300,
-                          opacity: isCenter ? 1 : 0.6,
-                          rotateY: offset === 0 ? 0 : offset === 1 ? 20 : -20,
+                          scale: isMobile ? 1 : (isCenter ? 1.05 : 0.8),
+                          x: isMobile ? 0 : (offset === 0 ? 0 : offset === 1 ? 300 : -300),
+                          opacity: isMobile ? 1 : (isCenter ? 1 : 0.6),
+                          rotateY: isMobile ? 0 : (offset === 0 ? 0 : offset === 1 ? 20 : -20),
                           zIndex: isCenter ? 50 : 10,
-                          filter: isCenter ? 'grayscale(0) blur(0px)' : 'grayscale(1) blur(2px)',
+                          filter: isMobile || isCenter ? 'none' : 'grayscale(1) blur(2px)',
                           pointerEvents: isCenter ? 'auto' : 'none'
                         }}
                         transition={{ 
@@ -1981,7 +1983,7 @@ const App: React.FC = () => {
               >
                 {/* Left Side: Newspaper Visual */}
                 <div style={{ position: 'relative', width: '100%', maxWidth: '500px' }}>
-                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100%', height: '100%', background: 'var(--logo-green)', filter: 'blur(100px)', opacity: 0.15, zIndex: -1 }}></div>
+                  {!isMobile && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100%', height: '100%', background: 'var(--logo-green)', filter: 'blur(100px)', opacity: 0.15, zIndex: -1 }}></div>}
                   <div style={{ borderRadius: '4rem', overflow: 'hidden', border: '1px solid var(--logo-green)', boxShadow: '0 40px 80px rgba(0,0,0,0.5)', background: '#fff' }}>
                     <div style={{ padding: '1.5rem', borderBottom: '2px solid #000', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span className="font-martial" style={{ color: '#000', fontSize: '1.2rem' }}>DIARIO DEPORTIVO</span>
@@ -2079,7 +2081,7 @@ const App: React.FC = () => {
                     position: 'relative'
                   }}
                 >
-                  <img src={item.img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Gallery" />
+                  <img src={item.img} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Gallery" />
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', opacity: 0, transition: 'opacity 0.3s' }} onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')} onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}>
                     <div style={{ position: 'absolute', bottom: '2rem', left: '2rem' }}>
                       <ImageIcon size={24} color="#fff" />

@@ -531,11 +531,22 @@ section {
 }
 
 @media (max-width: 768px) {
+  html, body {
+    overflow-x: clip !important;
+  }
+  body::before {
+    display: none;
+  }
+  .mesh-gradient {
+    filter: none;
+  }
   .hero-video-container {
-    height: 500px;
+    height: 520px;
+    perspective: none;
   }
   .hero-video-card {
-    width: 200px;
+    width: min(240px, 72vw);
+    box-shadow: none;
   }
 }
 

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import cron from 'node-cron';
 import { DateTime } from 'luxon';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,42 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 import { createClient } from '@supabase/supabase-js';
 const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABASE_ANON_KEY || '');
+
+const DOJO_AVATAR_FOLDER = 'ranasjiujitsu/avatars';
+
+function signCloudinary(params, apiSecret) {
+    const payload = Object.keys(params).sort().map((key) => `${key}=${params[key]}`).join('&');
+    return crypto.createHash('sha1').update(payload + apiSecret).digest('hex');
+}
+
+async function storeDojoAvatar(value, studentId) {
+    if (typeof value !== 'string' || !value.startsWith('data:')) return value;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    if (!cloudName || !apiKey || !apiSecret) return value;
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const publicId = `student-${String(studentId).replace(/[^a-zA-Z0-9_-]/g, '')}`;
+    const params = { folder: DOJO_AVATAR_FOLDER, overwrite: '1', public_id: publicId, timestamp };
+    const body = new FormData();
+    body.append('file', value);
+    body.append('api_key', apiKey);
+    body.append('timestamp', String(timestamp));
+    body.append('signature', signCloudinary(params, apiSecret));
+    body.append('folder', DOJO_AVATAR_FOLDER);
+    body.append('public_id', publicId);
+    body.append('overwrite', '1');
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error?.message || 'No se pudo guardar la foto');
+    const storedId = String(data.public_id || '');
+    if (!storedId.startsWith(`${DOJO_AVATAR_FOLDER}/`) || storedId.includes('lomasrico')) {
+        throw new Error('La foto iba a guardarse fuera de la carpeta del dojo');
+    }
+    return String(data.secure_url).replace('/upload/', '/upload/f_auto,q_auto,w_400,c_fill,g_face/');
+}
 
 
 const app = express();
@@ -404,7 +441,7 @@ app.get('/api/students', async (req, res) => {
         // La columna avatar no entra en el listado: si todavía hay fotos pesadas,
         // Supabase cancela la consulta y el panel de admin queda en blanco.
         let query = supabase.from('students').select(
-            'id,name,email,password,phone,belt,classesattended,classestonextbelt,lastpaymentmonth,lastpaymentdate,ispaid,plan,monthlyfee,birthdate,history,terms_accepted,scheduledclasses,joindate,lastgrade,graduationdate,weight,gender,sede_id,is_scholarship'
+            'id,name,email,password,phone,belt,classesattended,classestonextbelt,lastpaymentmonth,lastpaymentdate,ispaid,plan,monthlyfee,birthdate,history,terms_accepted,scheduledclasses,joindate,lastgrade,graduationdate,weight,gender,sede_id,is_scholarship,avatar'
         );
         if (req.query.sedeId) {
             query = query.eq('sede_id', Number(req.query.sedeId));
@@ -477,7 +514,7 @@ app.get('/api/students', async (req, res) => {
                 isPaid: effectivePaid,
                 plan: s.plan,
                 monthlyFee: s.monthlyfee,
-                avatar: s.avatar,
+                avatar: typeof s.avatar === 'string' && !s.avatar.startsWith('data:') ? s.avatar : undefined,
                 birthDate: s.birthdate,
                 history: cleanHistory,
                 terms_accepted: s.terms_accepted === true || s.terms_accepted === 'true' || s.terms_accepted === 1,
@@ -579,6 +616,7 @@ app.post('/api/students', async (req, res) => {
             newNum++;
         }
         const newId = newNum.toString();
+        const avatar = await storeDojoAvatar(req.body.avatar || null, newId);
 
         const newStudent = { 
             id: newId,
@@ -592,7 +630,7 @@ app.post('/api/students', async (req, res) => {
             ispaid: req.body.isPaid === true,
             plan: req.body.plan ? req.body.plan.toString() : null,
             monthlyfee: Number(req.body.monthlyFee) || null,
-            avatar: req.body.avatar || null,
+            avatar,
             birthdate: req.body.birthDate || null,
             history: Array.isArray(req.body.history) ? req.body.history : [],
             scheduledclasses: Array.isArray(req.body.scheduledClasses) ? req.body.scheduledClasses : [],
@@ -679,7 +717,7 @@ app.put('/api/students/:id', async (req, res) => {
         if (req.body.plan !== undefined) updateData.plan = req.body.plan ? req.body.plan.toString() : null;
         if (req.body.monthlyFee !== undefined) updateData.monthlyfee = Number(req.body.monthlyFee);
         if (req.body.birthDate !== undefined) updateData.birthdate = req.body.birthDate;
-        if (req.body.avatar !== undefined) updateData.avatar = req.body.avatar;
+        if (req.body.avatar !== undefined) updateData.avatar = await storeDojoAvatar(req.body.avatar, req.params.id);
         if (req.body.lastPaymentDate !== undefined) updateData.lastpaymentdate = req.body.lastPaymentDate;
         if (req.body.lastPaymentMonth !== undefined) updateData.lastpaymentmonth = req.body.lastPaymentMonth;
         if (req.body.scheduledClasses !== undefined) updateData.scheduledclasses = req.body.scheduledClasses;
