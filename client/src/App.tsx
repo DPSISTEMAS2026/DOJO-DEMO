@@ -296,6 +296,91 @@ const getFallbackAvatarUrl = (name?: string) => {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 };
 
+const ROSTER_CACHE_PREFIX = 'ranas-roster-v1-';
+
+function rosterCacheKey(sedeId: number | null) {
+  return ROSTER_CACHE_PREFIX + (sedeId == null ? 'all' : String(sedeId));
+}
+
+function readRosterCache(sedeId: number | null): { students: Student[]; etag: string } | null {
+  try {
+    const raw = localStorage.getItem(rosterCacheKey(sedeId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.students) || !parsed.etag) return null;
+    if (Date.now() - Number(parsed.savedAt || 0) > 1000 * 60 * 60 * 24) return null;
+    return { students: parsed.students, etag: String(parsed.etag) };
+  } catch {
+    return null;
+  }
+}
+
+function writeRosterCache(sedeId: number | null, students: Student[], etag: string) {
+  try {
+    const lean = students.map((student) => {
+      const copy = { ...student };
+      delete copy.password;
+      return copy;
+    });
+    localStorage.setItem(rosterCacheKey(sedeId), JSON.stringify({ savedAt: Date.now(), etag, students: lean }));
+  } catch {
+    /* el teléfono no tiene espacio; la próxima visita vuelve a pedir el listado */
+  }
+}
+
+const AVATAR_THUMB = 'f_auto,q_auto:good,w_320,c_fill,g_face';
+const AVATAR_VIEW = 'f_auto,q_auto:good,w_960,c_fill,g_face';
+
+function avatarDeliveryUrl(raw: string | undefined, mode: 'thumb' | 'view' = 'thumb') {
+  if (!raw || raw.startsWith('data:')) return '';
+  const absolute = raw.startsWith('http') ? raw : `${API_URL}${raw}`;
+  const marker = '/upload/';
+  if (!absolute.includes('res.cloudinary.com') || !absolute.includes(marker)) return absolute;
+  const start = absolute.indexOf(marker) + marker.length;
+  const rest = absolute.slice(start);
+  const slash = rest.indexOf('/');
+  const first = slash === -1 ? rest : rest.slice(0, slash);
+  const tail = slash === -1 ? '' : rest.slice(slash);
+  const isTransform = first.includes(',') || /^(f_|q_|w_|c_|g_|h_)/.test(first);
+  const transform = mode === 'view' ? AVATAR_VIEW : AVATAR_THUMB;
+  return absolute.slice(0, start) + (isTransform ? transform + tail : `${transform}/${rest}`);
+}
+
+function LazyAvatar({ raw, name, size, radius, border }: { raw?: string; name: string; size: number; radius?: string | number; border?: string }) {
+  const holder = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = holder.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setVisible(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: '80px' });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [raw]);
+
+  const src = visible ? (avatarDeliveryUrl(raw, 'thumb') || getFallbackAvatarUrl(name)) : '';
+  return (
+    <div ref={holder} className="strict-avatar-container" style={{ width: size, height: size, borderRadius: radius, border, background: '#05a86a' }}>
+      {src ? (
+        <img src={src} alt="" width={size} height={size} decoding="async" onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(name); }} />
+      ) : (
+        <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: Math.max(12, Math.round(size * 0.38)) }}>
+          {(name || '?').trim().charAt(0).toUpperCase()}
+        </span>
+      )}
+    </div>
+  );
+}
+
 const newsItems = [
   {
     title: "Frog Challenge Kids eleva el nivel y pone al sur en el mapa del Jiu Jitsu infantil",
@@ -650,7 +735,15 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    const keptRoster: [string, string][] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith(ROSTER_CACHE_PREFIX)) continue;
+      const value = localStorage.getItem(key);
+      if (value) keptRoster.push([key, value]);
+    }
     localStorage.clear();
+    keptRoster.forEach(([key, value]) => localStorage.setItem(key, value));
     setViewMode('landing');
     setRole('guest');
     setCurrentUser(null);
@@ -715,7 +808,14 @@ const App: React.FC = () => {
 
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<Student[]>(() => {
+    if (typeof window === 'undefined') return [];
+    const savedRole = localStorage.getItem('role');
+    if (!savedRole || savedRole === 'guest') return [];
+    const sede = localStorage.getItem('activeSedeId');
+    const cached = readRosterCache(savedRole === 'superadmin' ? null : (sede ? Number(sede) : null));
+    return cached?.students || [];
+  });
   const [manualPaymentDates, setManualPaymentDates] = useState<Record<string, string>>({});
   const [isGeneratingPayment, setIsGeneratingPayment] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -909,8 +1009,11 @@ const App: React.FC = () => {
   }, [liveNews.length]);
 
   // API Data Loading (Scoped by Sede)
-  const fetchDataForSede = async (sedeId: number | null) => {
+  const fetchDataForSede = async (sedeId: number | null, withRoster?: boolean) => {
     const queryParams = sedeId ? `?sedeId=${sedeId}` : '';
+    const includeRoster = withRoster ?? role !== 'guest';
+    const cachedRoster = includeRoster ? readRosterCache(sedeId) : null;
+    if (cachedRoster) setStudents(cachedRoster.students);
 
     // Carga ultrarrápida e independiente de videos (< 1 seg)
     fetch(`${API_URL}/api/videos${queryParams}`)
@@ -934,7 +1037,11 @@ const App: React.FC = () => {
     // Carga paralela de resto de datos del sistema
     try {
       const [studentsRes, newsRes, galleryRes, heroVideosRes, feesRes, automationRes, discountCatRes, sedesRes] = await Promise.all([
-        fetch(`${API_URL}/api/students${queryParams}`),
+        includeRoster
+          ? fetch(`${API_URL}/api/students${queryParams}`, {
+              headers: cachedRoster?.etag ? { 'If-None-Match': cachedRoster.etag } : {}
+            })
+          : Promise.resolve(null),
         fetch(`${API_URL}/api/news${queryParams}`),
         fetch(`${API_URL}/api/gallery${queryParams}`),
         fetch(`${API_URL}/api/hero-videos`),
@@ -944,7 +1051,16 @@ const App: React.FC = () => {
         fetch(`${API_URL}/api/sedes`)
       ]);
 
-      const studentsData = await studentsRes.json().catch(() => []);
+      let studentList = cachedRoster?.students || [];
+      if (studentsRes && studentsRes.status !== 304 && studentsRes.ok) {
+        const studentsData = await studentsRes.json().catch(() => []);
+        studentList = Array.isArray(studentsData) ? studentsData : [];
+        setStudents(studentList);
+        const etag = studentsRes.headers.get('ETag');
+        if (etag) writeRosterCache(sedeId, studentList, etag);
+      } else if (studentsRes && studentsRes.status === 304 && cachedRoster) {
+        setStudents(cachedRoster.students);
+      }
       const newsData = await newsRes.json().catch(() => null);
       const galleryData = await galleryRes.json().catch(() => null);
       const heroVideosData = await heroVideosRes.json().catch(() => null);
@@ -953,8 +1069,6 @@ const App: React.FC = () => {
       const discountCatData = await discountCatRes.json().catch(() => null);
       const sedesData = await sedesRes.json().catch(() => []);
 
-      const studentList = Array.isArray(studentsData) ? studentsData : [];
-      setStudents(studentList);
       setSedes(Array.isArray(sedesData) ? sedesData : []);
       if (newsData !== null) setLiveNews(newsData);
       if (galleryData !== null) setLiveGallery(galleryData);
@@ -1491,7 +1605,7 @@ const App: React.FC = () => {
       localStorage.setItem('activeSedeId', sId.toString());
       setViewMode('app');
       setMultiStudentAuthOptions([]);
-      fetchDataForSede(sId);
+      fetchDataForSede(sId, true);
       return;
     }
 
@@ -1511,7 +1625,7 @@ const App: React.FC = () => {
           setActiveSedeId(null);
           localStorage.removeItem('activeSedeId');
           setViewMode('app');
-          fetchDataForSede(null);
+          fetchDataForSede(null, true);
         } else if (data.role === 'admin_sede' || data.role === 'admin') {
           setRole('admin');
           localStorage.setItem('role', 'admin');
@@ -1519,14 +1633,12 @@ const App: React.FC = () => {
           setActiveSedeId(sId);
           localStorage.setItem('activeSedeId', sId.toString());
           setViewMode('app');
-          fetchDataForSede(sId);
+          fetchDataForSede(sId, true);
         } else if (data.role === 'student') {
           const loggedStudent = data.student;
-          
-          // Si hay múltiples alumnos con el mismo correo, mostrar el modal
-          const matchingStudents = students.filter(s => s.email && s.email.trim().toLowerCase() === authEmail.trim().toLowerCase());
-          if (matchingStudents.length > 1) {
-            setMultiStudentAuthOptions(matchingStudents);
+          const family = Array.isArray(data.family) ? data.family : [];
+          if (family.length > 1) {
+            setMultiStudentAuthOptions(family);
           } else {
             setRole('student');
             localStorage.setItem('role', 'student');
@@ -1536,7 +1648,7 @@ const App: React.FC = () => {
             setActiveSedeId(sId);
             localStorage.setItem('activeSedeId', sId.toString());
             setViewMode('app');
-            fetchDataForSede(sId);
+            fetchDataForSede(sId, true);
           }
         }
       } else {
@@ -1806,7 +1918,7 @@ const App: React.FC = () => {
           <div className="glass" style={{ padding: '0.8rem 2rem', display: 'flex', gap: '2rem', alignItems: 'center', borderRadius: '100px', border: '1px solid var(--glass-border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
               <div style={{ position: 'relative', display: 'flex' }}>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '50px', height: '50px', background: 'var(--logo-green)', filter: 'blur(30px)', opacity: 0.6, borderRadius: '50%', zIndex: -1 }}></div>
+                {!isMobile && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '50px', height: '50px', background: 'var(--logo-green)', filter: 'blur(30px)', opacity: 0.6, borderRadius: '50%', zIndex: -1 }}></div>}
                 <img src="/assets/WhatsApp Image 2026-03-04 at 1.50.04 PM.jpeg" alt="Logo" style={{ width: '35px', height: '35px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--logo-green)' }} />
               </div>
               <span className="nav-brand-text" style={{ fontWeight: 900, fontSize: '1.1rem', letterSpacing: '-0.5px', color: 'var(--text-main)' }}>RANAS <span style={{ color: 'var(--logo-green)' }}>JIU JITSU</span></span>
@@ -2407,11 +2519,12 @@ const App: React.FC = () => {
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: window.innerWidth < 1024 ? 'column' : 'row', position: 'relative', overflowX: 'hidden', background: '#000' }}>
-        {/* Decorative Background for Mobile */}
+        {!isMobile && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.4 }}>
           <div style={{ position: 'absolute', top: '20%', left: '10%', width: '300px', height: '300px', background: 'var(--logo-green)', filter: 'blur(100px)', borderRadius: '50%' }} />
           <div style={{ position: 'absolute', bottom: '20%', right: '10%', width: '300px', height: '300px', background: 'var(--logo-green)', filter: 'blur(100px)', borderRadius: '50%', opacity: 0.5 }} />
         </div>
+        )}
 
         {/* Left Side: Branding (Hidden on small mobile if needed, but here we stack) */}
         <motion.div 
@@ -2716,11 +2829,12 @@ const App: React.FC = () => {
           }} />
         )}
 
-        {/* BG Orbs */}
+        {!isMobile && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
           <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(5,168,106,0.12) 0%, transparent 70%)', filter: 'blur(80px)', opacity: 'var(--panel-orb-opacity)' }} />
           <div style={{ position: 'absolute', bottom: '10%', left: '-5%', width: '350px', height: '350px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(5,168,106,0.08) 0%, transparent 70%)', filter: 'blur(60px)', opacity: 'var(--panel-orb-opacity)' }} />
         </div>
+        )}
         <div style={{ maxWidth: '480px', margin: '0 auto', padding: '2rem 1.5rem 8rem', position: 'relative', zIndex: 1 }}>
 
           {/* Header */}
@@ -2730,7 +2844,7 @@ const App: React.FC = () => {
               <div style={{ position: 'relative', width: '52px', height: '52px' }}>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'conic-gradient(var(--logo-green) 0%, transparent 60%, var(--logo-green) 100%)' }} />
                 <div className="strict-avatar-container" style={{ position: 'absolute', inset: '2px', width: '48px', height: '48px', background: '#111' }}>
-                  <img src={currentUser.avatar ? (currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('data:') ? currentUser.avatar : `${API_URL}${currentUser.avatar}`) : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}&backgroundColor=05a86a&fontFamily=Arial,sans-serif&fontWeight=900&fontSize=40`} />
+                  <img src={avatarDeliveryUrl(currentUser.avatar, 'thumb') || getFallbackAvatarUrl(currentUser.name)} alt="" decoding="async" />
                 </div>
               </div>
               <div>
@@ -3067,7 +3181,9 @@ const App: React.FC = () => {
                       <div style={{ position: 'relative' }}>
                         <div className="strict-avatar-container" style={{ width: '85px', height: '85px', border: '3px solid var(--logo-green)', background: 'var(--panel-surface)' }}>
                           <img 
-                            src={currentUser.avatar ? (currentUser.avatar.startsWith('http') || currentUser.avatar.startsWith('data:') ? currentUser.avatar : `${API_URL}${currentUser.avatar}`) : getFallbackAvatarUrl(currentUser.name)} 
+                            src={avatarDeliveryUrl(currentUser.avatar, 'thumb') || getFallbackAvatarUrl(currentUser.name)} 
+                            alt=""
+                            decoding="async"
                             onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(currentUser.name); }}
                           />
                         </div>
@@ -3268,7 +3384,7 @@ const App: React.FC = () => {
 
         {/* Tab Bar */}
         <motion.nav initial={{ y: 100, x: '-50%' }} animate={{ y: 0, x: '-50%' }} transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 30 }}
-          style={{ position: 'fixed', bottom: '1.2rem', left: '50%', width: 'calc(100% - 2.5rem)', maxWidth: '440px', height: '66px', display: 'flex', justifyContent: 'space-around', alignItems: 'center', zIndex: 1000, borderRadius: '100px', background: 'var(--panel-sidebar)', backdropFilter: 'blur(30px)', border: '1px solid var(--panel-border)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+          style={{ position: 'fixed', bottom: '1.2rem', left: '50%', width: 'calc(100% - 2.5rem)', maxWidth: '440px', height: '66px', display: 'flex', justifyContent: 'space-around', alignItems: 'center', zIndex: 1000, borderRadius: '100px', background: 'var(--panel-sidebar)', border: '1px solid var(--panel-border)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
           <motion.button whileTap={{ scale: 0.82 }} onClick={() => setActiveTab('dashboard')}
             style={{ background: 'none', border: 'none', color: activeTab === 'dashboard' ? 'var(--logo-green)' : 'var(--panel-muted)', padding: '0.8rem', cursor: 'pointer', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
             <Users size={20} />
@@ -3577,8 +3693,8 @@ const App: React.FC = () => {
 
       {/* BG */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
-        <div style={{ position: 'absolute', top: 0, right: '20%', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(5,168,106,0.08) 0%, transparent 70%)', filter: 'blur(100px)', opacity: 'var(--panel-orb-opacity)' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: '20%', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(5,168,106,0.06) 0%, transparent 70%)', filter: 'blur(80px)', opacity: 'var(--panel-orb-opacity)' }} />
+        {!isMobile && <div style={{ position: 'absolute', top: 0, right: '20%', width: '600px', height: '600px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(5,168,106,0.08) 0%, transparent 70%)', filter: 'blur(100px)', opacity: 'var(--panel-orb-opacity)' }} />}
+        {!isMobile && <div style={{ position: 'absolute', bottom: 0, left: '20%', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(5,168,106,0.06) 0%, transparent 70%)', filter: 'blur(80px)', opacity: 'var(--panel-orb-opacity)' }} />}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, var(--panel-grid-dot) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
       </div>
 
@@ -3995,17 +4111,10 @@ const App: React.FC = () => {
                           return true;
                         })
                     .map((student) => (
-                      <div key={student.id}
+                      <div key={student.id} className="student-card"
                         style={{ background: 'var(--panel-surface)', border: '1px solid var(--panel-border)', borderRadius: '1rem', padding: '0.8rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flex: 1, minWidth: 0 }}>
-                          <div className="strict-avatar-container" style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--panel-surface)', border: `1px solid var(--panel-border)` }}>
-                            <img 
-                              src={student.avatar ? (student.avatar.startsWith('http') || student.avatar.startsWith('data:') ? student.avatar : `${API_URL}${student.avatar}`) : getFallbackAvatarUrl(student.name)} 
-                              loading="lazy"
-                              decoding="async"
-                              onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(student.name); }}
-                            />
-                          </div>
+                          <LazyAvatar raw={student.avatar} name={student.name} size={36} radius={10} border="1px solid var(--panel-border)" />
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--panel-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                               {student.is_scholarship && <span title="Becado/Monitor" style={{ fontSize: '0.75rem' }}>🏅</span>}
@@ -4110,17 +4219,10 @@ const App: React.FC = () => {
                           return true;
                         })
                         .map((student) => (
-                          <tr key={student.id} style={{ borderBottom: '1px solid var(--glass-border)', transition: 'all 0.3s' }} className="hover-light">
+                          <tr key={student.id} style={{ borderBottom: '1px solid var(--glass-border)', transition: 'all 0.3s' }} className="hover-light student-card">
                             <td style={{ padding: '1.5rem' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                                <div className="strict-avatar-container" style={{ width: '38px', height: '38px', border: '2px solid var(--glass-border)', background: 'var(--panel-surface)' }}>
-                                  <img 
-                                    src={student.avatar ? (student.avatar.startsWith('http') || student.avatar.startsWith('data:') ? student.avatar : `${API_URL}${student.avatar}`) : getFallbackAvatarUrl(student.name)} 
-                                    loading="lazy"
-                                    decoding="async"
-                                    onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(student.name); }}
-                                  />
-                                </div>
+                                <LazyAvatar raw={student.avatar} name={student.name} size={38} border="2px solid var(--glass-border)" />
                                 <div>
                                   <p style={{ fontWeight: 900, fontSize: '1rem', color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                     {student.is_scholarship && <span title="Becado/Monitor" style={{ fontSize: '0.85rem' }}>🏅</span>}
@@ -4252,7 +4354,7 @@ const App: React.FC = () => {
                       className="glass" 
                       style={{ padding: '2.5rem', borderRadius: '2rem', border: '1px solid var(--glass-border)', background: 'var(--panel-card)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', overflow: 'hidden' }}>
                       
-                      <div style={{ position: 'absolute', top: 0, right: 0, width: '120px', height: '120px', background: 'radial-gradient(circle, rgba(5,168,106,0.06) 0%, transparent 70%)', filter: 'blur(30px)' }} />
+                      {!isMobile && <div style={{ position: 'absolute', top: 0, right: 0, width: '120px', height: '120px', background: 'radial-gradient(circle, rgba(5,168,106,0.06) 0%, transparent 70%)', filter: 'blur(30px)' }} />}
                       
                       <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: 'rgba(5,168,106,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--logo-green)' }}>
                         <Folder size={24} />
@@ -5075,7 +5177,7 @@ const App: React.FC = () => {
               }}
                 onClick={e => e.stopPropagation()}>
                 {/* Decorative Background Element */}
-                <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '300px', height: '300px', background: 'var(--logo-green-soft)', borderRadius: '50%', filter: 'blur(60px)', zIndex: 0 }} />
+                {!isMobile && <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '300px', height: '300px', background: 'var(--logo-green-soft)', borderRadius: '50%', filter: 'blur(60px)', zIndex: 0 }} />}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', position: 'relative', zIndex: 1, flexWrap: 'wrap', gap: '1.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1, minWidth: isMobile ? '100%' : '300px' }}>
@@ -5087,7 +5189,9 @@ const App: React.FC = () => {
                         title="Ver foto en grande"
                       >
                         <img
-                          src={selectedStudent.avatar ? (selectedStudent.avatar.startsWith('http') || selectedStudent.avatar.startsWith('data:') ? selectedStudent.avatar : `${API_URL}${selectedStudent.avatar}`) : getFallbackAvatarUrl(selectedStudent.name)}
+                          src={avatarDeliveryUrl(selectedStudent.avatar, 'view') || getFallbackAvatarUrl(selectedStudent.name)}
+                          alt=""
+                          decoding="async"
                           onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(selectedStudent.name); }}
                         />
                       </div>
@@ -6212,11 +6316,7 @@ const App: React.FC = () => {
               style={{ borderRadius: '50%', overflow: 'hidden', width: isMobile ? '260px' : '340px', height: isMobile ? '260px' : '340px', border: '4px solid rgba(5,168,106,0.7)', boxShadow: '0 0 60px rgba(5,168,106,0.25), 0 30px 80px rgba(0,0,0,0.6)', flexShrink: 0, background: '#1e293b' }}
             >
               <img
-                src={photoLightboxStudent.avatar
-                  ? (photoLightboxStudent.avatar.startsWith('http') || photoLightboxStudent.avatar.startsWith('data:')
-                    ? photoLightboxStudent.avatar
-                    : `${API_URL}${photoLightboxStudent.avatar}`)
-                  : getFallbackAvatarUrl(photoLightboxStudent.name)}
+                src={avatarDeliveryUrl(photoLightboxStudent.avatar, 'view') || getFallbackAvatarUrl(photoLightboxStudent.name)}
                 onError={(e) => { e.currentTarget.src = getFallbackAvatarUrl(photoLightboxStudent.name); }}
                 alt={photoLightboxStudent.name}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}

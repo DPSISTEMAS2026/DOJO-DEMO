@@ -51,7 +51,7 @@ async function storeDojoAvatar(value, studentId) {
     if (!storedId.startsWith(`${DOJO_AVATAR_FOLDER}/`) || storedId.includes('lomasrico')) {
         throw new Error('La foto iba a guardarse fuera de la carpeta del dojo');
     }
-    return String(data.secure_url).replace('/upload/', '/upload/f_auto,q_auto,w_400,c_fill,g_face/');
+    return String(data.secure_url).replace('/upload/', '/upload/f_auto,q_auto:good,w_960,c_fill,g_face/');
 }
 
 
@@ -88,7 +88,7 @@ async function getMPClientForSede(sedeId) {
     return client;
 }
 
-app.use(cors());
+app.use(cors({ exposedHeaders: ['ETag'], maxAge: 86400 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -422,9 +422,21 @@ app.post('/api/hero-videos', (req, res) => {
     res.status(200).json(req.body);
 });
 
-// Students cache in memory (15 seconds TTL) to prevent API exhaustion
+// El listado vive 2 minutos en memoria. Si el teléfono manda el mismo ETag, se responde vacío.
 const studentsCache = new Map();
-const STUDENTS_CACHE_TTL_MS = 15000;
+const STUDENTS_CACHE_TTL_MS = 120000;
+
+function rosterEtag(formatted) {
+    const stamp = formatted.map(s => `${s.id}|${s.avatar || ''}|${s.isPaid ? 1 : 0}|${s.lastPaymentDate || ''}|${s.belt || ''}`).join('\n');
+    return `"${crypto.createHash('sha1').update(stamp).digest('hex').slice(0, 20)}"`;
+}
+
+function sendRoster(req, res, formatted, etag) {
+    res.set('Cache-Control', 'private, max-age=120');
+    res.set('ETag', etag);
+    if (req.headers['if-none-match'] === etag) return res.status(304).end();
+    return res.json(formatted);
+}
 
 export function clearStudentsCache() {
     studentsCache.clear();
@@ -435,11 +447,10 @@ app.get('/api/students', async (req, res) => {
         const cacheKey = req.query.sedeId ? `sede_${req.query.sedeId}` : 'all';
         const cached = studentsCache.get(cacheKey);
         if (cached && (Date.now() - cached.timestamp < STUDENTS_CACHE_TTL_MS)) {
-            return res.json(cached.data);
+            return sendRoster(req, res, cached.data, cached.etag);
         }
 
-        // La columna avatar no entra en el listado: si todavía hay fotos pesadas,
-        // Supabase cancela la consulta y el panel de admin queda en blanco.
+        // avatar es solo la URL de Cloudinary. Un data: residual no se reenvía.
         let query = supabase.from('students').select(
             'id,name,email,password,phone,belt,classesattended,classestonextbelt,lastpaymentmonth,lastpaymentdate,ispaid,plan,monthlyfee,birthdate,history,terms_accepted,scheduledclasses,joindate,lastgrade,graduationdate,weight,gender,sede_id,is_scholarship,avatar'
         );
@@ -530,9 +541,9 @@ app.get('/api/students', async (req, res) => {
             };
         });
 
-        // Store in cache
-        studentsCache.set(cacheKey, { timestamp: Date.now(), data: formatted });
-        res.json(formatted);
+        const etag = rosterEtag(formatted);
+        studentsCache.set(cacheKey, { timestamp: Date.now(), data: formatted, etag });
+        return sendRoster(req, res, formatted, etag);
 
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -2269,24 +2280,28 @@ app.post('/api/auth/login', async (req, res) => {
                 s.password && s.password.trim().toLowerCase() === trimmedPass.toLowerCase()
             );
             if (student) {
-                return res.json({
+                const slimStudent = (row) => ({
+                    id: row.id,
+                    name: row.name,
+                    email: row.email,
+                    belt: row.belt || 'WHITE',
+                    isPaid: row.ispaid === true,
+                    plan: row.plan,
+                    monthlyFee: row.monthlyfee,
+                    avatar: typeof row.avatar === 'string' && row.avatar.startsWith('http') ? row.avatar : undefined,
+                    birthDate: row.birthdate,
+                    history: Array.isArray(row.history) ? row.history.filter(h => h && !h._competition_info) : [],
+                    sedeId: row.sede_id || 1,
+                    sede_id: row.sede_id || 1,
+                    terms_accepted: row.terms_accepted === true || row.terms_accepted === 'true'
+                });
+                const payload = {
                     success: true,
                     role: 'student',
-                    student: {
-                        id: student.id,
-                        name: student.name,
-                        email: student.email,
-                        belt: student.belt || 'WHITE',
-                        isPaid: student.ispaid === true,
-                        plan: student.plan,
-                        monthlyFee: student.monthlyfee,
-                        avatar: student.avatar,
-                        birthDate: student.birthdate,
-                        history: student.history || [],
-                        sedeId: student.sede_id || 1, // Fallback a sede 1 si es nulo
-                        terms_accepted: student.terms_accepted === true
-                    }
-                });
+                    student: slimStudent(student)
+                };
+                if (matchingStudents.length > 1) payload.family = matchingStudents.map(slimStudent);
+                return res.json(payload);
             }
         }
 

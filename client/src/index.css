@@ -531,6 +531,9 @@ section {
 }
 
 @media (max-width: 768px) {
+  html {
+    scroll-behavior: auto;
+  }
   html, body {
     overflow-x: clip !important;
   }
@@ -539,6 +542,14 @@ section {
   }
   .mesh-gradient {
     filter: none;
+  }
+  .glass, .glass-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .student-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 76px;
   }
   .hero-video-container {
     height: 520px;
